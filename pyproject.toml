@@ -3,12 +3,12 @@ name = "qenvs"
 description = "QEnvS: physically validated quantum control environments (quantum batteries, state transfer, open systems) for RL and optimal control, built on JAX + dynamiqs."
 authors = [{ name = "Beomdo Park", email = "pbeomdo@gmail.com" }]
 dynamic = ["version"]
-license = { file = "LICENSE" }
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -55,7 +55,7 @@ Repository = "https://github.com/beomdo-park/QEnvS"
 Issues = "https://github.com/beomdo-park/QEnvS/issues"
 
 [build-system]
-requires = ["hatchling>=1.25", "hatch-vcs"]
+requires = ["hatchling>=1.27", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
