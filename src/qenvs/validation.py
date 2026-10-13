@@ -1,7 +1,9 @@
 """Physics validation checks, shared by the test-suite and the ``qenvs validate`` CLI.
 
 Each check compares a simulation against a closed-form result or a physical
-constraint and returns the measured error together with the tolerance. The
+constraint and returns the measured error together with the tolerance.
+Tolerances are chosen to hold in float32 as well as float64 (the CLI enables
+x64; library users may run either). The
 test-suite asserts ``passed``; the CLI prints the numbers so that users (and
 agents) can see *how* accurate the models are, not just that tests are green.
 """
@@ -38,7 +40,7 @@ class CheckResult:
 
 
 def _result(name: str, category: str, error: float, tol: float, detail: str) -> CheckResult:
-    error = float(error)
+    error = abs(float(error))
     return CheckResult(name, category, error, tol, bool(error <= tol), detail)
 
 

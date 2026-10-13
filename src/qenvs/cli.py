@@ -145,7 +145,10 @@ ERROR_CODES: dict[type[Exception], str] = {
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Entry point."""
+    """Entry point (enables JAX x64 so reported errors reflect double precision)."""
+    import jax
+
+    jax.config.update("jax_enable_x64", True)
     args = build_parser().parse_args(argv)
     try:
         return int(args.func(args))
