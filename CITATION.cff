@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+title: "QEnvS: physically validated quantum control environments"
+message: "If you use QEnvS, please cite it using this metadata."
+type: software
+authors:
+  - family-names: Park
+    given-names: Beomdo
+    affiliation: Hanbat National University
+license: Apache-2.0
+repository-code: https://github.com/beomdo-park/qenvs
+url: https://beomdo-park.github.io/qenvs
+keywords:
+  - quantum control
+  - reinforcement learning
+  - quantum battery
+  - open quantum systems
+  - JAX

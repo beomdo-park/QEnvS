@@ -1,0 +1,42 @@
+site_name: QEnvS
+site_description: Physically validated quantum control environments for RL and optimal control.
+site_url: https://beomdo-park.github.io/qenvs
+repo_url: https://github.com/beomdo-park/qenvs
+repo_name: beomdo-park/qenvs
+
+theme:
+  name: material
+  features: [navigation.sections, content.code.copy]
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle: { icon: material/brightness-7, name: Dark mode }
+    - scheme: slate
+      primary: indigo
+      toggle: { icon: material/brightness-4, name: Light mode }
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: false
+
+markdown_extensions:
+  - admonition
+  - pymdownx.arithmatex: { generic: true }
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Roadmap: roadmap.md
+  - API:
+      - Models: api/models.md
+      - Environments: api/envs.md
+      - Wrappers: api/wrappers.md

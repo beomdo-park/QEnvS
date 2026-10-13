@@ -1,0 +1,25 @@
+QEnvS (qenvs)
+Copyright 2026 Beomdo Park
+
+This product includes software developed at Hanbat National University.
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+-----------------------------------------------------------------------
+Third-party attributions
+-----------------------------------------------------------------------
+
+* Project tooling layout (pyproject/ruff/taskipy/mkdocs conventions) is
+  adapted from dynamiqs (https://github.com/dynamiqs/dynamiqs),
+  Apache License 2.0, Copyright dynamiqs developers.
+
+* The functional environment API (reset/step returning (state, timestep))
+  follows the design of Jumanji (https://github.com/instadeepai/jumanji),
+  Apache License 2.0, Copyright InstaDeep Ltd.
+
+* QuTiP (https://qutip.org) is used as a reference implementation in the
+  validation test-suite only. QuTiP is distributed under the BSD 3-Clause
+  License, Copyright QuTiP developers and contributors.
+
+No source code has been copied from projects that do not carry an
+OSI-approved license (e.g. RL4qcWpc, which has no LICENSE file).
