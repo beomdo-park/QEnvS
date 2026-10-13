@@ -39,6 +39,7 @@ dev = [
     "codespell",
     "pre-commit",
     "qutip>=5",          # reference implementation for validation tests
+    "optax",             # gradient baselines in examples/
 ]
 docs = [
     "mkdocs-material",

@@ -55,6 +55,11 @@ class Model(eqx.Module):
         """Named Hermitian observables reported by environments (may be empty)."""
         return {}
 
+    def battery_hamiltonian(self) -> QArray:
+        """Energy-storage Hamiltonian ``H_B`` (ground energy 0); battery models override."""
+        msg = f"{type(self).__name__} does not define a battery Hamiltonian"
+        raise NotImplementedError(msg)
+
     # ------------------------------------------------------------------ helpers
     @property
     def n_controls(self) -> int:
