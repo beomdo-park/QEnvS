@@ -25,7 +25,7 @@ jobs:
       - run: uv run codespell src tests docs README.md
       - name: forbid typographic separators (middle dot, en/em dash)
         run: |
-          ! grep -rnP '[\x{00B7}\x{2013}\x{2014}]' src tests docs examples README.md AGENTS.md CONTRIBUTING.md
+          ! LC_ALL=C.UTF-8 grep -rnIP --exclude-dir=assets '[\x{00B7}\x{2013}\x{2014}]' src tests docs examples README.md AGENTS.md CONTRIBUTING.md
 
   test:
     runs-on: ubuntu-latest
