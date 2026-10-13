@@ -12,10 +12,10 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from qenvs.validation import qubit
-from qenvs.validation.core import CheckResult, environment_info, result
+from qenvs.validation import dicke, lambda_system, qubit, qubit_battery
+from qenvs.validation.core import CheckResult, environment_info, result, skipped
 
-MODULES = (qubit,)
+MODULES = (qubit, qubit_battery, dicke, lambda_system)
 
 CHECKS: tuple[Callable[[], CheckResult], ...] = tuple(c for m in MODULES for c in m.CHECKS)
 
@@ -25,4 +25,4 @@ def run_all() -> list[CheckResult]:
     return [c() for c in CHECKS]
 
 
-__all__ = ["CHECKS", "MODULES", "CheckResult", "environment_info", "result", "run_all"]
+__all__ = ["CHECKS", "MODULES", "CheckResult", "environment_info", "result", "run_all", "skipped"]

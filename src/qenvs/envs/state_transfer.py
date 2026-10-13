@@ -57,7 +57,7 @@ class StateTransfer(Environment):
         x = qstate.to_jax().reshape(-1)
         return jnp.concatenate([x.real, x.imag, jnp.atleast_1d(t / self.duration)])
 
-    def _info(self, qstate: QArray) -> dict[str, Array]:
+    def _info(self, qstate: QArray, t: Array | None = None) -> dict[str, Array]:  # noqa: ARG002
         info = {name: dq.expect(op, qstate).real for name, op in self.model.observables().items()}
         info["fidelity"] = fidelity(qstate, self.target)
         return info

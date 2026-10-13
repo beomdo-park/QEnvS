@@ -41,6 +41,11 @@ extra_javascript:
 
 nav:
   - Home: index.md
+  - Models:
+      - Qubit battery: models/qubit_battery.md
+      - Dicke battery: models/dicke.md
+      - Lambda system (STIRAP): models/lambda_system.md
+  - Benchmarks: benchmarks.md
   - Roadmap: roadmap.md
   - API:
       - Models: api/models.md

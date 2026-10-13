@@ -29,5 +29,17 @@ def ergotropy(state: QArray, hamiltonian: QArray) -> Array:
 
 
 def fidelity(state: QArray, target: QArray) -> Array:
-    """State fidelity in ``[0, 1]`` (dynamiqs convention, squared overlap for pure states)."""
+    """State fidelity in ``[0, 1]``.
+
+    For a pure ``target`` (ket) this is ``<t|rho|t>``, which equals the Uhlmann
+    fidelity and, unlike the general square-root formula, has a finite gradient
+    when ``state`` is a density matrix (the general formula differentiates
+    ``sqrt`` of a rank-1 matrix and returns NaN). Mixed targets fall back to
+    ``dynamiqs.fidelity``.
+    """
+    if target.isket():
+        rho = state.todm().to_jax()
+        t = target.to_jax()
+        val = jnp.einsum("...ij,...jk,...kl->...il", jnp.conj(jnp.swapaxes(t, -1, -2)), rho, t)
+        return jnp.real(val[..., 0, 0])
     return dq.fidelity(state, target).real

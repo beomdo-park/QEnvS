@@ -77,13 +77,15 @@ def cmd_run(args: argparse.Namespace) -> int:
 def cmd_validate(args: argparse.Namespace) -> int:
     """Run physics checks and print errors vs tolerances."""
     out = toolkit.validate()
-    rows = [f"{'check':30s} {'category':16s} {'error':>10s} {'tol':>8s}  status"]
+    rows = [f"{'model':14s} {'check':32s} {'category':16s} {'error':>10s} {'tol':>8s}  status"]
     for c in out["checks"]:
-        status = "PASS" if c["passed"] else "FAIL"
+        status = "SKIP" if c["skipped"] else ("PASS" if c["passed"] else "FAIL")
         rows.append(
-            f"{c['name']:30s} {c['category']:16s} "
+            f"{(c['model'] or 'TwoLevel')[:14]:14s} {c['name'][:32]:32s} {c['category'][:16]:16s} "
             f"{c['error']:10.2e} {c['tolerance']:8.0e}  {status}"
         )
+    n_ok = sum(1 for c in out["checks"] if c["passed"])
+    rows.append(f"\n{n_ok}/{len(out['checks'])} passed, {out['n_skipped']} skipped")
     rows.append("")
     rows += [f"{k}: {v}" for k, v in out["environment"].items()]
     _emit(out, args.json, "\n".join(rows))

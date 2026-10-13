@@ -61,22 +61,22 @@ class BatteryCharging(Environment):
         return self.horizon * self.dt
 
     def _quantity(self, qstate: QArray) -> Array:
-        hb = self.model.battery_hamiltonian()
-        return energy(qstate, hb) if self.reward == "energy" else ergotropy(qstate, hb)
+        rho_b, hb = self.model.battery_reduced(qstate)
+        return energy(rho_b, hb) if self.reward == "energy" else ergotropy(rho_b, hb)
 
     def _observe(self, qstate: QArray, t: Array) -> Array:
         x = qstate.to_jax().reshape(-1)
         return jnp.concatenate([x.real, x.imag, jnp.atleast_1d(t / self.duration)])
 
     def _info(self, qstate: QArray, t: Array) -> dict[str, Array]:
-        hb = self.model.battery_hamiltonian()
-        e = energy(qstate, hb)
+        rho_b, hb = self.model.battery_reduced(qstate)
+        e = energy(rho_b, hb)
         rho = qstate.todm().to_jax()
         info = {name: dq.expect(op, qstate).real for name, op in self.model.observables().items()}
         info.update(
             {
                 "energy": e,
-                "ergotropy": ergotropy(qstate, hb),
+                "ergotropy": ergotropy(rho_b, hb),
                 "power": jnp.where(t > 0, e / jnp.maximum(t, 1e-12), 0.0),
                 "purity": jnp.real(jnp.trace(rho @ rho)),
             }

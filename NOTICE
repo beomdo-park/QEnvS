@@ -21,5 +21,9 @@ Third-party attributions
   validation test-suite only. QuTiP is distributed under the BSD 3-Clause
   License, Copyright QuTiP developers and contributors.
 
+* The vectorised PPO example (examples/ppo_jax.py) follows the training-loop
+  structure of PureJaxRL (https://github.com/luchris429/purejaxrl),
+  Apache License 2.0, Copyright Chris Lu. No source was copied.
+
 No source code has been copied from projects that do not carry an
 OSI-approved license (e.g. RL4qcWpc, which has no LICENSE file).

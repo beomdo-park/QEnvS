@@ -15,8 +15,7 @@ def _qubit_state_transfer(**kw: object) -> Environment:
     gamma_phi = float(kw.pop("gamma_phi", 0.0))
     detuning = float(kw.pop("detuning", 0.0))
     model = TwoLevel(gamma1=gamma1, gamma_phi=gamma_phi, detuning=detuning)
-    target = dq.basis(2, 1)
-    target = target.todm() if model.is_open else target
+    target = dq.basis(2, 1)  # pure target kept as a ket: exact, differentiable fidelity
     return StateTransfer(model=model, target=target, **kw)  # type: ignore[arg-type]
 
 

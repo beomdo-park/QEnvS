@@ -8,4 +8,6 @@
 
 ::: qenvs.envs.StateTransfer
 
+::: qenvs.envs.BatteryCharging
+
 ::: qenvs.registry

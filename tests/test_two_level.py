@@ -6,8 +6,8 @@ from qenvs.models import TwoLevel
 
 
 def test_closed_vs_open_state_types():
-    assert TwoLevel().initial_state().isket
-    assert TwoLevel(gamma1=0.1).initial_state().isdm
+    assert TwoLevel().initial_state().isket()
+    assert TwoLevel(gamma1=0.1).initial_state().isdm()
     assert not TwoLevel().is_open
     assert TwoLevel(gamma_phi=0.1).is_open
 

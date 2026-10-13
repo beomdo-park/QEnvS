@@ -20,6 +20,7 @@ class CheckResult:
     passed: bool
     detail: str
     model: str = ""
+    skipped: bool = False
 
     def to_dict(self) -> dict[str, object]:
         """Plain-dict form for JSON output."""
@@ -32,6 +33,11 @@ def result(
     """Build a :class:`CheckResult` from an absolute error and a tolerance."""
     error = abs(float(error))
     return CheckResult(name, category, error, tol, bool(error <= tol), detail, model)
+
+
+def skipped(name: str, category: str, tol: float, detail: str, model: str = "") -> CheckResult:
+    """A check that could not run (e.g. optional dependency missing); never counts as passed."""
+    return CheckResult(name, category, 0.0, tol, False, detail, model, skipped=True)
 
 
 def environment_info() -> dict[str, str]:

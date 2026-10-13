@@ -60,6 +60,17 @@ class Model(eqx.Module):
         msg = f"{type(self).__name__} does not define a battery Hamiltonian"
         raise NotImplementedError(msg)
 
+    def battery_reduced(self, qstate: QArray) -> tuple[QArray, QArray]:
+        """Reduced battery state and the battery Hamiltonian acting on it.
+
+        Energy and ergotropy of a battery are properties of the battery
+        subsystem alone. Models with ancillas (a charger cavity, a bath mode)
+        override this to partial-trace them out and return ``H_B`` on the
+        battery space. The default returns the full state and
+        :meth:`battery_hamiltonian`.
+        """
+        return qstate, self.battery_hamiltonian()
+
     # ------------------------------------------------------------------ helpers
     @property
     def n_controls(self) -> int:

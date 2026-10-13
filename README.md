@@ -106,11 +106,18 @@ results, physical constraints and an independent simulator (QuTiP).
 | Task id | Model | Dissipation | Validated against | Status |
 |---|---|---|---|---|
 | `qubit/StateTransfer-v0` | driven qubit | T1, T_phi (Lindblad) | Rabi formula, pi-pulse, T1/T_phi decay, ergotropy, energy conservation, rho constraints, solver convergence | available |
-| `battery/TwoLevel-v0` | open qubit battery | T1, T_phi, thermal | ergotropy/power bounds | planned |
-| `battery/Dicke-v0` | N qubits + cavity (Dicke / Tavis-Cummings) | cavity loss, dephasing | collective charging scaling | planned |
-| `transfer/LambdaSTIRAP-v0` | three-level Lambda | spontaneous emission | adiabatic STIRAP transfer | planned |
+| `battery/TwoLevel-v0` | open qubit battery (`QubitBattery`) | thermal bath (T1, n_th), T_phi | thermal steady state and stationary Gibbs state, pi-pulse energy = ergotropy = omega0, charging-power bound, QuTiP cross-check, rho constraints, solver convergence | available |
+| `battery/Dicke-v0` | N cells + cavity (Tavis-Cummings / Dicke, symmetric subspace) | cavity loss, collective emission and dephasing | Jaynes-Cummings Rabi formula, excitation conservation, collective charging scaling (Ferraro 2018), RWA vs counter-rotating terms, QuTiP cross-check, rho constraints, operator algebra | available |
+| `transfer/LambdaSTIRAP-v0` | three-level Lambda (pump + Stokes) | spontaneous emission from the excited level | dark state, two-level Rabi limit, STIRAP transfer (P3 > 0.99, P2 < 0.05), intuitive-order and diabatic counterexamples, emission robustness, QuTiP cross-check | available |
 
-See the [roadmap](docs/roadmap.md).
+Each model has a page under `docs/models/` with its Hamiltonian, assumptions and validation table. See the [roadmap](docs/roadmap.md).
+
+## Baselines
+
+`examples/grape_jax.py` (open-loop Adam, GRAPE-style, through `env.rollout`),
+`examples/ppo_jax.py` (vectorised PPO, equinox + optax) and `examples/benchmark.py`
+(table in [docs/benchmarks.md](docs/benchmarks.md)). Closed `qubit/StateTransfer-v0`,
+3 seeds, about a minute on CPU: GRAPE 1.0000, PPO 0.9997 +- 0.0002 (optimum 1.0).
 
 ## Why not X?
 

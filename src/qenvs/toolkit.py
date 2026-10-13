@@ -14,10 +14,11 @@ from qenvs.validation import run_all
 from qenvs.validation.core import environment_info
 
 UNITS = {
-    "energy": "units of omega0 (qubit frequency); omega0 = 1 by default",
+    "energy": "units of omega0 (the model's transition frequency); omega0 = 1 by default",
     "time": "units of 1/omega0; hbar = 1",
-    "rates": "gamma1, gamma_phi in units of omega0",
-    "control": "amplitude u multiplies sigma_x/2; Rabi frequency = u",
+    "rates": "decay / dephasing / loss rates in units of omega0",
+    "control": "each action component multiplies one control operator of the model "
+    "(see `qenvs info <task>`); for a qubit, u sigma_x/2 gives Rabi frequency u",
 }
 
 POLICIES = ("pi-pulse", "zero", "random")
@@ -77,7 +78,7 @@ def run_rollout(
         actions = jax.random.uniform(key, shape, minval=-b, maxval=b)
     actions = jnp.clip(actions, -env.action_bound, env.action_bound)
     state, rewards = env.rollout(actions, jax.random.PRNGKey(seed))
-    final_info = {k: float(v) for k, v in env._info(state.qstate).items()}
+    final_info = {k: float(v) for k, v in env._info(state.qstate, state.t).items()}
     model_params = {
         k: float(v) if isinstance(v, (int, float)) else str(v) for k, v in vars(env.model).items()
     }
@@ -140,7 +141,8 @@ def validate() -> dict[str, object]:
     """Run all physics checks and report errors, tolerances and environment."""
     results = [r.to_dict() for r in run_all()]
     return {
-        "all_passed": all(r["passed"] for r in results),
+        "all_passed": all(r["passed"] or r["skipped"] for r in results),
+        "n_skipped": sum(1 for r in results if r["skipped"]),
         "checks": results,
         "environment": environment_info(),
     }

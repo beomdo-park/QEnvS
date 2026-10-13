@@ -1,0 +1,69 @@
+"""Collective (Dicke / Tavis-Cummings) battery tasks."""
+
+from __future__ import annotations
+
+from qenvs.envs.base import Environment
+from qenvs.envs.battery import BatteryCharging
+from qenvs.models.dicke import DickeBattery
+from qenvs.registry import register
+
+
+def _optional_int(value: object) -> int | None:
+    return None if value is None else int(value)
+
+
+def _dicke_battery(**kw: object) -> Environment:
+    model = DickeBattery(
+        n_cells=int(kw.pop("n_cells", 3)),
+        n_photons=_optional_int(kw.pop("n_photons", None)),
+        n_max=_optional_int(kw.pop("n_max", None)),
+        omega_c=float(kw.pop("omega_c", 1.0)),
+        rwa=bool(kw.pop("rwa", True)),
+        kappa=float(kw.pop("kappa", 0.0)),
+        gamma=float(kw.pop("gamma", 0.0)),
+        gamma_phi=float(kw.pop("gamma_phi", 0.0)),
+    )
+    kw.setdefault("horizon", 20)
+    kw.setdefault("dt", 0.2)
+    kw.setdefault("action_bound", 0.5)
+    return BatteryCharging(model=model, **kw)  # type: ignore[arg-type]
+
+
+register(
+    "battery/Dicke-v0",
+    _dicke_battery,
+    description=(
+        "Charge N two-level cells from a cavity initially holding n_photons photons (Ferraro "
+        "et al. 2018) by controlling the collective coupling g(t) in the Tavis-Cummings "
+        "(rwa=True) or Dicke (rwa=False) Hamiltonian, within the permutation-symmetric "
+        "subspace. Reward per step = gain of stored energy <H_B> (or ergotropy); return = "
+        "Q_final - Q_initial, Q <= N omega0. Constant g charges in a time ~ N^(-1/2) "
+        "(collective advantage); switching g to 0 holds the charge."
+    ),
+    model="qenvs.models.DickeBattery",
+    references=(
+        "Ferraro, Campisi, Andolina, Pellegrini, Polini, Phys. Rev. Lett. 120, 117702 (2018)",
+        "Tavis & Cummings, Phys. Rev. 170, 379 (1968)",
+        "Dicke, Phys. Rev. 93, 99 (1954)",
+        "Andolina, Keck, Mari, Giovannetti, Polini, Phys. Rev. B 99, 205437 (2019)",
+        "Erdman, Andolina, Giovannetti, Noé, arXiv:2212.12397 (2022)",
+        "Shammah, Ahmed, Lambert, De Liberato, Nori, Phys. Rev. A 98, 063815 (2018)",
+    ),
+    kwargs={
+        "n_cells": "int, number of two-level cells N (default 3)",
+        "n_photons": "int, initial cavity Fock number (default n_cells)",
+        "n_max": (
+            "int, Fock cutoff (default n_photons if rwa else n_photons + 4; check convergence "
+            "for rwa=False)"
+        ),
+        "omega_c": "float, cavity frequency in units of omega0 = 1 (default 1.0, resonant)",
+        "rwa": "bool, True = Tavis-Cummings, False = full Dicke with counter-rotating terms",
+        "kappa": "float, cavity photon loss rate; >0 switches to Lindblad dynamics (default 0)",
+        "gamma": "float, collective emission rate sqrt(gamma) J- (default 0)",
+        "gamma_phi": "float, collective dephasing rate sqrt(gamma_phi) Jz (default 0)",
+        "horizon": "int, control steps per episode (default 20)",
+        "dt": "float, control period in units of 1/omega0 (default 0.2)",
+        "action_bound": "float, |g| <= action_bound = g_max (default 0.5)",
+        "reward": "'energy' or 'ergotropy' (default 'energy')",
+    },
+)
