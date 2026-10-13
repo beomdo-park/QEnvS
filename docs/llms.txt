@@ -1,0 +1,23 @@
+# QEnvS
+
+> Physically validated quantum control environments (quantum batteries, qubit state transfer, open systems) for reinforcement learning and optimal control. Python package `qenvs`, built on JAX + dynamiqs. Apache-2.0.
+
+Every model ships with analytic validation checks that run as tests and are printed by `qenvs validate`. Environments are functional (jit/vmap/grad) with a Gymnasium adapter.
+
+## Docs
+
+- [Overview and quickstart](https://beomdo-park.github.io/qenvs/): install, functional API, gradient-based control, Gymnasium usage
+- [Roadmap](https://beomdo-park.github.io/qenvs/roadmap/): planned models and validation gates
+- [API: models](https://beomdo-park.github.io/qenvs/api/models/): `Model`, `TwoLevel`, observables (energy, ergotropy, fidelity)
+- [API: environments](https://beomdo-park.github.io/qenvs/api/envs/): `Environment`, `EnvState`, `TimeStep`, `StateTransfer`, registry
+- [API: wrappers](https://beomdo-park.github.io/qenvs/api/wrappers/): `GymnasiumEnv`
+
+## Agent interface
+
+- CLI: `qenvs list --json`, `qenvs info <task> --json`, `qenvs run <task> --policy pi-pulse --json`, `qenvs validate --json`, `qenvs doctor --json`
+- [AGENTS.md](https://github.com/beomdo-park/qenvs/blob/main/AGENTS.md): repository conventions for coding agents
+
+## Source
+
+- [GitHub](https://github.com/beomdo-park/qenvs)
+- [PyPI](https://pypi.org/project/qenvs/)

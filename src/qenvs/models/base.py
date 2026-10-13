@@ -20,6 +20,8 @@ from dynamiqs import QArray, TimeQArray
 from dynamiqs.method import Method, Tsit5
 from jax import Array
 
+DEFAULT_METHOD: Method = Tsit5()
+
 
 class Model(eqx.Module):
     """Abstract physical model.
@@ -89,18 +91,28 @@ class Model(eqx.Module):
         hamiltonian: QArray | TimeQArray,
         duration: float | Array,
         *,
-        method: Method = Tsit5(),
+        method: Method | None = None,
     ) -> QArray:
         """Evolve ``state`` under ``hamiltonian`` for ``duration`` and return the final state.
 
         Uses the Schrodinger equation for closed models and the Lindblad master
         equation otherwise. Density matrices are always accepted.
+
+        The ODE ``method`` (adaptive Tsit5 by default) takes as many internal
+        integration steps as needed inside ``duration``: the agent's control
+        period and the integrator's time step are independent. For piecewise
+        constant Hamiltonians ``dynamiqs.method.Expm()`` is exact.
         """
         tsave = jnp.asarray([0.0, duration])
+        method = DEFAULT_METHOD if method is None else method
         if self.is_open:
+            # dynamiqs 0.3.6: mesolve(..., method=Expm(), save_states=False).final_state
+            # returns the *vectorised* density matrix (n^2, 1); states[-1] is always (n, n).
             res = dq.mesolve(
-                hamiltonian, self.jump_ops(), state, tsave, method=method, save_states=False
+                hamiltonian, self.jump_ops(), state, tsave, method=method, progress_meter=False
             )
-        else:
-            res = dq.sesolve(hamiltonian, state, tsave, method=method, save_states=False)
+            return res.states[-1]
+        res = dq.sesolve(
+            hamiltonian, state, tsave, method=method, save_states=False, progress_meter=False
+        )
         return res.final_state

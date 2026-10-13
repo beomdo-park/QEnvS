@@ -6,6 +6,7 @@ import dynamiqs as dq
 import jax
 import jax.numpy as jnp
 from dynamiqs import QArray
+from dynamiqs.method import Method, Tsit5
 from jax import Array
 
 from qenvs.envs.base import Environment, EnvState, TimeStep
@@ -21,12 +22,14 @@ class StateTransfer(Environment):
     the normalised time. The reward is the fidelity *gain* of the step, so the
     undiscounted return equals ``F(final) - F(initial)``.
 
-    Args:
+    Attributes:
         model: physical model.
         target: target state (ket or density matrix).
         horizon: number of control steps.
         dt: duration of each step.
         action_bound: maximum control amplitude.
+        method: dynamiqs ODE method used inside each control interval. The
+            integrator step is independent of ``dt`` (adaptive by default).
     """
 
     model: Model
@@ -34,6 +37,7 @@ class StateTransfer(Environment):
     horizon: int = 20
     dt: float = 0.1
     action_bound: float = 2.0
+    method: Method = Tsit5()
 
     @property
     def action_dim(self) -> int:
@@ -71,9 +75,11 @@ class StateTransfer(Environment):
         return state, ts
 
     def step(self, state: EnvState, action: Array) -> tuple[EnvState, TimeStep]:
-        action = jnp.clip(jnp.asarray(action, dtype=jnp.float32), -self.action_bound, self.action_bound)
+        action = jnp.clip(
+            jnp.asarray(action, dtype=jnp.float32), -self.action_bound, self.action_bound
+        )
         h = self.model.hamiltonian(action)
-        qstate = self.model.evolve(state.qstate, h, self.dt)
+        qstate = self.model.evolve(state.qstate, h, self.dt, method=self.method)
         f_prev = fidelity(state.qstate, self.target)
         f_new = fidelity(qstate, self.target)
         t = state.t + self.dt

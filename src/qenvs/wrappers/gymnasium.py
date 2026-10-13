@@ -42,7 +42,10 @@ class GymnasiumEnv(gym.Env):
         self._step = eqx.filter_jit(env.step)
 
     def reset(
-        self, *, seed: int | None = None, options: dict[str, Any] | None = None
+        self,
+        *,
+        seed: int | None = None,
+        options: dict[str, Any] | None = None,  # noqa: ARG002 (gymnasium signature)
     ) -> tuple[np.ndarray, dict[str, Any]]:
         super().reset(seed=seed)
         if seed is not None:

@@ -28,7 +28,7 @@ from qenvs.models.base import Model
 class TwoLevel(Model):
     """Driven qubit with optional T1/T_phi dissipation.
 
-    Args:
+    Attributes:
         omega0: qubit (battery) frequency, sets the energy unit of ``H_B``.
         detuning: drive-qubit detuning ``Delta`` in the rotating frame.
         gamma1: relaxation rate (0 = none).
@@ -55,7 +55,10 @@ class TwoLevel(Model):
     def jump_ops(self) -> list[QArray]:
         ops: list[QArray] = []
         if self.gamma1 > 0:
-            ops.append(jnp.sqrt(self.gamma1) * dq.sigmam())
+            # explicit |0><1| (index 1 = excited); dynamiqs' sigmam() follows the
+            # QuTiP spin convention where index 0 is "up", which is the opposite.
+            lower = dq.basis(2, 0) @ dq.basis(2, 1).dag()
+            ops.append(jnp.sqrt(self.gamma1) * lower)
         if self.gamma_phi > 0:
             ops.append(jnp.sqrt(self.gamma_phi / 2.0) * dq.sigmaz())
         return ops

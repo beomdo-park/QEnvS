@@ -1,6 +1,6 @@
 """QEnvS: physically validated quantum control environments for RL and optimal control."""
 
-from qenvs import envs, models, observables, wrappers
+from qenvs import envs, models, observables, validation
 from qenvs.envs.base import Environment, EnvState, TimeStep
 from qenvs.registry import make, register, registry
 
@@ -10,8 +10,8 @@ except ImportError:  # pragma: no cover - editable install without build hook
     __version__ = "0.0.0+unknown"
 
 __all__ = [
-    "Environment",
     "EnvState",
+    "Environment",
     "TimeStep",
     "__version__",
     "envs",
@@ -20,5 +20,5 @@ __all__ = [
     "observables",
     "register",
     "registry",
-    "wrappers",
+    "validation",
 ]

@@ -26,6 +26,9 @@ dependencies = [
     "numpy",
 ]
 
+[project.scripts]
+qenvs = "qenvs.cli:main"
+
 [project.optional-dependencies]
 gym = ["gymnasium>=1.0"]
 dev = [
@@ -77,7 +80,7 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 select = ["F", "E", "W", "I", "UP", "B", "C4", "SIM", "RET", "ARG", "PTH", "NPY", "RUF", "D"]
-ignore = ["D100", "D104", "D105", "D107", "D203", "D213", "E741", "RUF012"]
+ignore = ["D100", "D102", "D104", "D105", "D107", "D203", "D213", "E741", "RUF012"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
@@ -90,7 +93,7 @@ convention = "google"
 
 [tool.codespell]
 skip = ".git,*.ipynb,uv.lock,site"
-ignore-words-list = "ket,braket"
+ignore-words-list = "ket,braket,sme"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
