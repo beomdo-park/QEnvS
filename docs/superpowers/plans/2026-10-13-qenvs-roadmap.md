@@ -20,8 +20,7 @@ validation gate; do not start a phase before the previous gate is green in CI.
    `power` (gain per dt); terminal bonus optional.
 3. Tests: steady-state population `n_th/(2 n_th + 1)`; ergotropy monotone under
    resonant drive without loss; QuTiP `mesolve` cross-check on a random pulse.
-4. Port the author's single-qubit charging scripts (`250809_SingleQubit_QB_*`)
-   as an example notebook.
+4. Port the author's earlier single-qubit charging scripts as an example notebook.
 
 ## Phase 2: `battery/Dicke-v0`
 
@@ -31,7 +30,7 @@ validation gate; do not start a phase before the previous gate is green in CI.
    re-implemented in JAX; cite Shammah et al. 2018, BSD-3 via QuTiP).
 2. Tests: closed N=1 reduces to Jaynes-Cummings Rabi; charging power scaling
    with N matches Ferraro et al. 2018 regime; PIQS cross-check for N=4, open.
-3. Port `250730_Dicke_TLS_Charging_optimization` SAC env as a task variant.
+3. Port the author's earlier Dicke charging SAC environment as a task variant.
 
 ## Phase 3: `transfer/LambdaSTIRAP-v0`
 

@@ -8,8 +8,8 @@ machines) exposed through a uniform environment interface, so that setting up
 an RL / optimal-control study costs minutes instead of weeks, and so that the
 underlying physics is reused rather than re-derived per paper.
 
-Primary user: the author's own Dicke quantum-battery optimisation work (K-Quantum
-Hub / IonQ proposal). Secondary users: RL-for-quantum-control researchers who
+Primary user: the author's own quantum-battery charging-control research.
+Secondary users: RL-for-quantum-control researchers who
 currently hand-write JAX environments per paper (e.g. ICML 2025 RL4qcWpc).
 
 Success criteria for v0.1:
