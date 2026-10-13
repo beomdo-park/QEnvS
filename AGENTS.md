@@ -7,7 +7,7 @@ Read this before changing anything.
 
 ```bash
 uv sync --extra dev                 # install (Python 3.11/3.12)
-uv run pytest -n auto               # tests (physics checks live in src/qenvs/validation.py)
+uv run pytest -n auto               # tests (physics checks live in src/qenvs/validation/<model>.py)
 uv run ruff check . && uv run ruff format .
 uv run qenvs validate               # prints per-check error vs tolerance + versions
 uv run mkdocs build --strict        # docs (needs --extra docs)
