@@ -63,12 +63,12 @@ Decisions:
 | Need | Choice | Cost | Alternative rejected |
 |---|---|---|---|
 | Package index | PyPI, Trusted Publishing (OIDC) | free, no tokens | API tokens (rotation burden) |
-| CI | GitHub Actions (public repo: unlimited) | free | — |
+| CI | GitHub Actions (public repo: unlimited) | free | none |
 | Docs | mkdocs-material on GitHub Pages | free | ReadTheDocs (also free, but second service) |
-| Versioning | hatch-vcs from git tags | — | manual version bumps |
-| DOI | Zenodo GitHub integration | free | — |
-| Coverage | none in v0 | — | Codecov (free for OSS, add later if useful) |
-| Deps bot | Dependabot, monthly, actions only | free | — |
+| Versioning | hatch-vcs from git tags | none | manual version bumps |
+| DOI | Zenodo GitHub integration | free | none |
+| Coverage | none in v0 | none | Codecov (free for OSS, add later if useful) |
+| Deps bot | Dependabot, monthly, actions only | free | none |
 
 ## Licensing
 

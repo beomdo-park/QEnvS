@@ -23,6 +23,9 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run codespell src tests docs README.md
+      - name: forbid typographic separators (middle dot, en/em dash)
+        run: |
+          ! grep -rnP '[\x{00B7}\x{2013}\x{2014}]' src tests docs examples README.md AGENTS.md CONTRIBUTING.md
 
   test:
     runs-on: ubuntu-latest
