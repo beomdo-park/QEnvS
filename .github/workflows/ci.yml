@@ -30,6 +30,9 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.11", "3.12"]
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
+      JAX_PLATFORMS: cpu
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,10 +41,8 @@ jobs:
         with:
           enable-cache: true
       - run: uv python install ${{ matrix.python-version }}
-      - run: uv sync --extra dev --python ${{ matrix.python-version }}
-      - run: uv run pytest -n auto
-        env:
-          JAX_PLATFORMS: cpu
+      - run: uv sync --extra dev
+      - run: uv run --extra dev pytest -n auto
 
   build:
     runs-on: ubuntu-latest

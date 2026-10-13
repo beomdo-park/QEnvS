@@ -7,8 +7,8 @@ authors:
     given-names: Beomdo
     affiliation: Hanbat National University
 license: Apache-2.0
-repository-code: https://github.com/beomdo-park/qenvs
-url: https://beomdo-park.github.io/qenvs
+repository-code: https://github.com/beomdo-park/QEnvS
+url: https://beomdo-park.github.io/QEnvS
 keywords:
   - quantum control
   - reinforcement learning

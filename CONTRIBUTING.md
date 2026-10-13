@@ -1,7 +1,7 @@
 # Contributing
 
 ```bash
-git clone https://github.com/beomdo-park/qenvs && cd qenvs
+git clone https://github.com/beomdo-park/QEnvS && cd qenvs
 uv sync --extra dev          # or: pip install -e '.[dev]'
 uv run pre-commit install
 uv run pytest -n auto

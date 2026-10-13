@@ -48,10 +48,10 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/beomdo-park/qenvs"
-Documentation = "https://beomdo-park.github.io/qenvs"
-Repository = "https://github.com/beomdo-park/qenvs"
-Issues = "https://github.com/beomdo-park/qenvs/issues"
+Homepage = "https://github.com/beomdo-park/QEnvS"
+Documentation = "https://beomdo-park.github.io/QEnvS"
+Repository = "https://github.com/beomdo-park/QEnvS"
+Issues = "https://github.com/beomdo-park/QEnvS/issues"
 
 [build-system]
 requires = ["hatchling>=1.25", "hatch-vcs"]

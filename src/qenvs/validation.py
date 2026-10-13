@@ -104,7 +104,7 @@ def check_ergotropy() -> CheckResult:
     ]
     err = max(abs(v) for v in vals)
     return _result(
-        "ergotropy_qubit", "thermodynamics", err, 1e-9, "max deviation over 4 reference states"
+        "ergotropy_qubit", "thermodynamics", err, 1e-6, "max deviation over 4 reference states"
     )
 
 

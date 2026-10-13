@@ -4,8 +4,8 @@
 
 *Reusable physics. Reproducible control.*
 
-[![ci](https://github.com/beomdo-park/qenvs/actions/workflows/ci.yml/badge.svg)](https://github.com/beomdo-park/qenvs/actions/workflows/ci.yml)
-[![docs](https://github.com/beomdo-park/qenvs/actions/workflows/docs.yml/badge.svg)](https://beomdo-park.github.io/qenvs)
+[![ci](https://github.com/beomdo-park/QEnvS/actions/workflows/ci.yml/badge.svg)](https://github.com/beomdo-park/QEnvS/actions/workflows/ci.yml)
+[![docs](https://github.com/beomdo-park/QEnvS/actions/workflows/docs.yml/badge.svg)](https://beomdo-park.github.io/QEnvS)
 [![PyPI](https://img.shields.io/pypi/v/qenvs)](https://pypi.org/project/qenvs/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
@@ -81,7 +81,7 @@ qenvs doctor                                    # install / backend / optional e
 ```
 
 Repository conventions for coding agents are in [AGENTS.md](AGENTS.md); an LLM
-index of the docs is at [`/llms.txt`](https://beomdo-park.github.io/qenvs/llms.txt).
+index of the docs is at [`/llms.txt`](https://beomdo-park.github.io/QEnvS/llms.txt).
 
 ## Models and tasks
 

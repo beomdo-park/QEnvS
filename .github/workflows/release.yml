@@ -1,6 +1,6 @@
 # Publish to PyPI via Trusted Publishing (OIDC): no API tokens to store or rotate.
 # One-time setup on PyPI (account sidebar -> Publishing -> GitHub):
-#   project = qenvs, owner = beomdo-park, repo = qenvs,
+#   project = qenvs, owner = beomdo-park, repo = QEnvS,
 #   workflow = release.yml, environment = pypi
 # Then: git tag v0.1.0 && git push --tags
 name: release

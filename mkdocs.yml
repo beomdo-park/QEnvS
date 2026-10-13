@@ -1,8 +1,8 @@
 site_name: QEnvS
 site_description: Physically validated quantum control environments for RL and optimal control.
-site_url: https://beomdo-park.github.io/qenvs
-repo_url: https://github.com/beomdo-park/qenvs
-repo_name: beomdo-park/qenvs
+site_url: https://beomdo-park.github.io/QEnvS
+repo_url: https://github.com/beomdo-park/QEnvS
+repo_name: beomdo-park/QEnvS
 
 theme:
   name: material

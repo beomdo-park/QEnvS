@@ -24,7 +24,7 @@ qenvs doctor --json                           # versions, backend, optional extr
 ```
 
 With `--json`, failures are `{"error": {"code": "unknown_task" | "invalid_argument", "message": ...}}`
-and exit code 1. Docs index for LLMs: https://beomdo-park.github.io/qenvs/llms.txt
+and exit code 1. Docs index for LLMs: https://beomdo-park.github.io/QEnvS/llms.txt
 
 ## Layout
 

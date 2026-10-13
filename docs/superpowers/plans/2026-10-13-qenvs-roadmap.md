@@ -62,7 +62,7 @@ validation gate; do not start a phase before the previous gate is green in CI.
 ## Owner one-time setup (cannot be automated)
 
 * PyPI: account -> Publishing -> add pending publisher
-  (project `qenvs`, owner `beomdo-park`, repo `qenvs`, workflow `release.yml`,
+  (project `qenvs`, owner `beomdo-park`, repo `QEnvS`, workflow `release.yml`,
   environment `pypi`).
 * GitHub: Settings -> Environments -> create `pypi` (optionally require reviewer).
-* Zenodo: log in with GitHub, toggle `beomdo-park/qenvs`.
+* Zenodo: log in with GitHub, toggle `beomdo-park/QEnvS`.
