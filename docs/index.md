@@ -1,4 +1,4 @@
-# QEnvS
+<p align="center"><img src="assets/qenvs_logo_1200.png" alt="QEnvS" width="440"></p>
 
 **Physically validated quantum control environments for reinforcement learning and optimal control.**
 

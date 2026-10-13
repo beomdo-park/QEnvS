@@ -1,4 +1,6 @@
-# QEnvS
+<p align="center">
+  <img src="docs/assets/qenvs_logo_1200.png" alt="QEnvS" width="480">
+</p>
 
 **Physically validated quantum control environments for reinforcement learning and optimal control.**
 
@@ -82,6 +84,22 @@ qenvs doctor                                    # install / backend / optional e
 
 Repository conventions for coding agents are in [AGENTS.md](AGENTS.md); an LLM
 index of the docs is at [`/llms.txt`](https://beomdo-park.github.io/QEnvS/llms.txt).
+
+## Architecture
+
+```mermaid
+flowchart LR
+    M["Model<br/>drift, controls, jump ops,<br/>initial state, observables"] --> E["Environment<br/>reset / step / rollout<br/>jit, vmap, grad"]
+    E --> G["GymnasiumEnv<br/>SB3, CleanRL"]
+    E --> R["registry.make()<br/>namespace/Name-vN"]
+    M --> V["validation.CHECKS<br/>analytic, constraints, numerics"]
+    V --> C["qenvs validate / tests"]
+    E --> O["GRAPE via jax.grad<br/>PPO via vmap"]
+```
+
+The physics lives only in `Model`; everything above it is an adapter. A model is
+merged only with checks in `qenvs.validation` that compare it against closed-form
+results, physical constraints and an independent simulator (QuTiP).
 
 ## Models and tasks
 

@@ -6,6 +6,8 @@ repo_name: beomdo-park/QEnvS
 
 theme:
   name: material
+  logo: assets/qenvs_mark.png
+  favicon: assets/favicon.png
   features: [navigation.sections, content.code.copy]
   palette:
     - scheme: default
@@ -28,7 +30,11 @@ markdown_extensions:
   - admonition
   - pymdownx.arithmatex: { generic: true }
   - pymdownx.highlight
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 extra_javascript:
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
