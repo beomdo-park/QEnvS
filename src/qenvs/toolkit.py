@@ -10,7 +10,8 @@ import jax
 import jax.numpy as jnp
 
 from qenvs.registry import make, registry
-from qenvs.validation import environment_info, run_all
+from qenvs.validation import run_all
+from qenvs.validation.core import environment_info
 
 UNITS = {
     "energy": "units of omega0 (qubit frequency); omega0 = 1 by default",

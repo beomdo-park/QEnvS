@@ -31,14 +31,15 @@ and exit code 1. Docs index for LLMs: https://beomdo-park.github.io/QEnvS/llms.t
 - `src/qenvs/models/` physics only (`Model`: drift, controls, jump_ops, initial_state, observables)
 - `src/qenvs/envs/` functional envs (`reset(key)`, `step(state, action)` -> `(EnvState, TimeStep)`)
 - `src/qenvs/wrappers/` Gymnasium adapter
-- `src/qenvs/registry.py` task ids `namespace/Name-vN` with metadata
-- `src/qenvs/validation.py` analytic / constraint / numerics checks (single source for tests + CLI)
+- `src/qenvs/registry.py` core registry; `src/qenvs/tasks/<model>.py` registers task ids `namespace/Name-vN` with metadata
+- `src/qenvs/validation/<model>.py` analytic / constraint / numerics checks exposing `CHECKS` (single source for tests + CLI); wired in `validation/__init__.py` `MODULES`
 - `src/qenvs/toolkit.py` plain-dict API behind `cli.py` (an MCP adapter can sit on it later)
 
 ## Rules
 
-1. A new model ships with validation checks in `validation.py` (closed-form result, physical
-   constraints, solver convergence) and a registry entry with references. No checks, no merge.
+1. A new model ships with `validation/<model>.py` checks (closed-form result, physical constraints,
+   solver convergence, QuTiP cross-check) and a `tasks/<model>.py` registry entry with references.
+   No checks, no merge.
 2. Never change a released task's reward/observation/defaults; bump `-vN`.
 3. Core deps stay `jax`, `dynamiqs`, `equinox`, `numpy`. Anything else is an optional extra.
 4. Index 1 is the excited state. Do not use `dq.sigmam()`/`sigmap()` for relaxation (QuTiP spin
