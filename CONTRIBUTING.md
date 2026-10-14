@@ -34,5 +34,5 @@ Bump the suffix (`-v0` -> `-v1`) whenever a change could alter learning results
 
 ## Releases
 
-Tag `vX.Y.Z` on `main`; the `release.yml` workflow builds and publishes to PyPI
-via Trusted Publishing and creates a GitHub release.
+See [RELEASING.md](RELEASING.md): minor releases go through a release candidate, an API
+gate and a behaviour snapshot of released tasks.

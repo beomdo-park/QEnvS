@@ -1991,6 +1991,7 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "codespell" },
+    { name = "griffelib" },
     { name = "gymnasium" },
     { name = "optax" },
     { name = "pre-commit" },
@@ -2014,6 +2015,7 @@ requires-dist = [
     { name = "codespell", marker = "extra == 'dev'", specifier = ">=2.3" },
     { name = "dynamiqs", specifier = ">=0.3.6" },
     { name = "equinox", specifier = ">=0.11.10" },
+    { name = "griffelib", marker = "extra == 'dev'", specifier = ">=2.3" },
     { name = "gymnasium", marker = "extra == 'dev'", specifier = ">=1.0" },
     { name = "gymnasium", marker = "extra == 'gym'", specifier = ">=1.0" },
     { name = "jax", specifier = ">=0.4.36,!=0.7.0,!=0.7.1,<0.11" },

@@ -42,6 +42,7 @@ dev = [
     "pre-commit>=3.5",
     "qutip>=5.1",        # reference implementation for validation tests (5.0 needs setuptools at runtime)
     "optax>=0.2.3",      # gradient baselines in examples/
+    "griffelib>=2.3",    # API stability gate (tests/test_api_stability.py)
 ]
 docs = [
     "mkdocs-material",

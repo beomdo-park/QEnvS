@@ -22,6 +22,24 @@ from qenvs.validation.core import environment_info
 POLICIES = ("reference", "pi-pulse", "zero", "random")
 
 
+def __getattr__(name: str) -> object:
+    """Deprecated module attributes (removed in 0.2.0 without notice, restored in 0.3.0)."""
+    if name == "UNITS":
+        import warnings
+
+        from qenvs.registry import DIMENSIONLESS_UNITS
+
+        warnings.warn(
+            "qenvs.toolkit.UNITS is deprecated and will be removed in 0.4; units are per task: "
+            "use qenvs.registry[task_id].units (or the 'units' key of qenvs info --json)",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return dict(DIMENSIONLESS_UNITS)
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)
+
+
 def _param(v: object) -> object:
     """JSON-friendly model parameter (ints and bools keep their type)."""
     if isinstance(v, bool | int | float) or v is None:

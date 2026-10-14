@@ -1,0 +1,153 @@
+{
+  "battery/Dicke-v0": {
+    "action_bound": 0.5,
+    "action_dim": 1,
+    "dt": 0.2,
+    "fixed_pulse_info": {
+      "energy": 0.07805790432482487,
+      "ergotropy": 0.0,
+      "excitation": 2.999995766592815,
+      "n_photons": 2.92193786226799,
+      "power": 0.019514476081206215,
+      "purity": 0.999997177730535,
+      "top_fock": 0.9233025465091136
+    },
+    "fixed_pulse_return": 0.07805790432482487,
+    "horizon": 20,
+    "info_keys": [
+      "energy",
+      "ergotropy",
+      "excitation",
+      "n_photons",
+      "power",
+      "purity",
+      "top_fock"
+    ],
+    "observation_dim": 33,
+    "open_system": false,
+    "zero_return": 0.0
+  },
+  "battery/TwoLevel-v0": {
+    "action_bound": 2.0,
+    "action_dim": 1,
+    "dt": 0.1,
+    "fixed_pulse_info": {
+      "energy": 0.008775100548043,
+      "ergotropy": 0.008775100548043,
+      "p1": 0.008775100548043,
+      "power": 0.0043875502740214995,
+      "purity": 0.9999999999996293
+    },
+    "fixed_pulse_return": 0.008775100548043004,
+    "horizon": 20,
+    "info_keys": [
+      "energy",
+      "ergotropy",
+      "p1",
+      "power",
+      "purity"
+    ],
+    "observation_dim": 5,
+    "open_system": false,
+    "reference_return": 0.9999999999920284,
+    "zero_return": 0.0
+  },
+  "qubit/StateTransfer-v0": {
+    "action_bound": 2.0,
+    "action_dim": 1,
+    "dt": 0.1,
+    "fixed_pulse_info": {
+      "energy": 0.008775100548043,
+      "fidelity": 0.008775100548043,
+      "p1": 0.008775100548043
+    },
+    "fixed_pulse_return": 0.008775100548043004,
+    "horizon": 20,
+    "info_keys": [
+      "energy",
+      "fidelity",
+      "p1"
+    ],
+    "observation_dim": 5,
+    "open_system": false,
+    "reference_return": 0.9999999999920284,
+    "zero_return": 0.0
+  },
+  "transfer/LambdaSTIRAP-v0": {
+    "action_bound": 1.0,
+    "action_dim": 2,
+    "dt": 0.2,
+    "fixed_pulse_info": {
+      "fidelity": 0.025665247880332493,
+      "p1": 0.9698950085376538,
+      "p2": 0.004439743572309279,
+      "p3": 0.025665247880332493
+    },
+    "fixed_pulse_return": 0.025665247880332493,
+    "horizon": 100,
+    "info_keys": [
+      "fidelity",
+      "p1",
+      "p2",
+      "p3"
+    ],
+    "observation_dim": 7,
+    "open_system": false,
+    "reference_return": 0.9964391958818124,
+    "zero_return": 0.0
+  },
+  "transmon/SXGate-v0": {
+    "action_bound": 0.3141592653589793,
+    "action_dim": 2,
+    "dt": 2.0,
+    "fixed_pulse_info": {
+      "fidelity": 0.5730402154282782,
+      "leakage": 0.0089716214714981,
+      "p0": 0.9894233832355286,
+      "p1": 0.010452425540774317,
+      "p2": 0.00012419122369761182,
+      "state_leakage": 0.00012419122369761182
+    },
+    "fixed_pulse_return": -0.09362645123838848,
+    "horizon": 16,
+    "info_keys": [
+      "fidelity",
+      "leakage",
+      "p0",
+      "p1",
+      "p2",
+      "state_leakage"
+    ],
+    "observation_dim": 19,
+    "open_system": false,
+    "reference_return": 0.33333150975982834,
+    "zero_return": -2.1094237467877966e-15
+  },
+  "transmon/XGate-v0": {
+    "action_bound": 0.3141592653589793,
+    "action_dim": 2,
+    "dt": 2.0,
+    "fixed_pulse_info": {
+      "fidelity": 0.33141594154380216,
+      "leakage": 0.0089716214714981,
+      "p0": 0.9894233832355286,
+      "p1": 0.010452425540774317,
+      "p2": 0.00012419122369761182,
+      "state_leakage": 0.00012419122369761182
+    },
+    "fixed_pulse_return": -0.0019173917895311783,
+    "horizon": 16,
+    "info_keys": [
+      "fidelity",
+      "leakage",
+      "p0",
+      "p1",
+      "p2",
+      "state_leakage"
+    ],
+    "observation_dim": 19,
+    "open_system": false,
+    "reference_return": 0.6666618159090411,
+    "zero_return": -1.1842378929334997e-15
+  }
+}

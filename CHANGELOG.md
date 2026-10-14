@@ -3,6 +3,20 @@
 All notable changes to QEnvS are listed here. Task ids carry their own version
 suffix (`-vN`); a released task is never changed in place.
 
+## [Unreleased]
+
+### Added
+
+- Release safety rails: an API gate (`tests/test_api_stability.py`, griffe diff against the
+  last release tag), a behaviour snapshot of every released task
+  (`tests/golden/tasks.json`), and `RELEASING.md` with a release-candidate process.
+
+### Deprecated
+
+- `qenvs.toolkit.UNITS`, removed in 0.2.0 without a deprecation period, is restored and
+  emits a `DeprecationWarning`; it will be removed in 0.4. Units are per task: use
+  `qenvs.registry[task_id].units`.
+
 ## [0.2.0] - 2026-10-15
 
 ### Added
