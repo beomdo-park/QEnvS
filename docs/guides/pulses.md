@@ -36,9 +36,7 @@ env = qenvs.make(task, **kw)
 state, _ = env.rollout(np.asarray(g["best_pulse"]))
 fidelity = float(env.fidelity(state.qstate))  # 1 - F about 6e-16
 
-pulse = Pulse.from_actions(
-    g["best_pulse"], env.dt, task_id=task, task_kwargs=kw, fidelity=fidelity
-)
+pulse = Pulse.from_actions(g["best_pulse"], env.dt, task_id=task, task_kwargs=kw, fidelity=fidelity)
 hw = pulse.resample(2 / 9)  # 20 x 9 = 180 samples of 2/9 ns, exact (sample-and-hold)
 awg = hw.pad(multiple=16)  # 192 samples; metadata['unpadded_n_samples'] = 180
 
@@ -148,8 +146,12 @@ m = Transmon.from_properties(
 
 # (b) SI values shaped like Qiskit's BackendProperties.qubit_property(q): seconds and hertz,
 #     each a bare number or a (value, timestamp) tuple
-props = {"T1": (120e-6, stamp), "T2": (85e-6, stamp),
-         "frequency": (4.9e9, stamp), "anharmonicity": (-0.33e9, stamp)}
+props = {
+    "T1": (120e-6, stamp),
+    "T2": (85e-6, stamp),
+    "frequency": (4.9e9, stamp),
+    "anharmonicity": (-0.33e9, stamp),
+}
 m = Transmon.from_properties(props, levels=3, detuning_ghz=0.0)
 # Transmon(anharmonicity_ghz=-0.33, t1_us=120.0, t2_us=85.0)
 
@@ -158,7 +160,9 @@ freq_ghz = parse_properties(props).frequency_ghz  # 4.9: not part of the model, 
 # a task from the result: the registered factories take kwargs, so pass the fields on
 env = qenvs.make(
     "transmon/XGate-v0",
-    anharmonicity_ghz=m.anharmonicity_ghz, t1_us=m.t1_us, t2_us=m.t2_us,
+    anharmonicity_ghz=m.anharmonicity_ghz,
+    t1_us=m.t1_us,
+    t2_us=m.t2_us,
 )
 ```
 

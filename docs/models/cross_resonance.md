@@ -28,8 +28,9 @@ actions = reference_actions(env)  # calibrated flat-top CR + cancellation tone, 
 state, rewards = env.rollout(actions)  # state.qstate = 9 x 9 propagator (common frame)
 print(env.fidelity(state.qstate), env.leakage(state.qstate))  # about 0.98432, 1.3e-4
 
-noisy = qenvs.make("transmon/CRGate-v0", t1_c_us=100.0, t2_c_us=100.0,
-                   t1_t_us=100.0, t2_t_us=100.0)  # 81 x 81 superoperator
+noisy = qenvs.make(
+    "transmon/CRGate-v0", t1_c_us=100.0, t2_c_us=100.0, t1_t_us=100.0, t2_t_us=100.0
+)  # 81 x 81 superoperator
 ```
 
 ```bash

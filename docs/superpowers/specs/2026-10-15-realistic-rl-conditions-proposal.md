@@ -114,8 +114,8 @@ renv = ParameterRandomization(
         # 지지집합 (-inf, 0]: Normal은 생성 시 오류, 절단 분포를 씀
         "anharmonicity_ghz": TruncatedNormal(std=0.005, low=-0.02, high=0.02, unit="GHz"),
     },
-    strength=1.0,      # 설정 폭(std, half_width)에 곱하는 배율
-    oracle=False,      # True: 표본 매개변수를 관측에 붙임(oracle 설정)
+    strength=1.0,  # 설정 폭(std, half_width)에 곱하는 배율
+    oracle=False,  # True: 표본 매개변수를 관측에 붙임(oracle 설정)
 )
 ```
 
