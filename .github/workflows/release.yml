@@ -36,7 +36,15 @@ jobs:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
+      # Pre-releases (vX.Y.ZaN, bN, rcN) go to PyPI only. A GitHub release would make
+      # Zenodo mint a permanent version DOI for a candidate, so only final tags get one.
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" dist/* --repo "${{ github.repository }}" --generate-notes
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [[ "$TAG" =~ (a|b|rc)[0-9]+$ ]]; then
+            echo "pre-release $TAG: PyPI only, no GitHub release"
+          else
+            gh release create "$TAG" dist/* --repo "${{ github.repository }}" --generate-notes
+          fi

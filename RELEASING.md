@@ -4,6 +4,12 @@ Releases are cut from `main` by pushing a tag; `release.yml` builds, publishes t
 through Trusted Publishing and creates the GitHub release; Zenodo archives it and mints a
 version DOI. Minor releases (0.x.0) go through a release candidate first.
 
+Pre-release tags (`vX.Y.0aN` alpha, `bN` beta, `rcN` release candidate) are published to
+PyPI only: the workflow creates no GitHub release for them, so Zenodo mints no DOI for a
+candidate. An alpha may be cut before the feature freeze to test packaging and a fresh
+install of the features that are already done; features can still follow an alpha, not an
+rc.
+
 ## 1. Feature freeze
 
 - [ ] Every new model has validation checks wired into `validation.MODULES`, a model page
