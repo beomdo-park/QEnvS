@@ -2,7 +2,7 @@
 
 QEnvS models are accepted only after adversarial review: independent reviewers try to
 refute the physics, re-derive the reference formulas, and mutate the code to see whether
-the tests notice. This page records what those reviews found (four rounds so far), the counterexample that
+the tests notice. This page records what those reviews found (five rounds so far), the counterexample that
 showed each problem, the fix, and the check that now guards against it. Every number below
 was reproduced independently of the code under review (numpy or scipy, or QuTiP 5).
 
@@ -64,6 +64,24 @@ of the rest of the repository followed.
 | Custom models | A tolerance of the battery-consistency check was 10x tighter than the norm check it stands for, so valid models failed on long rollouts; and 13 of 32 mutants of the generic checks survived. | Built-in `TwoLevel()` at horizon 400 failed while every other check passed. | Rollout tolerances scale with the integrated time; near-threshold tests kill all 24 mutants defined in the fix. The self-consistency QuTiP check is now named `qutip_solver_cross_check` and states that it does not verify the physics; `--reference` compares against an independent model. |
 | Gymnasium | The wrappers returned read-only numpy views of jax arrays. | `gymnasium.wrappers.vector.ClipReward` failed with "assignment destination is read-only". | Writable copies; tests run the official vector wrappers, also on gymnasium 1.0.0 with jax 0.4.36. |
 | QA sweep | Six test assertions used `.isket` / `.isdm` without calling them, so they were always true. Fixing them exposed one stale expectation: the Lambda task keeps its pure target as a ket for open systems since 0.1.0, and the test still expected a density matrix. | `bool(state.isket)` is `True` for any state. | Assertions call the methods; the expectation is updated. 27 other findings (stale text, wrong file paths, inconsistent numbers, a missing import in a tutorial snippet) were fixed. One finding was rejected after checking: the GitHub releases do carry the PEP 740 attestation files. |
+
+## Round 5 (2026-10-15): 0.3 features (pulses, cross-resonance, local dissipation)
+
+Five reviewers checked the pulse I/O module (one review), the cross-resonance task and the
+Dicke battery with local dissipation (physics review and mutation review each). The pulse
+module was not refuted; both reviews of each new task refuted at first. Fixes were made by
+separate agents, and the lead re-injected each bug behind a major finding into a copy of
+the tree to confirm that the new test now fails.
+
+| area | finding | counterexample | fix and guard |
+|---|---|---|---|
+| Cross-resonance (physics review) | The defaults table called $\Delta = f_c - f_t = -0.1$ GHz "inside the straddling regime $\alpha_c < \Delta < 0$". Straddling is $0 < \Delta < -\alpha_c$, so the default is not straddling. The reference pulse also failed on the straddling side. | First-order ZX coefficient $\lvert\alpha_c/(\Delta(\alpha_c+\Delta))\rvert$: 7.7 per GHz at $-0.1$ GHz against 14.2 per GHz at $+0.1$ GHz. `reference_actions` at `detuning_ghz=0.1` raised "no flat-top width reaches a pi/2 conditional rotation". | Docs corrected; the default stays and the reason is stated. The reference takes the amplitude sign from the first-order $\nu_{ZX}$ (F = 0.9963 at $+0.1$ GHz). Tests `test_first_order_zx_straddling_regime`, `test_reference_positive_detuning_uses_negative_amplitude`. |
+| Cross-resonance (mutation review) | Dropping `subspace` from the open-system leakage of `GateControl` passed every test. | Reference pulse with T1 = T2 = 100 us: leakage 0.124 instead of 1.41e-4. | `test_open_env_leakage_uses_the_computational_subspace`; with the bug re-injected it fails (0.124 > 3e-4). The operand order of `to_qubit_frame` (unitary and superoperator) is pinned by `test_to_qubit_frame_operand_order`. 56 of 60 mutants were caught before the fix. |
+| Cross-resonance (rejected) | A reviewer proposed the cancellation ratio $J/\Delta$ for `levels=2`, on the grounds that the IX term is $-J\Omega/\Delta$ for qubits. | For qubits there is no first-order IX term: $\nu_{IX} = -J\Omega/(\Delta+\alpha_c) \to 0$ as $\alpha_c \to -\infty$. With ratio 0 the IX angle is about 0; with $J/\Delta$ it is large. | `levels=2` uses ratio 0; its reference reaches F = 0.9948 (the three-level ratio gave 0.9644 on two levels). `test_reference_two_level_model`. |
+| Local dissipation (both reviews) | The default Fock cutoff $n_{\max} = n_{\mathrm{photons}} + N$ was documented as exact with local pumping. Pumping is a continuous source: a cell can emit into the cavity and be pumped again, so no finite cutoff is exact. | $N = 1$, $n_{\mathrm{photons}} = 0$, pumping 0.3, $g = 0.5$ for 40 steps: energy 30 to 50 percent off at the default cutoff. | With pumping, `n_max` must be given (error at construction); `info["top_fock"]` is the convergence diagnostic. Convergence is measured separately from the brute-force gate: energy change from $n_{\max}$ to $n_{\max}+4$ is 6.7e-2 (2 to 6), 1.9e-3 (4 to 8), 1.1e-5 (6 to 10). With the guard re-injected, `test_pumping_requires_an_explicit_cutoff` and `test_task_default_contract` fail. The task default has no pumping, where the cutoff is exact. |
+| Local dissipation (mutation review) | The weight of the symmetric sector (`symmetric` in `info`) was untested. | Dropping the last basis index of the $j = N/2$ projector survived all 10 checks. | `brute_force_agreement` compares the symmetric weight with the brute-force state and the projector trace with $(N+1)(n_{\max}+1)$. Caches are read-only. Thin float32 tolerances were widened; the x64 1e-8 brute-force gate is unchanged. |
+| Local dissipation (docs) | The cost was described as polynomial in $N$; only the Liouvillian dimension is. Gradient memory was not documented. | `jit(grad(rollout))` peak memory 8.8 GB at $N = 4$, horizon 20, and 39.5 GB at $N = 5$, horizon 20. | Docs state the $O(4^N)$ state, ergotropy and observation cost and the memory table. The defaults (local emission and dephasing 0.05, no pumping) are pinned by `test_task_default_contract` and described as a benchmark setting, not a standard experimental value. |
+| Pulses | Not refuted; 40 of 43 mutants caught. A time-reversing `to_actions` survived because the resampling gate built both runs from it. | `samples[::-1]` passed all 27 tests. | The gate's reference is built from the raw actions, and `to_actions` is asserted equal to the input. Also fixed: stale `unpadded_n_samples` after resampling, complex input silently truncated, the padding caveat for open systems (1.2e-4 at T1 = 30 us, T2 = 25 us). |
 
 ## How to reproduce
 

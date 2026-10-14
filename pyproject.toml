@@ -103,4 +103,5 @@ ignore-words-list = "ket,braket,sme,commun"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = ["slow: heavy statistical gates (coverage, batch timing); deselect with -m 'not slow'"]
 filterwarnings = ["ignore::DeprecationWarning"]

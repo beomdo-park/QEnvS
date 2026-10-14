@@ -7,6 +7,19 @@ suffix (`-vN`); a released task is never changed in place.
 
 ### Added
 
+- `transmon/CRGate-v0`: two-qubit cross-resonance gate on two coupled multi-level transmons
+  (`qenvs.models.two_transmon.TwoTransmon`: Duffing oscillators with exchange coupling, CR
+  drive on the control and a cancellation drive on the target, optional T1/T2), target
+  ZX(pi/2) on the computational subspace with leakage, and a calibrated flat-top reference
+  pulse. `GateControl` and `qenvs.gates` gain a backward-compatible `subspace` argument.
+- `battery/DickeLocal-v0`: the Dicke battery with local emission, dephasing and pumping on
+  every cell (`qenvs.models.dicke_local.DickeBatteryLocal`, permutation-invariant method of
+  Shammah et al. 2018, all spin sectors), checked against a brute-force 2^N simulation to
+  1e-8. `battery/Dicke-v0` is unchanged.
+- `qenvs.pulses`: an immutable `Pulse` record with units and provenance, lossless JSON and
+  NPZ round trips, exact resampling of piecewise-constant pulses to an AWG sample period,
+  padding, rad/ns and MHz conversion; `Transmon.from_properties` reads T1, T2, frequency
+  and anharmonicity from a plain dict with explicit units or Qiskit-style SI values.
 - Release safety rails: an API gate (`tests/test_api_stability.py`, griffe diff against the
   last release tag), a behaviour snapshot of every released task
   (`tests/golden/tasks.json`), and `RELEASING.md` with a release-candidate process.

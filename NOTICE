@@ -18,8 +18,13 @@ Third-party attributions
   Apache License 2.0, Copyright InstaDeep Ltd.
 
 * QuTiP (https://qutip.org) is used as a reference implementation in the
-  validation test-suite only. QuTiP is distributed under the BSD 3-Clause
+  validation test-suite. QuTiP is distributed under the BSD 3-Clause
   License, Copyright QuTiP developers and contributors.
+
+* The local-dissipator coefficients in src/qenvs/models/dicke_local.py are
+  transcribed from the QuTiP PIQS module (qutip/piqs), BSD 3-Clause License,
+  Copyright QuTiP developers and contributors; method of Shammah et al.,
+  Phys. Rev. A 98, 063815 (2018).
 
 * The vectorised PPO example (examples/ppo_jax.py) follows the training-loop
   structure of PureJaxRL (https://github.com/luchris429/purejaxrl),

@@ -110,9 +110,11 @@ results, physical constraints and an independent simulator (QuTiP).
 | Task id | Model | Dissipation | Validated against | Status |
 |---|---|---|---|---|
 | `transmon/XGate-v0`, `transmon/SXGate-v0` | multi-level transmon (anharmonicity, I/Q drive, RWA) in hardware units (ns, rad/ns; kwargs in GHz and us) | optional T1, T2 (Lindblad; superoperator gate fidelity) | qubit limit, Rabi units, drift spectrum, gate-fidelity closed forms, idle T1/T2 fidelity, harmonic T1 ladder, CPTP superoperator, DRAG coefficient confirmed numerically, QuTiP cross-check, solver convergence | available |
+| `transmon/CRGate-v0` | two coupled transmons (Duffing, exchange coupling J, common frame at the target frequency), CR drive on the control and a cancellation drive on the target; target ZX(pi/2) on the computational subspace | optional T1, T2 on both transmons | J = 0 decoupling, single-transmon limits, static ZZ at second order, first-order ZX rate at weak drive, frame change, CPTP superoperator, leakage-aware subspace fidelity, QuTiP cross-check, solver convergence | available (0.3) |
 | `qubit/StateTransfer-v0` | driven qubit | T1, T_phi (Lindblad) | Rabi formula, pi-pulse, T1/T_phi decay, ergotropy, energy conservation, rho constraints, solver convergence | available |
 | `battery/TwoLevel-v0` | open qubit battery (`QubitBattery`) | thermal bath (T1, n_th), T_phi | thermal steady state and stationary Gibbs state, pi-pulse energy = ergotropy = omega0, charging-power bound, QuTiP cross-check, rho constraints, solver convergence | available |
 | `battery/Dicke-v0` | N cells + cavity (Tavis-Cummings / Dicke, symmetric subspace) | cavity loss, collective emission and dephasing | Jaynes-Cummings Rabi formula, excitation conservation, collective charging scaling (Ferraro 2018), RWA vs counter-rotating terms, QuTiP cross-check, rho constraints, operator algebra | available |
+| `battery/DickeLocal-v0` | N cells + cavity with dissipation on every cell (permutation-invariant method, all spin sectors) | local emission, dephasing and pumping, plus the collective channels of `battery/Dicke-v0` | brute-force 2^N simulation to 1e-8, collective-only limit equals `battery/Dicke-v0`, QuTiP PIQS cross-check, single-cell dissipators, local relaxation and pumping closed forms, rho constraints | available (0.3) |
 | `transfer/LambdaSTIRAP-v0` | three-level Lambda (pump + Stokes) | spontaneous emission from the excited level | dark state, two-level Rabi limit, STIRAP transfer (P3 > 0.99, P2 < 0.05), intuitive-order and diabatic counterexamples, emission robustness, QuTiP cross-check | available |
 
 Each model has a page under `docs/models/` with its Hamiltonian, assumptions and validation table.
@@ -122,7 +124,10 @@ accepts NumPy, JAX, dynamiqs or QuTiP operators, plugs into every environment, a
 `qenvs validate --model my_module:MODEL` runs generic physics and numerics checks on it
 ([guide](https://beomdo-park.github.io/QEnvS/guides/custom-models/)). For RL libraries,
 `GymnasiumEnv(env, normalize_actions=True)` and the batched `GymnasiumVectorEnv`
-([guide](https://beomdo-park.github.io/QEnvS/guides/rl-libraries/)). See the [roadmap](docs/roadmap.md).
+([guide](https://beomdo-park.github.io/QEnvS/guides/rl-libraries/)). For hardware toolchains,
+`qenvs.pulses` stores pulses with units and provenance (JSON, NPZ), resamples them exactly
+to an AWG sample period and converts rad/ns to MHz
+([guide](https://beomdo-park.github.io/QEnvS/guides/pulses/)). See the [roadmap](docs/roadmap.md).
 
 ## Baselines
 

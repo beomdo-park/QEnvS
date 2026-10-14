@@ -32,6 +32,7 @@ Analytic references are checked in :mod:`qenvs.validation.transmon`.
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 
 import dynamiqs as dq
 import equinox as eqx
@@ -93,6 +94,54 @@ class Transmon(Model):
                 "T2 <= 2 T1 is required (1/T2 = 1/(2 T1) + 1/T_phi)"
             )
             raise ValueError(msg)
+
+    @classmethod
+    def from_properties(
+        cls, props: Mapping[str, object], *, levels: int = 3, detuning_ghz: float = 0.0
+    ) -> Transmon:
+        """Build a transmon from device properties (explicit units or SI values).
+
+        ``props`` is a mapping with ``anharmonicity_ghz``, ``t1_us``, ``t2_us`` and
+        ``frequency_ghz``, or with the SI values (seconds and hertz, each either a bare
+        number or a ``(value, timestamp)`` tuple) that Qiskit's
+        ``BackendProperties.qubit_property(q)`` returned: ``'T1'``, ``'T2'``,
+        ``'frequency'``, ``'anharmonicity'``. Qiskit is not imported. The rotating-frame
+        model does not use the qubit frequency (give the drive offset as ``detuning_ghz``);
+        read it with :func:`qenvs.pulses.parse_properties` if you want it as pulse metadata.
+
+        A missing anharmonicity keeps the model default and emits a ``UserWarning``; missing
+        ``t1_us`` / ``t2_us`` mean no dissipation from that source. ``T2 > 2 T1`` raises
+        ``ValueError``. See :func:`qenvs.pulses.parse_properties` for the accepted keys.
+        """
+        import warnings
+
+        from qenvs.pulses import parse_properties
+
+        p = parse_properties(props)
+        extra: dict[str, float] = {}
+        if p.anharmonicity_ghz is None:
+            warnings.warn(
+                "no anharmonicity in the device properties; keeping the Transmon default "
+                f"anharmonicity_ghz = {cls.anharmonicity_ghz}",
+                UserWarning,
+                stacklevel=2,
+            )
+        else:
+            if p.anharmonicity_ghz > 0:
+                warnings.warn(
+                    f"anharmonicity_ghz = {p.anharmonicity_ghz:g} is positive; a transmon has "
+                    "a negative anharmonicity (the sign is kept as given)",
+                    UserWarning,
+                    stacklevel=2,
+                )
+            extra["anharmonicity_ghz"] = p.anharmonicity_ghz
+        return cls(
+            levels=levels,
+            detuning_ghz=detuning_ghz,
+            t1_us=p.t1_us,
+            t2_us=p.t2_us,
+            **extra,
+        )
 
     # ----------------------------------------------------------------- rates
     @property

@@ -40,13 +40,18 @@ def _as_matrix(x: object) -> Array:
     return m
 
 
+def _as_subspace(x: object) -> tuple[int, ...] | None:
+    return None if x is None else tuple(int(i) for i in x)  # type: ignore[attr-defined]
+
+
 class GateControl(Environment):
     """Piecewise-constant control towards a target gate (average gate fidelity reward).
 
     Each step applies the action as constant control amplitudes for ``dt`` and
     composes the step propagator with the accumulated map. The reward is the gain of
     the average gate fidelity on the computational subspace (the first ``k`` levels,
-    ``k = target.shape[0]``), so the undiscounted return equals
+    ``k = target.shape[0]``, or the basis states listed in ``subspace``), so the
+    undiscounted return equals
     ``F_final - F_initial`` with ``F_initial = F(identity, target)``.
 
     The observation is the flattened real and imaginary parts of the accumulated map
@@ -65,6 +70,9 @@ class GateControl(Environment):
         method: dynamiqs method for each step propagator. The default ``Expm()`` is
             exact for piecewise-constant controls; ODE methods (``Tsit5()``) integrate
             the propagator instead.
+        subspace: ``k`` basis indices spanning the computational subspace, in the
+            order of the target's basis (e.g. ``(0, 1, 3, 4)`` for two qutrits in
+            control (x) target order). ``None`` (default) means the first ``k`` levels.
     """
 
     model: Model
@@ -73,12 +81,18 @@ class GateControl(Environment):
     dt: float = 2.0
     action_bound: float = 0.1 * math.pi
     method: Method = Expm()
+    subspace: tuple[int, ...] | None = eqx.field(default=None, static=True, converter=_as_subspace)
 
     def __check_init__(self) -> None:
         k = self.target.shape[0]
         if k > self.model.dim:
             msg = f"target acts on {k} levels but the model has only {self.model.dim}"
             raise ValueError(msg)
+        if self.subspace is not None:
+            sub = self.subspace
+            if len(sub) != k or len(set(sub)) != k or min(sub) < 0 or max(sub) >= self.model.dim:
+                msg = f"subspace must list {k} distinct indices in [0, {self.model.dim}), got {sub}"
+                raise ValueError(msg)
 
     @property
     def action_dim(self) -> int:
@@ -108,14 +122,14 @@ class GateControl(Environment):
     def fidelity(self, qstate: QArray | Array) -> Array:
         """Average gate fidelity of the accumulated map against ``target``."""
         if self.model.is_open:
-            return superop_average_gate_fidelity(qstate, self.target)
-        return average_gate_fidelity(qstate, self.target)
+            return superop_average_gate_fidelity(qstate, self.target, subspace=self.subspace)
+        return average_gate_fidelity(qstate, self.target, subspace=self.subspace)
 
     def leakage(self, qstate: QArray | Array) -> Array:
-        """Leakage rate of the accumulated map out of the first ``k`` levels."""
+        """Leakage rate of the accumulated map out of the computational subspace."""
         if self.model.is_open:
-            return superop_leakage(qstate, self.n_comp)
-        return leakage(qstate, self.n_comp)
+            return superop_leakage(qstate, self.n_comp, subspace=self.subspace)
+        return leakage(qstate, self.n_comp, subspace=self.subspace)
 
     def evolved_state(self, qstate: QArray | Array) -> QArray:
         """The accumulated map applied to ``model.initial_state()``."""

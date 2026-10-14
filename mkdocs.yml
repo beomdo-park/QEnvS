@@ -50,10 +50,13 @@ nav:
   - Guides:
       - Bring your own Hamiltonian: guides/custom-models.md
       - RL libraries (Gymnasium, vector envs): guides/rl-libraries.md
+      - Pulses for hardware toolchains: guides/pulses.md
   - Models:
       - Transmon gates (X, SX): models/transmon.md
+      - Cross-resonance gate (two transmons): models/cross_resonance.md
       - Qubit battery: models/qubit_battery.md
       - Dicke battery: models/dicke.md
+      - Dicke battery with local dissipation: models/dicke_local.md
       - Lambda system (STIRAP): models/lambda_system.md
   - Validation:
       - Validation report: validation.md

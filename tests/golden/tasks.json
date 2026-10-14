@@ -27,6 +27,36 @@
     "open_system": false,
     "zero_return": 0.0
   },
+  "battery/DickeLocal-v0": {
+    "action_bound": 0.5,
+    "action_dim": 1,
+    "dt": 0.2,
+    "fixed_pulse_info": {
+      "energy": 0.06985842151496942,
+      "ergotropy": 0.0,
+      "excitation": 2.9903233487494023,
+      "n_photons": 2.920464927234431,
+      "power": 0.01746460537874235,
+      "purity": 0.9661017373211311,
+      "symmetric": 0.9948181077498309,
+      "top_fock": 0.9219178655286053
+    },
+    "fixed_pulse_return": 0.06985842151496942,
+    "horizon": 20,
+    "info_keys": [
+      "energy",
+      "ergotropy",
+      "excitation",
+      "n_photons",
+      "power",
+      "purity",
+      "symmetric",
+      "top_fock"
+    ],
+    "observation_dim": 2049,
+    "open_system": true,
+    "zero_return": 0.0
+  },
   "battery/TwoLevel-v0": {
     "action_bound": 2.0,
     "action_dim": 1,
@@ -95,6 +125,35 @@
     "open_system": false,
     "reference_return": 0.9964391958818124,
     "zero_return": 0.0
+  },
+  "transmon/CRGate-v0": {
+    "action_bound": 0.37699111843077515,
+    "action_dim": 4,
+    "dt": 5.0,
+    "fixed_pulse_info": {
+      "fidelity": 0.3557040411342697,
+      "leakage": 0.01992442978991341,
+      "p00": 0.7657817228242186,
+      "p01": 0.19866765487034352,
+      "p10": 0.025084854798285563,
+      "p11": 0.003958846535462092,
+      "state_leakage": 0.0065069209716829505
+    },
+    "fixed_pulse_return": -0.24429595886573024,
+    "horizon": 64,
+    "info_keys": [
+      "fidelity",
+      "leakage",
+      "p00",
+      "p01",
+      "p10",
+      "p11",
+      "state_leakage"
+    ],
+    "observation_dim": 163,
+    "open_system": false,
+    "reference_return": 0.384316197011157,
+    "zero_return": -0.010555414428500498
   },
   "transmon/SXGate-v0": {
     "action_bound": 0.3141592653589793,

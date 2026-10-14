@@ -4,6 +4,10 @@ Conventions:
 
 * Basis index 0 is the ground state, index 1 the excited state; a ``k``-level target
   acts on the first ``k`` levels (the computational subspace) of a ``d``-level system.
+  Every fidelity and leakage function also accepts ``subspace``: a sequence of ``k``
+  basis indices that span the computational subspace, in the order of the target's
+  basis (for two qutrits in control (x) target order, ``(0, 1, 3, 4)``). The default
+  ``None`` means the first ``k`` levels.
 * Average gate fidelity is averaged over Haar-random pure inputs *inside* the
   computational subspace and compares with the ideal output (Wood and Gambetta,
   Phys. Rev. A 97, 032306 (2018), Eqs. (5)-(6))::
@@ -26,8 +30,10 @@ leading batch dimensions.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 
 import jax.numpy as jnp
+import numpy as np
 from jax import Array
 
 SQ2 = 1.0 / math.sqrt(2.0)
@@ -67,31 +73,67 @@ def _arr(x: object) -> Array:
     return jnp.asarray(to_jax() if to_jax is not None else x)
 
 
-def average_gate_fidelity(u: object, target: object) -> Array:
+def _indices(subspace: Sequence[int] | None, k: int, d: int) -> np.ndarray:
+    """Computational basis indices (default ``0 .. k-1``), checked against ``k`` and ``d``."""
+    if subspace is None:
+        return np.arange(k)
+    idx = np.asarray(subspace, dtype=int).reshape(-1)
+    if idx.size != k or len(set(idx.tolist())) != k or idx.min() < 0 or idx.max() >= d:
+        msg = f"subspace must list {k} distinct indices in [0, {d}), got {list(subspace)}"
+        raise ValueError(msg)
+    return idx
+
+
+def _complement(idx: np.ndarray, d: int) -> np.ndarray:
+    keep = np.ones(d, dtype=bool)
+    keep[idx] = False
+    return np.nonzero(keep)[0]
+
+
+def _block(m: Array, rows: np.ndarray, cols: np.ndarray) -> Array:
+    """``m[..., rows, cols]`` as a sub-matrix (static index arrays)."""
+    return m[..., rows[:, None], cols[None, :]]
+
+
+def average_gate_fidelity(
+    u: object, target: object, *, subspace: Sequence[int] | None = None
+) -> Array:
     """Average gate fidelity of a ``d``-level unitary ``u`` against a ``k``-level ``target``.
 
-    ``F = [Tr(M M^dag) + |Tr M|^2] / (k (k + 1))``, ``M = target^dag u[:k, :k]``
-    (Pedersen et al. 2007). Population leaked out of the first ``k`` levels lowers
-    ``Tr(M M^dag)`` and ``|Tr M|``. Equal to 1 iff ``u`` acts as ``target`` on the
-    subspace up to a global phase. Batched over leading dimensions of ``u``.
+    ``F = [Tr(M M^dag) + |Tr M|^2] / (k (k + 1))``, ``M = target^dag P u P``
+    (Pedersen et al. 2007), with ``P`` the projector on the first ``k`` levels or on the
+    basis states listed in ``subspace`` (in the target's basis order). Population leaked
+    out of the subspace lowers ``Tr(M M^dag)`` and ``|Tr M|``. Equal to 1 iff ``u`` acts
+    as ``target`` on the subspace up to a global phase. Batched over leading dimensions
+    of ``u``.
     """
     u, t = _arr(u), _arr(target)
     k = t.shape[-1]
-    m = jnp.conj(t).T @ u[..., :k, :k]
+    if subspace is None:
+        m = jnp.conj(t).T @ u[..., :k, :k]
+    else:
+        idx = _indices(subspace, k, u.shape[-1])
+        m = jnp.conj(t).T @ _block(u, idx, idx)
     tr_mm = jnp.sum(jnp.abs(m) ** 2, axis=(-2, -1))
     tr_m = jnp.trace(m, axis1=-2, axis2=-1)
     return (tr_mm + jnp.abs(tr_m) ** 2) / (k * (k + 1))
 
 
-def leakage(u: object, k: int = 2) -> Array:
-    """Leakage rate of a unitary out of the first ``k`` levels.
+def leakage(u: object, k: int = 2, *, subspace: Sequence[int] | None = None) -> Array:
+    """Leakage rate of a unitary out of the first ``k`` levels (or out of ``subspace``).
 
     ``L = 1 - (1/k) sum_{i,j<k} |u_ji|^2``, evaluated as the equivalent (for unitary
     ``u``) sum of leaked populations ``(1/k) sum_{i<k, j>=k} |u_ji|^2``, which avoids
-    cancellation when ``L`` is tiny and stays non-negative.
+    cancellation when ``L`` is tiny and stays non-negative. When ``subspace`` is given,
+    ``k = len(subspace)`` and the sums run over those indices and their complement.
     """
     u = _arr(u)
-    return jnp.sum(jnp.abs(u[..., k:, :k]) ** 2, axis=(-2, -1)) / k
+    d = u.shape[-1]
+    if subspace is None:
+        return jnp.sum(jnp.abs(u[..., k:, :k]) ** 2, axis=(-2, -1)) / k
+    idx = _indices(subspace, len(subspace), d)
+    out = _complement(idx, d)
+    return jnp.sum(jnp.abs(_block(u, out, idx)) ** 2, axis=(-2, -1)) / idx.size
 
 
 def unitary_to_superop(u: object) -> Array:
@@ -120,38 +162,59 @@ def _channel_tensor(s: Array) -> Array:
     return jnp.swapaxes(jnp.swapaxes(t, -4, -3), -2, -1)
 
 
-def superop_leakage(s: object, k: int = 2) -> Array:
+def _sub_channel(e: Array, k: int, subspace: Sequence[int] | None) -> Array:
+    """Restrict ``E[a, b, c, e]`` to the first ``k`` levels or to ``subspace``."""
+    if subspace is None:
+        return e[..., :k, :k, :k, :k]
+    idx = _indices(subspace, k, e.shape[-1])
+    return e[(Ellipsis, *np.ix_(idx, idx, idx, idx))]
+
+
+def superop_leakage(s: object, k: int = 2, *, subspace: Sequence[int] | None = None) -> Array:
     """Leakage rate ``L = Tr[(1 - P) E(P / k)]`` of a channel (Wood and Gambetta 2018, Eq. (2)).
 
     Equals ``1 - Tr[P E(P / k)]`` for a trace-preserving map and reduces to
-    :func:`leakage` for a unitary channel.
+    :func:`leakage` for a unitary channel. ``P`` projects on the first ``k`` levels or,
+    when given, on ``subspace`` (then ``k = len(subspace)``).
     """
     e = _channel_tensor(_arr(s))
-    pops = jnp.einsum("...aacc->...a", e[..., :, :, :k, :k]).real
-    return jnp.sum(pops[..., k:], axis=-1) / k
+    if subspace is None:
+        pops = jnp.einsum("...aacc->...a", e[..., :, :, :k, :k]).real
+        return jnp.sum(pops[..., k:], axis=-1) / k
+    d = e.shape[-1]
+    idx = _indices(subspace, len(subspace), d)
+    out = _complement(idx, d)
+    sub = e[(Ellipsis, *np.ix_(out, out, idx, idx))]
+    pops = jnp.einsum("...aacc->...a", sub).real
+    return jnp.sum(pops, axis=-1) / idx.size
 
 
-def superop_process_fidelity(s: object, target: object) -> Array:
+def superop_process_fidelity(
+    s: object, target: object, *, subspace: Sequence[int] | None = None
+) -> Array:
     """Process fidelity on the subspace ``(1/k^2) sum_ij <i|U_t^dag E(|i><j|) U_t|j>``."""
     e = _channel_tensor(_arr(s))
     t = _arr(target)
     k = t.shape[-1]
-    ek = e[..., :k, :k, :k, :k]
+    ek = _sub_channel(e, k, subspace)
     val = jnp.einsum("ai,bj,...abij->...", jnp.conj(t), t, ek)
     return val.real / (k * k)
 
 
-def superop_average_gate_fidelity(s: object, target: object) -> Array:
+def superop_average_gate_fidelity(
+    s: object, target: object, *, subspace: Sequence[int] | None = None
+) -> Array:
     """Average gate fidelity of a (leaky) channel ``s`` against a ``k``-level ``target``.
 
     ``F = (k F_pro + 1 - L') / (k + 1)`` with ``1 - L' = Tr[P E(P / k)]`` (Wood and
     Gambetta 2018, Eq. (6)), computed as an exact Haar average over pure inputs in the
-    computational subspace. Equals :func:`average_gate_fidelity` for a unitary channel.
+    computational subspace (first ``k`` levels, or ``subspace``). Equals
+    :func:`average_gate_fidelity` for a unitary channel.
     """
     e = _channel_tensor(_arr(s))
     t = _arr(target)
     k = t.shape[-1]
-    ek = e[..., :k, :k, :k, :k]
+    ek = _sub_channel(e, k, subspace)
     kept = jnp.einsum("...aacc->...", ek).real  # Tr[P E(P)] = k (1 - L')
     pro = jnp.einsum("ai,bj,...abij->...", jnp.conj(t), t, ek).real  # k^2 F_pro
     return (kept + pro) / (k * (k + 1))

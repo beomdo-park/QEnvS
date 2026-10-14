@@ -12,10 +12,18 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from qenvs.validation import dicke, lambda_system, qubit, qubit_battery, transmon
+from qenvs.validation import (
+    cross_resonance,
+    dicke,
+    dicke_local,
+    lambda_system,
+    qubit,
+    qubit_battery,
+    transmon,
+)
 from qenvs.validation.core import CheckResult, environment_info, result, skipped
 
-MODULES = (qubit, qubit_battery, dicke, lambda_system, transmon)
+MODULES = (qubit, qubit_battery, dicke, dicke_local, lambda_system, transmon, cross_resonance)
 
 CHECKS: tuple[Callable[[], CheckResult], ...] = tuple(c for m in MODULES for c in m.CHECKS)
 
