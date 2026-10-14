@@ -13,3 +13,4 @@ site/
 .DS_Store
 src/qenvs/_version.py
 .python-version
+.claude/

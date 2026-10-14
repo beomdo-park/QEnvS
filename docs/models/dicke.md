@@ -91,19 +91,27 @@ rate $\gamma_\phi / 2$, i.e. `DickeBattery(gamma_phi=x)` corresponds to
   permutation-invariant (PIQS-style, Shammah et al. 2018) solver is planned.
 * **Fock cutoff (read this before using `rwa=False`).** For TC the excitation number
   is conserved, so $n_{\max} = n$ is exact (the default). For the Dicke model the
-  counter-rotating terms create photons and the default $n_{\max} = n + 4$ is a
-  convenience, not a convergence guarantee. It is converged for weak coupling:
-  `cutoff_convergence` finds $|\Delta\langle H_B\rangle| = 8.5 \times 10^{-6}$ between
-  $n_{\max} = 6$ and $12$ at $g = 0.1\,\omega_0$, $N = 2$ (top-Fock population
-  $2.4 \times 10^{-5}$). **It is not converged at the task default
-  `action_bound = 0.5`**: for constant $g = 0.5$ over the default episode (20 steps,
-  `dt = 0.2`) the return is $1.754$ with the default $n_{\max} = 7$ for $N = 3$ but
-  $1.530$ once converged ($n_{\max} \ge 27$), an error of about 15 percent; for
-  $N = 2$ it is $1.017$ ($n_{\max} = 6$) versus $1.000$ ($n_{\max} \ge 12$), and the
-  energy curves at $n_{\max} = 6$ and $12$ differ by up to $0.13$ along the episode.
-  With `rwa=False` either keep $|g| \lesssim 0.1\,\omega_0$ or set
-  `n_max >= n_photons + 24`, and monitor the `top_fock` observable (population of the
-  highest kept Fock level): it should stay negligible throughout the episode.
+  counter-rotating terms create photons, and the default $n_{\max} = n + 4$ is a
+  convenience, not a convergence guarantee. The cutoff that is needed grows with $N$
+  and with the coupling. Measured for the Ferraro protocol ($n = N$), comparing the
+  stored energy with a reference at a much larger cutoff:
+
+  | coupling | $N$ | default $n_{\max} = n + 4$ | converged return (cutoff needed) |
+  |---|---|---|---|
+  | $g = 0.1\,\omega_0$, 20 steps of `dt = 0.2` | 2, 3, 4 | max energy error $8.5\times10^{-6}$, $1.1\times10^{-4}$, $5.2\times10^{-4}$ | adequate |
+  | $g = 0.1\,\omega_0$ | 6, 8 | $4.2\times10^{-3}$, $4.3\times10^{-2}$ | raise $n_{\max}$ |
+  | $g = 0.5\,\omega_0$ (task default bound), 20 steps | 2 | return $1.017$ | $1.0005$ ($n + 10$) |
+  | $g = 0.5\,\omega_0$ | 3 | $1.754$ (15 percent off) | $1.530$ ($n + 24$) |
+  | $g = 0.5\,\omega_0$ | 6 | $2.608$ | $2.604$ ($n + 56$; $n + 24$ still gives $2.752$) |
+
+  The $N = 6$ row shows that a return close to the converged value at the default
+  cutoff can be accidental, and that a fixed "$n + 24$" rule does not generalise. The
+  reliable criterion is the `top_fock` observable (population of the highest kept Fock
+  level): raise `n_max` until its maximum over the episode is below about $10^{-4}$ and
+  the return stops changing. In the table, `top_fock` reaches $0.07$ to $0.10$ at the
+  default cutoff and $1.3\times10^{-4}$ for $N = 6$ at $n + 56$. The check
+  `cutoff_convergence` covers the weak-coupling case $N = 2$, $g = 0.1\,\omega_0$
+  only.
 * Energies and rates are in units of $\omega_0$ (= 1 by default), times in $1/\omega_0$.
 
 ## Parameters
@@ -153,6 +161,13 @@ constant $g = 0.5$ and $t = 1$ the energy is $0.784\,\omega_0$ but the ergotropy
 only $0.277\,\omega_0$ (while the global state is pure, `purity` = 1). The two
 coincide only when the reduced cell state is pure, e.g. at full charge.
 
+For Tavis-Cummings charging from a Fock state the reduced cell state stays diagonal in
+the Dicke basis (the excitation number is conserved), so its ergotropy is exactly zero
+until the cell populations become inverted. `reward="ergotropy"` is then a sparse
+reward with an exactly zero gradient on that plateau (for example $N = 2$, constant
+$g = 0.3$ for 6 steps of `dt = 0.2` gives return 0). Use `reward="energy"` for early
+training or gradient-based optimisation and evaluate the ergotropy afterwards.
+
 Closed-form landmarks (resonant TC, constant $g$):
 
 * $N = n = 1$ (Jaynes-Cummings): $P_e(t) = \sin^2(g t)$. At $g t = \pi/4$ the reduced
@@ -165,10 +180,11 @@ Closed-form landmarks (resonant TC, constant $g$):
   with the first maximum $E_{\max} = \tfrac{8}{9}\,N\omega_0$ at
   $t^* = \pi/(\sqrt{6}\,g)$ (`two_cells_closed_form`).
 
-With the Ferraro protocol ($n = N$ photons) the maximum energy reachable by a constant
-coupling is $N\omega_0$ only for $N = 1$; for $N = 2, 4, 8$ the first energy peak
-reaches $0.89, 0.86, 0.88$ of $N\omega_0$ (the cells and the cavity do not fully swap
-excitations for $N > 1$).
+With the Ferraro protocol ($n = N$ photons) and a constant coupling, the first energy
+peak reaches $N\omega_0$ only for $N = 1$; for $N = 2, 4, 8$ it reaches
+$0.89, 0.86, 0.88$ of $N\omega_0$, because the cells and the cavity do not fully swap
+excitations for $N > 1$. Later peaks were not searched; time-dependent couplings (the
+point of the task) can do better.
 
 ```python
 import jax.numpy as jnp
@@ -193,8 +209,8 @@ passes in float64 and in float32.
 | check | reference | tolerance | measured (float64) | measured (float32) |
 |---|---|---|---|---|
 | `operator_algebra` | $[J_+, J_-] = 2J_z$ for $N \le 6$; $[a, a^\dagger] = 1$ below the cutoff | 1e-12 | 3.6e-15 | 3.6e-15 |
-| `jaynes_cummings_limit` | $N = 1$, $n \in \{1, 3\}$, resonant TC, $g = 0.5$: $P_e(t) = \sin^2(g\sqrt{n}\,t)$ (Jaynes-Cummings) | 1e-6 | 1.1e-8 | 4.2e-7 |
-| `detuned_jaynes_cummings` | $N = 1$, $g = 0.5$, $(\omega_0, \omega_c, n) \in \{(1, 1.7, 1), (1, 0.3, 2), (1.3, 1.0, 1)\}$: $P_e = \frac{4g^2 n}{\Omega^2}\sin^2\frac{\Omega t}{2}$, $\Omega^2 = (\omega_c - \omega_0)^2 + 4g^2 n$, and $\langle a^\dagger a\rangle = n - P_e$ | 1e-6 | 1.3e-8 | 7.2e-7 |
+| `jaynes_cummings_limit` | $N = 1$, $n \in \{1, 3\}$, resonant TC, $g = 0.5$: $P_e(t) = \sin^2(g\sqrt{n}\,t)$ (Jaynes-Cummings) | 3e-6 | 1.1e-8 | 4.2e-7 |
+| `detuned_jaynes_cummings` | $N = 1$, $g = 0.5$, $(\omega_0, \omega_c, n) \in \{(1, 1.7, 1), (1, 0.3, 2), (1.3, 1.0, 1)\}$: $P_e = \frac{4g^2 n}{\Omega^2}\sin^2\frac{\Omega t}{2}$, $\Omega^2 = (\omega_c - \omega_0)^2 + 4g^2 n$, $\langle a^\dagger a\rangle = n - P_e$, and the coupling expectation $\langle V\rangle = (d/g)\,P_e$ with $d = \omega_c - \omega_0$ (odd in $d$, so it fixes the sign of the detuning) | 3e-6 | 1.3e-8 | 7.2e-7 |
 | `two_cells_closed_form` | $N = n = 2$, $g = 0.5$: $t^* = \pi/(\sqrt{6}\,g)$ (grid of 601 points, parabolic refinement) and $E(t^*) = \tfrac{8}{9} N\omega_0$; error $= \max(|\Delta t^*|, 100\,|\Delta E_{\max}|)$ so the single tolerance enforces 1e-4 on $t^*$ and 1e-6 on $E_{\max}$ | 1e-4 | 7.5e-7 ($|\Delta t^*| = 1.7\times10^{-8}$, $|\Delta E_{\max}| = 7.4\times10^{-9}$) | 2.0e-5 ($2.0\times10^{-5}$, $1.3\times10^{-8}$) |
 | `reduced_ergotropy` | $N = n = 1$: reduced cell state at $g t = \pi/4$ has $E = \omega_0/2$, ergotropy $0$; at $g t = \pi/2$ ergotropy $= E = \omega_0$ | 1e-6 | 3.8e-9 | 1.2e-7 |
 | `omega0_scaling` | resonant TC, $N = 2$, same random $g(t)$ with $\omega_0 = 1$ and $1.5$: energy and ergotropy scale exactly by $1.5$ (max abs residual over 10 env steps) | 1e-6 | 1.3e-9 | 4.1e-8 |
@@ -207,24 +223,26 @@ passes in float64 and in float32.
 | `qutip_tavis_cummings` | open TC, $N = n = 3$, $\kappa = 0.1$, $\gamma = 0.05$, $\gamma_\phi = 0.03$, random $g(t)$: final $\rho$ vs QuTiP 5 `mesolve` (max abs element) | 1e-5 | 5.8e-11 | 6.1e-8 |
 | `qutip_dicke` | open Dicke, $N = n = 3$, $n_{\max} = 7$, $\kappa = 0.1$, random $g(t)$: final $\rho$ vs QuTiP 5 `mesolve` | 1e-5 | 5.8e-10 | 6.4e-8 |
 | `qutip_detuned` | open TC, $N = n = 2$, $\omega_0 = 0.8$, $\omega_c = 1.3$, $\kappa = 0.05$, $\gamma = 0.02$, random $g(t)$: final $\rho$ vs QuTiP 5 built with explicit $\omega_0$, $\omega_c$ (the coherences fix the sign of the detuning) | 1e-5 | 4.0e-11 | 8.7e-8 |
+| `collective_dissipators` | $N = 1$, $g = 0$, no QuTiP: $\langle a^\dagger a\rangle = e^{-\kappa t}$ (cavity loss), $\langle H_B\rangle/\omega_0 = e^{-\gamma t}$ from $|e\rangle$ (emission), $2|\langle J_-\rangle| = e^{-\gamma_\phi t/2}$ from $(|g\rangle + |e\rangle)/\sqrt{2}$ (dephasing), $t \le 4$ | 2e-6 | 4.7e-9 | 1.7e-7 |
 | `density_matrix_constraints` | open Dicke after random driving: Hermitian, trace 1, positive semidefinite | 1e-6 | 1.1e-16 | 0 |
 | `solver_convergence` | default Tsit5 (env rollout) vs exact `Expm` propagator, closed Dicke, dim 32, 8 random steps | 2e-5 | 4.4e-6 | 5.1e-6 |
-| `open_solver_convergence` | default Tsit5 vs `Tsit5(rtol=1e-10, atol=1e-12)`, open Dicke ($\kappa = 0.1$, $\gamma = 0.05$), dim 21, 8 random steps, final $\rho$ | 1e-5 | 5.4e-6 | 6.1e-6 |
+| `open_solver_convergence` | default Tsit5 vs `Tsit5(rtol=1e-10, atol=1e-12)`, open Dicke ($\kappa = 0.1$, $\gamma = 0.05$), dim 21, 8 random steps, final $\rho$ | 2e-5 | 5.4e-6 | 6.1e-6 |
 
 Notes on the scaling check: the fitted exponent is $-0.40$ for $N \in \{1, 2, 4, 8\}$
-and stays at $-0.40$ when the fit is extended offline to $N = 16, 32, 48$
-($t^* = 10.60, 8.06, 6.87$; exponents $-0.402, -0.401, -0.400$ for $N \le 16, 32, 48$).
-This is the finite-$N$ exponent of the TC model with $n = N$ photons at
-$g = 0.05\,\omega_0$ in this protocol (constant coupling, first energy peak), not the
-asymptotic $N^{-1/2}$ law of Ferraro et al., which is a large-$N$ statement; the check
-therefore accepts a window $[-0.75, -0.25]$ rather than asserting $-0.5$ exactly. It is
-still discriminating: it fails if $t^*$ does not decrease with $N$ (no collective
-advantage).
+and stays at about $-0.40$ when the fit is extended offline to $N = 16, 32, 48$
+($t^* = 10.60, 8.06, 6.87$). This is the finite-$N$ exponent of the TC model with $n = N$
+photons at $g = 0.05\,\omega_0$ in this protocol (constant coupling, first energy
+peak). Ferraro et al. state an $N^{-1/2}$ law; whether this protocol approaches $-1/2$ at
+larger $N$ is not established here. The check therefore accepts a window
+$[-0.75, -0.25]$ rather than asserting $-0.5$. It is still discriminating: it fails if
+$t^*$ does not decrease with $N$ (no collective advantage).
 
 Which check catches what (verified by mutating the model): a drift that uses
 $\omega_0$ for the cavity fails `detuned_jaynes_cummings` and `qutip_detuned`; a flipped
-detuning sign leaves every population unchanged and is caught only by `qutip_detuned`
-(coherences); an $H_B$ without $\omega_0$ fails `detuned_jaynes_cummings`,
+detuning sign leaves every population unchanged and is caught by the $\langle V\rangle$
+term of `detuned_jaynes_cummings` and by `qutip_detuned` (coherences); a reversed
+cavity-loss or emission operator or a wrong dephasing prefactor fails
+`collective_dissipators` (no QuTiP needed); an $H_B$ without $\omega_0$ fails `detuned_jaynes_cummings`,
 `omega0_scaling` and `qutip_detuned`; ergotropy evaluated on the full cells+cavity state
 fails `reduced_ergotropy`; a missing $+N/2$ offset fails `excitation_conservation` (and
 `reduced_ergotropy`, `ergotropy_bounds` if it is in $H_B$); a task factory that drops a
@@ -240,10 +258,11 @@ level. Without `qutip` installed the three QuTiP checks are reported as skipped
 
 * Collective dissipation only. Local decay / dephasing (which breaks permutation
   symmetry) is not available; planned via a PIQS-style solver.
-* `n_max` for `rwa=False` must be converged by the user; the default $n + 4$ is only
-  adequate for $|g| \lesssim 0.1\,\omega_0$ and is about 15 percent off in the return
-  at the task default `action_bound = 0.5` (see Assumptions and validity). Watch
-  `top_fock`.
+* `n_max` for `rwa=False` must be converged by the user. The default $n + 4$ is
+  adequate only for weak coupling and small $N$ ($|g| \lesssim 0.1\,\omega_0$,
+  $N \le 4$); at the task default `action_bound = 0.5` the needed cutoff grows with $N$
+  (see the table in Assumptions and validity). Raise `n_max` until `top_fock` stays
+  below about $10^{-4}$.
 * The symmetric subspace is $N + 1$ dimensional, but the open-system Liouvillian is
   $((N+1)(n_{\max}+1))^2$ dimensional, so open-system episodes with large $N$ and large
   cutoffs are slow on CPU.

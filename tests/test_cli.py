@@ -109,3 +109,12 @@ def test_run_output_schema(capsys):
         assert key in res
     assert res["solver"]["method"] == "Tsit5"
     assert len(res["rewards"]) == 3
+
+
+def test_validate_markdown_report(capsys):
+    code, out = _run(capsys, "validate", "--markdown")
+    assert code == 0
+    assert out.startswith("**") and "| check | category |" in out
+    for model in ("TwoLevel", "QubitBattery", "DickeBattery", "LambdaSystem"):
+        assert f"## {model}" in out
+    assert "FAIL" not in out

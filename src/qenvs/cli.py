@@ -77,6 +77,9 @@ def cmd_run(args: argparse.Namespace) -> int:
 def cmd_validate(args: argparse.Namespace) -> int:
     """Run physics checks and print errors vs tolerances."""
     out = toolkit.validate()
+    if getattr(args, "markdown", False):
+        sys.stdout.write(toolkit.validation_markdown(out))
+        return 0 if out["all_passed"] else 1
     rows = [f"{'model':14s} {'check':32s} {'category':16s} {'error':>10s} {'tol':>8s}  status"]
     for c in out["checks"]:
         status = "SKIP" if c["skipped"] else ("PASS" if c["passed"] else "FAIL")
@@ -130,7 +133,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(func=cmd_run)
 
     s = sub.add_parser("validate", help="run physics validation checks and report errors")
-    s.add_argument("--json", action="store_true")
+    fmt = s.add_mutually_exclusive_group()
+    fmt.add_argument("--json", action="store_true")
+    fmt.add_argument(
+        "--markdown", action="store_true", help="Markdown report (as on the docs site)"
+    )
     s.set_defaults(func=cmd_validate)
 
     s = sub.add_parser("doctor", help="check installation, backend and optional extras")

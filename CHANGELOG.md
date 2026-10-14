@@ -1,0 +1,46 @@
+# Changelog
+
+All notable changes to QEnvS are listed here. Task ids carry their own version
+suffix (`-vN`); a released task is never changed in place.
+
+## [0.1.0] - 2026-10-14
+
+First release with a model zoo.
+
+### Added
+
+- `battery/TwoLevel-v0`: open qubit battery (`QubitBattery`) with a thermal bath
+  (T1 at occupation `n_th`) and pure dephasing; energy or ergotropy reward.
+- `battery/Dicke-v0`: collective battery (`DickeBattery`), N cells and one cavity
+  mode in the permutation-symmetric subspace, Tavis-Cummings (`rwa=True`) or full
+  Dicke (`rwa=False`) coupling, collective cavity loss, emission and dephasing.
+  Energy and ergotropy are evaluated on the reduced cell state.
+- `transfer/LambdaSTIRAP-v0`: three-level Lambda system (`LambdaSystem`) with pump
+  and Stokes controls and spontaneous emission; `stirap_pulses` helper.
+- `BatteryCharging` environment shared by all battery models, and the
+  `Model.battery_reduced` hook for composite batteries.
+- 44 new validation checks (53 in total) with closed-form references, physical
+  constraints, solver convergence and QuTiP cross-checks; every check passes in
+  float32 and float64. `qenvs validate` reports skipped checks (QuTiP not
+  installed) as SKIP.
+- Baselines: `examples/grape_jax.py` (open-loop Adam through `env.rollout`),
+  `examples/ppo_jax.py` (vectorised PPO), `examples/benchmark.py`, and the
+  benchmark page.
+- Model documentation pages with Hamiltonians, assumptions, validity limits and
+  measured validation tables.
+- Logo, favicon and architecture diagram.
+
+### Fixed
+
+- Fidelity to a pure target is now `<t|rho|t>`, which is exact and has a finite
+  gradient on density matrices (the general square-root formula returned NaN
+  gradients for open systems).
+- `qenvs run` works for battery tasks.
+
+## [0.0.1] - 2026-10-13
+
+Skeleton release: `qubit/StateTransfer-v0`, functional environment API,
+Gymnasium adapter, JSON command-line interface, physics validation framework.
+
+[0.1.0]: https://github.com/beomdo-park/QEnvS/compare/v0.0.1...v0.1.0
+[0.0.1]: https://github.com/beomdo-park/QEnvS/releases/tag/v0.0.1

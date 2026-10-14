@@ -2,14 +2,18 @@
 
 > Physically validated quantum control environments (quantum batteries, qubit state transfer, open systems) for reinforcement learning and optimal control. Python package `qenvs`, built on JAX + dynamiqs. Apache-2.0.
 
-Every model ships with analytic validation checks that run as tests and are printed by `qenvs validate`. Environments are functional (jit/vmap/grad) with a Gymnasium adapter.
+Tasks: `qubit/StateTransfer-v0`, `battery/TwoLevel-v0`, `battery/Dicke-v0`, `transfer/LambdaSTIRAP-v0`. Every model ships with analytic validation checks (53 in total: closed-form results, physical constraints, solver convergence, QuTiP cross-checks) that run as tests and are printed by `qenvs validate`. Environments are functional (jit/vmap/grad) with a Gymnasium adapter.
 
 ## Docs
 
 - [Overview and quickstart](https://beomdo-park.github.io/QEnvS/): install, functional API, gradient-based control, Gymnasium usage
-- [Roadmap](https://beomdo-park.github.io/QEnvS/roadmap/): planned models and validation gates
-- [API: models](https://beomdo-park.github.io/QEnvS/api/models/): `Model`, `TwoLevel`, observables (energy, ergotropy, fidelity)
-- [API: environments](https://beomdo-park.github.io/QEnvS/api/envs/): `Environment`, `EnvState`, `TimeStep`, `StateTransfer`, registry
+- [Model: qubit battery](https://beomdo-park.github.io/QEnvS/models/qubit_battery/): task `battery/TwoLevel-v0`, open qubit with thermal bath, energy / ergotropy rewards, validation table
+- [Model: Dicke battery](https://beomdo-park.github.io/QEnvS/models/dicke/): task `battery/Dicke-v0`, N cells + cavity (Tavis-Cummings / Dicke), collective charging, Fock-cutoff caveats, validation table
+- [Model: Lambda system](https://beomdo-park.github.io/QEnvS/models/lambda_system/): task `transfer/LambdaSTIRAP-v0`, three-level STIRAP transfer with spontaneous emission, validation table
+- [Benchmarks](https://beomdo-park.github.io/QEnvS/benchmarks/): GRAPE (jax.grad) and vectorised PPO baselines, reproduction commands
+- [Roadmap](https://beomdo-park.github.io/QEnvS/roadmap/): models and validation gates
+- [API: models](https://beomdo-park.github.io/QEnvS/api/models/): `Model`, `TwoLevel`, `QubitBattery`, `DickeBattery`, `LambdaSystem`, observables (energy, ergotropy, fidelity)
+- [API: environments](https://beomdo-park.github.io/QEnvS/api/envs/): `Environment`, `EnvState`, `TimeStep`, `StateTransfer`, `BatteryCharging`, registry
 - [API: wrappers](https://beomdo-park.github.io/QEnvS/api/wrappers/): `GymnasiumEnv`
 
 ## Agent interface

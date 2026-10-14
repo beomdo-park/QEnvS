@@ -137,6 +137,41 @@ def doctor() -> dict[str, object]:
     }
 
 
+def validation_markdown(out: dict[str, object]) -> str:
+    """Render a :func:`validate` result as a Markdown report (one table per model)."""
+    checks = out["checks"]
+    n_ok = sum(1 for c in checks if c["passed"])
+    lines = [
+        f"**{n_ok} / {len(checks)} checks passed, {out['n_skipped']} skipped.** "
+        "`error` is the measured deviation from the reference, `tol` the acceptance "
+        "threshold, `margin` = tol / error (larger is safer).",
+        "",
+    ]
+    models: dict[str, list[dict[str, object]]] = {}
+    for c in checks:
+        models.setdefault(str(c["model"] or "TwoLevel"), []).append(c)
+    for model, rows in models.items():
+        lines += [
+            f"## {model}",
+            "",
+            "| check | category | error | tol | margin | status | detail |",
+        ]
+        lines.append("|---|---|---|---|---|---|---|")
+        for c in rows:
+            status = "SKIP" if c["skipped"] else ("PASS" if c["passed"] else "FAIL")
+            err, tol = float(c["error"]), float(c["tolerance"])
+            margin = "inf" if err == 0 else f"{tol / err:.3g}"
+            detail = str(c["detail"]).replace("|", "\\|")
+            lines.append(
+                f"| `{c['name']}` | {c['category']} | {err:.2e} | {tol:.0e} | {margin} "
+                f"| {status} | {detail} |"
+            )
+        lines.append("")
+    lines += ["## Environment", "", "| key | value |", "|---|---|"]
+    lines += [f"| {k} | `{v}` |" for k, v in out["environment"].items()]
+    return "\n".join(lines) + "\n"
+
+
 def validate() -> dict[str, object]:
     """Run all physics checks and report errors, tolerances and environment."""
     results = [r.to_dict() for r in run_all()]

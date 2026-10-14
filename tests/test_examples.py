@@ -38,11 +38,11 @@ def test_grape_reaches_pi_pulse():
     json.dumps(out)  # JSON-serialisable
 
 
-def test_grape_open_system_uses_trace_overlap_and_improves():
-    # dq.fidelity against a pure target has a NaN gradient for density matrices; the
-    # example switches to the (identical) trace overlap and must still learn.
+def test_grape_open_system_differentiates_the_return_and_improves():
+    # since 0.1.0 the pure-target fidelity has a finite gradient on density matrices,
+    # so the open task is optimised through its own return (no surrogate objective).
     out = grape_jax.run_grape(TASK, steps=30, horizon=10, dt=0.2, gamma1=0.1)
-    assert out["objective"] == "trace_overlap" and out["open_system"]
+    assert out["objective"] == "return" and out["open_system"]
     assert math.isfinite(out["final_return"])
     assert out["final_return"] > max(out["initial_return"], 0.5)
     pi_pulse = benchmark.pi_pulse_return(TASK, horizon=10, dt=0.2, gamma1=0.1)

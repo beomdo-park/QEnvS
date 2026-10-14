@@ -8,7 +8,7 @@ license-files = ["LICENSE", "NOTICE"]
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -74,6 +74,7 @@ include = ["src/qenvs", "tests", "README.md", "LICENSE", "NOTICE", "CITATION.cff
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+extend-exclude = [".claude"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -93,7 +94,7 @@ ignore = ["D100", "D102", "D104", "D105", "D107", "D203", "D213", "E741", "RUF01
 convention = "google"
 
 [tool.codespell]
-skip = ".git,*.ipynb,uv.lock,site"
+skip = ".git,*.ipynb,uv.lock,site,.claude"
 ignore-words-list = "ket,braket,sme"
 
 [tool.pytest.ini_options]

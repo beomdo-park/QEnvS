@@ -19,6 +19,9 @@ theme:
 
 plugins:
   - search
+  - gen-files:
+      scripts:
+        - docs/gen_validation.py
   - mkdocstrings:
       handlers:
         python:
@@ -45,6 +48,7 @@ nav:
       - Qubit battery: models/qubit_battery.md
       - Dicke battery: models/dicke.md
       - Lambda system (STIRAP): models/lambda_system.md
+  - Validation report: validation.md
   - Benchmarks: benchmarks.md
   - Roadmap: roadmap.md
   - API:

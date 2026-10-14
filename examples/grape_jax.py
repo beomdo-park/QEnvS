@@ -14,13 +14,10 @@ Usage::
 Known optimum for the closed ``qubit/StateTransfer-v0`` task: return 1.0 for any pulse
 whose integral ``sum(u dt)`` equals ``pi`` (a pi-pulse).
 
-Open systems: the fidelity reward of ``StateTransfer`` is the Uhlmann fidelity, whose
-gradient through the eigen-decomposition is NaN whenever the target is pure (the matrix
-``sqrt(rho) sigma sqrt(rho)`` is rank one, so a zero eigenvalue is always present). For an
-open environment with a pure ``target`` the optimiser therefore differentiates the trace
-overlap ``tr(rho_T sigma) - tr(rho_0 sigma)``, which is *identical* to the return for a pure
-target (``F(rho, |psi><psi|) = <psi|rho|psi>``). Reported returns are always re-evaluated
-from ``env.rollout`` rewards.
+The optimiser differentiates the environment return directly, for closed and open
+systems alike. Since qenvs 0.1.0 the fidelity to a pure target is ``<psi|rho|psi>``,
+which is exact and has a finite gradient on density matrices (0.0.1 used the general
+Uhlmann formula, whose gradient is NaN for a pure target).
 """
 
 from __future__ import annotations
@@ -58,16 +55,6 @@ def parse_set(items: Sequence[str] | None) -> dict[str, object]:
 def pulse_from_theta(theta: Array, action_bound: float) -> Array:
     """Map unconstrained parameters to bounded control amplitudes."""
     return action_bound * jnp.tanh(theta)
-
-
-def _pure_target(env: object) -> Array | None:
-    """Density matrix of ``env.target`` if the environment has a pure target, else ``None``."""
-    target = getattr(env, "target", None)
-    if target is None:
-        return None
-    sigma = target.todm().to_jax()
-    purity = float(jnp.real(jnp.trace(sigma @ sigma)))
-    return sigma if abs(purity - 1.0) < 1e-6 else None
 
 
 def pulse_summary(actions: Array, dt: float) -> dict[str, list[float]]:
@@ -120,17 +107,10 @@ def run_grape(
         _, rewards = env.rollout(pulse_from_theta(theta, bound))
         return rewards.sum()
 
-    objective_name, objective = "return", lambda theta: -env_return(theta)
-    if env.model.is_open and _pure_target(env) is not None:
-        # exact, differentiable stand-in for the Uhlmann fidelity gain (see module docstring)
-        sigma = _pure_target(env)
-        f0 = jnp.real(jnp.trace(env.reset(jax.random.PRNGKey(0))[0].qstate.to_jax() @ sigma))
+    objective_name = "return"
 
-        def objective(theta: Array) -> Array:
-            state, _ = env.rollout(pulse_from_theta(theta, bound))
-            return -(jnp.real(jnp.trace(state.qstate.to_jax() @ sigma)) - f0)
-
-        objective_name = "trace_overlap"
+    def objective(theta: Array) -> Array:
+        return -env_return(theta)
 
     tx = optax.adam(lr)
 

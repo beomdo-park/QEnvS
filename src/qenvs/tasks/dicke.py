@@ -41,11 +41,12 @@ register(
         "the ergotropy of the reduced cell state, cavity traced out (reward='ergotropy'); "
         "return = Q_final - Q_initial, Q <= N omega0. Constant g charges in a time that "
         "decreases with N (collective advantage): the fitted exponent in this protocol is "
-        "about -0.40 for N <= 48, below the asymptotic N^(-1/2) of Ferraro et al. "
+        "about -0.40 for N <= 48 (Ferraro et al. state N^(-1/2); not established here). "
         "Switching g to 0 holds the charge. WARNING: for rwa=False the default Fock cutoff "
-        "n_max = n_photons + 4 is NOT converged at the default action_bound = 0.5 (N=3 "
-        "constant-g return 1.75 vs 1.53 converged, about 15 percent); set n_max >= "
-        "n_photons + 24 or action_bound <= 0.1 and watch the 'top_fock' observable."
+        "n_max = n_photons + 4 is NOT converged at the default action_bound = 0.5, and the "
+        "needed cutoff grows with N (N=3: return 1.75 vs 1.53 converged at n_photons + 24; "
+        "N=6 needs about n_photons + 56). Raise n_max until the 'top_fock' observable stays "
+        "below about 1e-4 over the episode, or keep action_bound <= 0.1 for N <= 4."
     ),
     model="qenvs.models.DickeBattery",
     references=(
@@ -60,8 +61,8 @@ register(
         "n_cells": "int, number of two-level cells N (default 3)",
         "n_photons": "int, initial cavity Fock number (default n_cells)",
         "n_max": (
-            "int, Fock cutoff (default n_photons if rwa else n_photons + 4; NOT converged for "
-            "rwa=False at action_bound=0.5, see the task description)"
+            "int, Fock cutoff (default n_photons if rwa else n_photons + 4; for rwa=False "
+            "converge it with the top_fock observable, see the task description)"
         ),
         "omega0": "float, cell transition frequency, energy unit of H_B (default 1.0)",
         "omega_c": "float, cavity frequency; detuning omega_c - omega0 (default 1.0, resonant)",

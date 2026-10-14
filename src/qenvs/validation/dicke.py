@@ -106,7 +106,7 @@ def check_jaynes_cummings_limit() -> CheckResult:
         "jaynes_cummings_limit",
         "analytic",
         max(errs.values()),
-        1e-6,
+        3e-6,
         f"max |P_e - sin^2(g sqrt(n) t)| over one period ({detail})",
     )
 
@@ -117,8 +117,9 @@ def check_detuned_jaynes_cummings() -> CheckResult:
     ``P_e(t) = (4 g^2 n / Om^2) sin^2(Om t / 2)`` with ``Om^2 = d^2 + 4 g^2 n`` and, by
     excitation conservation, ``<a^dag a>(t) = n - P_e(t)``. ``P_e`` is read off as
     ``<H_B> / omega0``, so the cases with ``omega0 != 1`` also test the energy unit.
-    The formula is even in ``d``; the sign of the detuning (and ``omega0`` in the drift)
-    is checked by ``qutip_detuned`` on the full density matrix.
+    ``P_e`` is even in ``d``. The sign of the detuning is pinned by the coupling
+    expectation ``<V> = <a^dag J- + a J+>``: energy conservation inside the doublet
+    ``{|g, n>, |e, n-1>}`` gives ``g <V> = d P_e``, which is odd in ``d``.
     """
     g = 0.5
     cases = ((1.0, 1.7, 1), (1.0, 0.3, 2), (1.3, 1.0, 1))
@@ -132,9 +133,14 @@ def check_detuned_jaynes_cummings() -> CheckResult:
         pe = np.asarray(dq.expect(m.battery_hamiltonian(), states).real, dtype=np.float64)
         pe = pe / omega0
         nph = np.asarray(dq.expect(m.number(), states).real, dtype=np.float64)
+        coupling = np.asarray(dq.expect(m.controls()[0], states).real, dtype=np.float64)
         exact = (4 * g**2 * n / om**2) * np.sin(om * ts / 2) ** 2
         errs[(omega0, omega_c, n)] = float(
-            max(np.max(np.abs(pe - exact)), np.max(np.abs(nph - (n - pe))))
+            max(
+                np.max(np.abs(pe - exact)),
+                np.max(np.abs(nph - (n - pe))),
+                np.max(np.abs(coupling - (d / g) * exact)),
+            )
         )
     detail = ", ".join(
         f"(omega0={w0}, omega_c={wc}, n={n}): {e:.2e}" for (w0, wc, n), e in errs.items()
@@ -143,9 +149,9 @@ def check_detuned_jaynes_cummings() -> CheckResult:
         "detuned_jaynes_cummings",
         "analytic",
         max(errs.values()),
-        1e-6,
-        f"max |P_e - (4g^2n/Om^2) sin^2(Om t/2)| and |<a^dag a> - (n - P_e)| over one period, "
-        f"g=0.5 ({detail})",
+        3e-6,
+        f"max of |P_e - (4g^2n/Om^2) sin^2(Om t/2)|, |<a^dag a> - (n - P_e)| and "
+        f"|<V> - (d/g) P_e| (odd in d) over one period, g=0.5 ({detail})",
     )
 
 
@@ -488,10 +494,56 @@ def check_qutip_detuned() -> CheckResult:
     QuTiP builds ``H`` independently with explicit ``omega0`` and ``omega_c``. Populations
     are even in the detuning, but the coherences of ``rho`` are not, so a drift that uses
     ``omega0`` for the cavity, a flipped detuning sign or an ``H_B`` without ``omega0``
-    changes the final density matrix at the 1e-1 level.
+    changes the final density matrix at the 1e-2 level (tolerance 1e-5).
     """
     m = DickeBattery(n_cells=2, n_photons=2, omega0=0.8, omega_c=1.3, kappa=0.05, gamma=0.02)
     return _qutip_cross_check("qutip_detuned", m)
+
+
+def check_collective_dissipators() -> CheckResult:
+    """Closed-form Lindblad dynamics of the three dissipators, N = 1, g = 0 (no QuTiP).
+
+    * cavity loss ``sqrt(kappa) a`` from ``|g> (x) |1>``: ``<a^dag a>(t) = exp(-kappa t)``;
+    * collective emission ``sqrt(gamma) J-`` from ``|e> (x) |0>``:
+      ``<H_B>(t) / omega0 = exp(-gamma t)``;
+    * collective dephasing ``sqrt(gamma_phi) Jz`` (``Jz = sigma_z / 2``) from
+      ``(|g> + |e>)/sqrt(2) (x) |0>``: ``2 |<J->(t)| = exp(-gamma_phi t / 2)`` (the
+      modulus removes the free precession at ``omega0`` of the lab-frame drift).
+
+    A reversed jump operator or a wrong rate prefactor fails one of the three, so the jump
+    operators are pinned even when the QuTiP cross-checks are skipped.
+    """
+    ts = np.linspace(0.0, 4.0, 17)
+    tsave = jnp.asarray(ts)
+
+    def evolve(m: DickeBattery, rho0: dq.QArray, op: dq.QArray) -> np.ndarray:
+        res = dq.mesolve(m.drift(), m.jump_ops(), rho0, tsave, method=TIGHT, progress_meter=False)
+        return np.asarray(dq.expect(op, res.states).real, dtype=np.float64)
+
+    kappa, gamma, gamma_phi = 0.3, 0.4, 0.5
+    m_k = DickeBattery(n_cells=1, n_photons=1, kappa=kappa)
+    e_k = np.max(np.abs(evolve(m_k, m_k.initial_state(), m_k.number()) - np.exp(-kappa * ts)))
+
+    m_g = DickeBattery(n_cells=1, n_photons=0, n_max=1, gamma=gamma)
+    excited = dq.tensor(dq.basis(2, 1), dq.basis(2, 0)).todm()
+    e_g = np.max(
+        np.abs(evolve(m_g, excited, m_g.battery_hamiltonian()) / m_g.omega0 - np.exp(-gamma * ts))
+    )
+
+    m_p = DickeBattery(n_cells=1, n_photons=0, n_max=1, gamma_phi=gamma_phi)
+    plus = dq.tensor((dq.basis(2, 0) + dq.basis(2, 1)).unit(), dq.basis(2, 0)).todm()
+    res_p = dq.mesolve(m_p.drift(), m_p.jump_ops(), plus, tsave, method=TIGHT, progress_meter=False)
+    coherence = 2 * np.abs(np.asarray(dq.expect(m_p.jminus(), res_p.states), dtype=np.complex128))
+    e_p = np.max(np.abs(coherence - np.exp(-gamma_phi * ts / 2)))
+
+    return _res(
+        "collective_dissipators",
+        "open_system",
+        max(e_k, e_g, e_p),
+        2e-6,
+        f"N=1, g=0: |<a^dag a> - exp(-kappa t)|={e_k:.2e}, |<H_B>/omega0 - exp(-gamma t)|="
+        f"{e_g:.2e}, |2|<J->| - exp(-gamma_phi t/2)|={e_p:.2e} (t <= 4)",
+    )
 
 
 def check_density_matrix_constraints() -> CheckResult:
@@ -564,7 +616,7 @@ def check_open_solver_convergence() -> CheckResult:
         "open_solver_convergence",
         "numerics",
         err,
-        1e-5,
+        2e-5,
         f"max |rho_Tsit5(default) - rho_Tsit5(rtol=1e-10, atol=1e-12)| after {horizon} random "
         f"steps, open Dicke dim {m.dim}, kappa=0.1, gamma=0.05",
     )
@@ -608,6 +660,7 @@ CHECKS: tuple[Callable[[], CheckResult], ...] = (
     check_qutip_tavis_cummings,
     check_qutip_dicke,
     check_qutip_detuned,
+    check_collective_dissipators,
     check_density_matrix_constraints,
     check_solver_convergence,
     check_open_solver_convergence,

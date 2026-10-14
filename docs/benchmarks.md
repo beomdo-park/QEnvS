@@ -82,19 +82,15 @@ baselines 0.123 and 0.112.
 
 ## Differentiability note (open systems)
 
-`StateTransfer` rewards the gain in `dynamiqs.fidelity`. For density matrices that is the
-Uhlmann fidelity, computed through an eigen-decomposition of $\sqrt{\rho}\,\sigma\sqrt{\rho}$.
-With a pure target this matrix has rank one, so a zero eigenvalue is always present and the
-gradient of $\sqrt{\lambda}$ at $\lambda = 0$ is NaN. `jax.grad` through `env.rollout` of the
-open task therefore returns NaN (the forward pass is fine; PPO is unaffected because it never
-differentiates through the environment). `run_grape` detects an open environment with a pure
-`target` and differentiates the trace overlap $\mathrm{tr}(\rho_T\sigma) - \mathrm{tr}(\rho_0\sigma)$
-instead, which is identical to the return for a pure target
-($F(\rho, |\psi\rangle\langle\psi|) = \langle\psi|\rho|\psi\rangle$; agreement to 1e-16 was checked
-on a random pulse). The reported returns are always re-evaluated from `env.rollout` rewards,
-and the output dict records which objective was differentiated (`"objective": "return"` or
-`"trace_overlap"`). Tasks whose reward is already differentiable (closed systems, energy
-rewards) use the return directly.
+`run_grape` differentiates the environment return directly for closed and open tasks.
+In qenvs 0.0.1 the `StateTransfer` reward used the general Uhlmann fidelity, whose
+gradient is NaN for a pure target on density matrices (the matrix
+$\sqrt{\rho}\,\sigma\sqrt{\rho}$ has rank one, and $d\sqrt{\lambda}/d\lambda$ diverges at
+$\lambda = 0$); the first version of this example worked around it with the identical trace
+overlap. Since 0.1.0 `qenvs.observables.fidelity` evaluates a pure target as
+$\langle\psi|\rho|\psi\rangle$, which is exact and differentiable, so the workaround was
+removed. The returns in the table above are unchanged, because both objectives are equal for
+a pure target.
 
 ## Reproduce
 
@@ -131,5 +127,5 @@ No GPU was used. Timings are for a shared machine and vary by a few tens of perc
   GRAPE and makes no claim of optimality for the open variant.
 * PPO uses a state-independent Gaussian `log_std` and clips actions through the environment
   (no tanh squashing); the open-variant result is untuned.
-* The trace-overlap objective applies only to environments with a pure `target` attribute;
-  open tasks with mixed targets would need a differentiable fidelity in the library.
+* Gradients through a *mixed* target still use the general Uhlmann fidelity, whose
+  gradient can be singular; all registered tasks use pure targets.
