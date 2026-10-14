@@ -5,7 +5,7 @@ from __future__ import annotations
 from qenvs.envs.base import Environment
 from qenvs.envs.battery import BatteryCharging
 from qenvs.models.dicke import DickeBattery
-from qenvs.registry import register
+from qenvs.registry import DIMENSIONLESS_UNITS, register
 
 
 def _optional_int(value: object) -> int | None:
@@ -57,6 +57,7 @@ register(
         "Erdman, Andolina, Giovannetti, Noé, Phys. Rev. Lett. 133, 243602 (2024), arXiv:2212.12397",
         "Shammah, Ahmed, Lambert, De Liberato, Nori, Phys. Rev. A 98, 063815 (2018)",
     ),
+    units={**DIMENSIONLESS_UNITS, "control": "collective coupling g(t) in units of omega0"},
     kwargs={
         "n_cells": "int, number of two-level cells N (default 3)",
         "n_photons": "int, initial cavity Fock number (default n_cells)",

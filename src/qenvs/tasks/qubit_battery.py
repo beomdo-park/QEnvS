@@ -5,7 +5,7 @@ from __future__ import annotations
 from qenvs.envs.base import Environment
 from qenvs.envs.battery import BatteryCharging
 from qenvs.models.qubit_battery import QubitBattery
-from qenvs.registry import register
+from qenvs.registry import DIMENSIONLESS_UNITS, register
 
 MODEL_RATE_KWARGS = ("detuning", "gamma1", "n_th", "gamma_phi")
 
@@ -37,6 +37,10 @@ register(
         "Alicki & Fannes, Phys. Rev. E 87, 042123 (2013)",
         "Breuer & Petruccione, The Theory of Open Quantum Systems (2002), Sec. 3.4",
     ),
+    units={
+        **DIMENSIONLESS_UNITS,
+        "control": "amplitude u multiplies sigma_x/2, Rabi frequency u (units of omega0)",
+    },
     kwargs={
         "horizon": "int, control steps per episode (default 20)",
         "dt": "float, control period (default 0.1)",

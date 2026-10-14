@@ -23,7 +23,15 @@ class TaskSpec:
     model: str
     references: tuple[str, ...] = field(default_factory=tuple)
     kwargs: dict[str, str] = field(default_factory=dict)
+    units: dict[str, str] = field(default_factory=dict)
 
+
+#: Units of the dimensionless models (TwoLevel, QubitBattery, DickeBattery, LambdaSystem).
+DIMENSIONLESS_UNITS: dict[str, str] = {
+    "energy": "units of omega0 (the transition frequency of the model); omega0 = 1 by default",
+    "time": "units of 1/omega0; hbar = 1",
+    "rates": "decay, dephasing and loss rates in units of omega0",
+}
 
 registry: dict[str, TaskSpec] = {}
 
@@ -36,6 +44,7 @@ def register(
     model: str,
     references: tuple[str, ...] = (),
     kwargs: dict[str, str] | None = None,
+    units: dict[str, str] | None = None,
 ) -> None:
     """Register a task factory under ``task_id``."""
     if task_id in registry:
@@ -48,6 +57,7 @@ def register(
         model=model,
         references=references,
         kwargs=kwargs or {},
+        units=dict(units) if units else dict(DIMENSIONLESS_UNITS),
     )
 
 

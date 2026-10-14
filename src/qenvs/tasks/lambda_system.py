@@ -7,7 +7,7 @@ import dynamiqs as dq
 from qenvs.envs.base import Environment
 from qenvs.envs.state_transfer import StateTransfer
 from qenvs.models.lambda_system import LambdaSystem
-from qenvs.registry import register
+from qenvs.registry import DIMENSIONLESS_UNITS, register
 
 
 def _lambda_stirap(**kw: object) -> Environment:
@@ -42,6 +42,12 @@ register(
         "Vitanov, Rangelov, Shore & Bergmann, Rev. Mod. Phys. 89, 015006 (2017)",
         "Shore, Acta Physica Slovaca 58, 243 (2008)",
     ),
+    units={
+        **DIMENSIONLESS_UNITS,
+        "control": (
+            "pump and Stokes Rabi frequencies (Omega_p, Omega_s) in units of the inverse time unit"
+        ),
+    },
     kwargs={
         "horizon": "int, control steps per episode (default 100)",
         "dt": "float, control period (default 0.2, so T = 20)",

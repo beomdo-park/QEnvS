@@ -7,7 +7,7 @@ import dynamiqs as dq
 from qenvs.envs.base import Environment
 from qenvs.envs.state_transfer import StateTransfer
 from qenvs.models.two_level import TwoLevel
-from qenvs.registry import register
+from qenvs.registry import DIMENSIONLESS_UNITS, register
 
 
 def _qubit_state_transfer(**kw: object) -> Environment:
@@ -32,6 +32,10 @@ register(
         "Rabi, Phys. Rev. 51, 652 (1937)",
         "Breuer & Petruccione, The Theory of Open Quantum Systems (2002), Sec. 3.4",
     ),
+    units={
+        **DIMENSIONLESS_UNITS,
+        "control": "amplitude u multiplies sigma_x/2, Rabi frequency u (units of omega0)",
+    },
     kwargs={
         "horizon": "int, control steps per episode (default 20)",
         "dt": "float, control period (default 0.1)",
