@@ -49,6 +49,7 @@ nav:
       - Dicke battery: models/dicke.md
       - Lambda system (STIRAP): models/lambda_system.md
   - Validation report: validation.md
+  - Review log: review-log.md
   - Benchmarks: benchmarks.md
   - Roadmap: roadmap.md
   - API:

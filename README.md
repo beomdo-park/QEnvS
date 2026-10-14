@@ -120,6 +120,14 @@ Each model has a page under `docs/models/` with its Hamiltonian, assumptions and
 (table in [docs/benchmarks.md](docs/benchmarks.md)). Closed `qubit/StateTransfer-v0`,
 3 seeds, about a minute on CPU: GRAPE 1.0000, PPO 0.9997 +- 0.0002 (optimum 1.0).
 
+`examples/benchmark_battery.py` charges the battery tasks and compares GRAPE and PPO
+with a provable optimum (closed resonant Dicke and qubit batteries reduce to a single
+pulse-area parameter) and a one-pulse physical baseline. GRAPE reaches the optimum on
+every closed task ($N$ = 2, 4, 8); on the open Dicke batteries no method found more than
+the best single rectangular pulse, while time-shaped GRAPE pulses win on the open qubit
+battery. PPO at default settings stays within about 2 percent of the closed optima. Tables
+in [docs/benchmarks.md](docs/benchmarks.md#battery-charging-benchmark).
+
 ## Why not X?
 
 * **qutip-qoc / GRAPE / CRAB** optimise a pulse for one fixed model; QEnvS gives

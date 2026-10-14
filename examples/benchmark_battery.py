@@ -4,7 +4,7 @@ For every task variant the script reports, per method, the stored energy and the
 ergotropy of the battery at the end of the episode (both divided by the maximum
 ``N omega0``), the control energy ``sum(g^2 dt)`` and the wall-clock time::
 
-    python examples/benchmark_battery.py              # markdown table (about 10 min, CPU)
+    python examples/benchmark_battery.py              # markdown table (about 20 min, CPU)
     python examples/benchmark_battery.py --quick      # smoke settings (seconds)
     python examples/benchmark_battery.py --json --out battery_bench.json
 
