@@ -44,14 +44,18 @@ extra_javascript:
 
 nav:
   - Home: index.md
+  - Getting started: getting-started.md
   - Models:
       - Qubit battery: models/qubit_battery.md
       - Dicke battery: models/dicke.md
       - Lambda system (STIRAP): models/lambda_system.md
-  - Validation report: validation.md
-  - Review log: review-log.md
+  - Validation:
+      - Validation report: validation.md
+      - Review log: review-log.md
   - Benchmarks: benchmarks.md
-  - Roadmap: roadmap.md
+  - Project:
+      - Stability and versioning: stability.md
+      - Roadmap: roadmap.md
   - API:
       - Models: api/models.md
       - Environments: api/envs.md

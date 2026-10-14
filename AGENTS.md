@@ -6,7 +6,7 @@ Read this before changing anything.
 ## Commands
 
 ```bash
-uv sync --extra dev                 # install (Python 3.11/3.12)
+uv sync --extra dev                 # install (Python 3.11 to 3.13)
 uv run pytest -n auto               # tests (physics checks live in src/qenvs/validation/<model>.py)
 uv run ruff check . && uv run ruff format .
 uv run qenvs validate               # prints per-check error vs tolerance + versions

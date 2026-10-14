@@ -1,0 +1,31 @@
+name: New model or task proposal
+description: Propose a physical model or control task for the zoo.
+labels: [new model]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every model in QEnvS ships with validation checks against closed-form results or an independent simulator (see AGENTS.md, rule 1). Proposals that name those references are the easiest to accept.
+  - type: textarea
+    id: physics
+    attributes:
+      label: Hamiltonian, dissipators and controls
+      description: Equations, basis ordering, units, and which parameters an agent controls.
+    validations:
+      required: true
+  - type: textarea
+    id: checks
+    attributes:
+      label: Reference results for validation
+      description: Closed-form limits, conserved quantities, known optima, or published numbers that a check can compare against.
+    validations:
+      required: true
+  - type: textarea
+    id: task
+    attributes:
+      label: Control task
+      description: Initial state, target or reward, horizon, why it matters (paper, hardware, benchmark).
+  - type: textarea
+    id: refs
+    attributes:
+      label: References

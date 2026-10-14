@@ -7,6 +7,8 @@ Tasks: `qubit/StateTransfer-v0`, `battery/TwoLevel-v0`, `battery/Dicke-v0`, `tra
 ## Docs
 
 - [Overview and quickstart](https://beomdo-park.github.io/QEnvS/): install, functional API, gradient-based control, Gymnasium usage
+- [Getting started](https://beomdo-park.github.io/QEnvS/getting-started/): install (CPU, GPU), checking the installation, precision, troubleshooting
+- [Stability and versioning](https://beomdo-park.github.io/QEnvS/stability/): task-id versioning, API and CLI stability rules, supported Python / jax / OS versions
 - [Model: qubit battery](https://beomdo-park.github.io/QEnvS/models/qubit_battery/): task `battery/TwoLevel-v0`, open qubit with thermal bath, energy / ergotropy rewards, validation table
 - [Model: Dicke battery](https://beomdo-park.github.io/QEnvS/models/dicke/): task `battery/Dicke-v0`, N cells + cavity (Tavis-Cummings / Dicke), collective charging, Fock-cutoff caveats, validation table
 - [Model: Lambda system](https://beomdo-park.github.io/QEnvS/models/lambda_system/): task `transfer/LambdaSTIRAP-v0`, three-level STIRAP transfer with spontaneous emission, validation table

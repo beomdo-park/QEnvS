@@ -1,0 +1,47 @@
+name: Bug report
+description: Something computes the wrong thing, crashes, or does not install.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. A minimal script that reproduces the problem is the most useful thing you can give.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of problem
+      options:
+        - Physics looks wrong (a result disagrees with theory or another simulator)
+        - Numerical problem (NaN, solver error, precision)
+        - Crash or exception
+        - Installation or dependency conflict
+        - Documentation is wrong or unclear
+    validations:
+      required: true
+  - type: input
+    id: task
+    attributes:
+      label: Task id or model
+      placeholder: e.g. battery/Dicke-v0, or a custom HamiltonianModel
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: Python code or `qenvs ...` commands that show the problem.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected versus actual
+      description: For physics problems, say where the expected value comes from (closed form, paper, QuTiP, hardware).
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `qenvs doctor --json`
+      render: json
+    validations:
+      required: true

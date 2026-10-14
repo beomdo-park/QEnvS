@@ -1,5 +1,7 @@
 # Contributing
 
+Participation follows the [code of conduct](CODE_OF_CONDUCT.md). Report security issues privately as described in [SECURITY.md](SECURITY.md).
+
 ```bash
 git clone https://github.com/beomdo-park/QEnvS && cd qenvs
 uv sync --extra dev          # or: pip install -e '.[dev]'

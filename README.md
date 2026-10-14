@@ -29,6 +29,8 @@ the same model serves RL (PPO/SAC), GRAPE-style optimal control and MPC.
 
 ## Install
 
+Full instructions, GPU setup and troubleshooting: [Getting started](https://beomdo-park.github.io/QEnvS/getting-started/). Supported versions and the API stability policy: [Stability and versioning](https://beomdo-park.github.io/QEnvS/stability/).
+
 ```bash
 pip install qenvs            # core: jax + dynamiqs
 pip install 'qenvs[gym]'     # + gymnasium adapter (stable-baselines3, CleanRL, ...)
