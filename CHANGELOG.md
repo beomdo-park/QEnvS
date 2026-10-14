@@ -15,6 +15,15 @@ suffix (`-vN`); a released task is never changed in place.
 - Review log page with the counterexamples found in adversarial review and the checks
   that now guard against them.
 
+### Changed
+
+- Dependency range widened: `jax>=0.4.36,<0.11` (was `<0.8`); jax 0.8 to 0.10 are tested.
+  Lower bounds added for `equinox`, `numpy` and the dev tools; `qutip>=5.1` (5.0 imports
+  setuptools at runtime without declaring it).
+- CI tests Python 3.11, 3.12, 3.13 on Linux, Python 3.12 on macOS, and the lowest allowed
+  versions of every direct dependency.
+- The package ships a `py.typed` marker.
+
 ### Fixed
 
 - `run_ppo`: the discount factor was named `gamma`, which captured the `gamma` emission

@@ -44,7 +44,8 @@ and exit code 1. Docs index for LLMs: https://beomdo-park.github.io/QEnvS/llms.t
 3. Core deps stay `jax`, `dynamiqs`, `equinox`, `numpy`. Anything else is an optional extra.
 4. Index 1 is the excited state. Do not use `dq.sigmam()`/`sigmap()` for relaxation (QuTiP spin
    convention is reversed); build `|0><1|` explicitly.
-5. `jax<0.8` pin exists because dynamiqs 0.3.6 fails to import on jax>=0.8. Re-test before loosening.
+5. `jax<0.11` pin exists because dynamiqs 0.3.6 fails to import on jax 0.11 (fixed upstream in
+   dynamiqs#1140, unreleased). CI tests the lowest and the highest allowed versions.
 6. Do not copy code from repositories without an OSI license (e.g. RL4qcWpc). Attribute reuse in `NOTICE`.
 7. Silence solver progress bars (`progress_meter=False`) so `--json` output stays clean.
 8. Plain ASCII punctuation in code, comments, docs and notebooks: no middle dot (U+00B7), no en/em dash

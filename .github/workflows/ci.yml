@@ -28,11 +28,22 @@ jobs:
           ! LC_ALL=C.UTF-8 grep -rnIP --exclude-dir=assets '[\x{00B7}\x{2013}\x{2014}]' src tests docs examples README.md AGENTS.md CONTRIBUTING.md
 
   test:
-    runs-on: ubuntu-latest
+    name: test (${{ matrix.os }}, py${{ matrix.python-version }}${{ matrix.resolution == 'lowest-direct' && ', lowest deps' || '' }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
+        os: [ubuntu-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+        resolution: [highest]
+        include:
+          - os: macos-latest
+            python-version: "3.12"
+            resolution: highest
+          # oldest versions allowed by pyproject.toml (jax 0.4.36, numpy 1.26, qutip 5.1, ...)
+          - os: ubuntu-latest
+            python-version: "3.11"
+            resolution: lowest-direct
     env:
       UV_PYTHON: ${{ matrix.python-version }}
       JAX_PLATFORMS: cpu
@@ -44,8 +55,17 @@ jobs:
         with:
           enable-cache: true
       - run: uv python install ${{ matrix.python-version }}
-      - run: uv sync --extra dev
-      - run: uv run --extra dev pytest -n auto
+      - name: install (locked, newest allowed versions)
+        if: matrix.resolution == 'highest'
+        run: uv sync --extra dev
+      - name: install (lowest allowed direct dependencies)
+        if: matrix.resolution == 'lowest-direct'
+        run: |
+          uv venv
+          uv pip install --resolution lowest-direct -e ".[dev]"
+      - name: versions
+        run: uv run --no-sync python -c "import sys, jax, dynamiqs, numpy, qutip; print(sys.version, jax.__version__, dynamiqs.__version__, numpy.__version__, qutip.__version__)"
+      - run: uv run --no-sync pytest -n auto
 
   build:
     runs-on: ubuntu-latest

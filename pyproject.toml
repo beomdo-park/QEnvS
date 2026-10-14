@@ -13,17 +13,19 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
     "Topic :: Scientific/Engineering :: Physics",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 keywords = ["quantum control", "reinforcement learning", "quantum battery", "open quantum systems", "jax", "gymnasium"]
 dependencies = [
-    # jax<0.8: dynamiqs 0.3.6 fails to import with jax>=0.8 (UnionType | str in qarray.py).
-    # Loosen once dynamiqs ships a fix.
-    "jax>=0.4.36,!=0.7.0,!=0.7.1,<0.8",
+    # jax<0.11: dynamiqs 0.3.6 fails to import with jax 0.11 (types.UnionType | str in
+    # qarray.py, fixed upstream in dynamiqs#1140 but not released yet). 0.8 to 0.10 work.
+    "jax>=0.4.36,!=0.7.0,!=0.7.1,<0.11",
     "dynamiqs>=0.3.6",
-    "equinox",
-    "numpy",
+    "equinox>=0.11.10",
+    "numpy>=1.26",
 ]
 
 [project.scripts]
@@ -33,13 +35,13 @@ qenvs = "qenvs.cli:main"
 gym = ["gymnasium>=1.0"]
 dev = [
     "qenvs[gym]",
-    "pytest>=8",
-    "pytest-xdist",
+    "pytest>=8.2",
+    "pytest-xdist>=3.5",
     "ruff>=0.8",
-    "codespell",
-    "pre-commit",
-    "qutip>=5",          # reference implementation for validation tests
-    "optax",             # gradient baselines in examples/
+    "codespell>=2.3",
+    "pre-commit>=3.5",
+    "qutip>=5.1",        # reference implementation for validation tests (5.0 needs setuptools at runtime)
+    "optax>=0.2.3",      # gradient baselines in examples/
 ]
 docs = [
     "mkdocs-material",
