@@ -69,3 +69,11 @@ class Environment(eqx.Module):
     @abc.abstractmethod
     def step(self, state: EnvState, action: Array) -> tuple[EnvState, TimeStep]:
         """Advance one control interval."""
+
+    def info(self, state: EnvState) -> dict[str, Array]:
+        """Diagnostics of ``state`` (the same dictionary ``step`` puts in ``TimeStep.info``).
+
+        Use it after ``rollout`` to read fidelity, energy, populations or leakage of the
+        final state without stepping again.
+        """
+        return self._info(state.qstate, state.t)  # type: ignore[attr-defined]

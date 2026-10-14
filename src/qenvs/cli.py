@@ -6,6 +6,8 @@ Designed to be read by humans and by coding agents alike::
     qenvs info qubit/StateTransfer-v0 --json
     qenvs run qubit/StateTransfer-v0 --policy pi-pulse --json
     qenvs validate --json
+    qenvs validate --model package.module:attr --json
+    qenvs validate --model package.module:attr --reference package.module:ref_attr
     qenvs doctor --json
 
 Errors are reported as ``{"error": {"code": ..., "message": ...}}`` with exit code 1
@@ -76,19 +78,33 @@ def cmd_run(args: argparse.Namespace) -> int:
 
 def cmd_validate(args: argparse.Namespace) -> int:
     """Run physics checks and print errors vs tolerances."""
-    out = toolkit.validate()
+    if getattr(args, "reference", None) and not getattr(args, "model", None):
+        msg = "--reference needs --model (the model to be checked against the reference)"
+        raise ValueError(msg)
+    if getattr(args, "model", None):
+        model = toolkit.load_model(args.model)
+        kwargs = {}
+        if getattr(args, "reference", None):
+            kwargs["reference"] = toolkit.load_model(args.reference)
+        out = toolkit.validate_model(model, **kwargs)
+    else:
+        out = toolkit.validate()
     if getattr(args, "markdown", False):
         sys.stdout.write(toolkit.validation_markdown(out))
         return 0 if out["all_passed"] else 1
-    rows = [f"{'model':14s} {'check':32s} {'category':16s} {'error':>10s} {'tol':>8s}  status"]
-    for c in out["checks"]:
+    names = [str(c["model"] or "TwoLevel") for c in out["checks"]]
+    mw = max([14, *(len(n) for n in names)])
+    rows = [f"{'model':{mw}s} {'check':32s} {'category':16s} {'error':>10s} {'tol':>8s}  status"]
+    for c, model_name in zip(out["checks"], names, strict=True):
         status = "SKIP" if c["skipped"] else ("PASS" if c["passed"] else "FAIL")
         rows.append(
-            f"{(c['model'] or 'TwoLevel')[:14]:14s} {c['name'][:32]:32s} {c['category'][:16]:16s} "
-            f"{c['error']:10.2e} {c['tolerance']:8.0e}  {status}"
+            f"{model_name:{mw}s} {c['name'][:32]:32s} {c['category'][:16]:16s} "
+            f"{c['error']:10.2e} {toolkit.fmt_tol(c['tolerance']):>8s}  {status}"
         )
     n_ok = sum(1 for c in out["checks"] if c["passed"])
     rows.append(f"\n{n_ok}/{len(out['checks'])} passed, {out['n_skipped']} skipped")
+    if any(c["name"] == "qutip_solver_cross_check" for c in out["checks"]):
+        rows.append(f"note: {toolkit.SOLVER_ONLY_NOTE.replace('`', '')}")
     rows.append("")
     rows += [f"{k}: {v}" for k, v in out["environment"].items()]
     _emit(out, args.json, "\n".join(rows))
@@ -133,6 +149,19 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(func=cmd_run)
 
     s = sub.add_parser("validate", help="run physics validation checks and report errors")
+    s.add_argument(
+        "--model",
+        metavar="PACKAGE.MODULE:ATTR",
+        help="validate your own model with the generic checks instead of the built-in suite; "
+        "ATTR is a qenvs Model instance or a zero-argument callable returning one",
+    )
+    s.add_argument(
+        "--reference",
+        metavar="PACKAGE.MODULE:ATTR",
+        help="with --model: an independently built model of the intended physics; QuTiP "
+        "integrates it and the result is compared with --model (check qutip_cross_check, "
+        "the only generic check that can detect a wrong operator)",
+    )
     fmt = s.add_mutually_exclusive_group()
     fmt.add_argument("--json", action="store_true")
     fmt.add_argument(
@@ -150,6 +179,7 @@ ERROR_CODES: dict[type[Exception], str] = {
     KeyError: "unknown_task",
     ValueError: "invalid_argument",
     argparse.ArgumentTypeError: "invalid_argument",
+    toolkit.InvalidModelError: "invalid_model",
 }
 
 
@@ -161,7 +191,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         return int(args.func(args))
-    except (KeyError, ValueError, argparse.ArgumentTypeError) as e:
+    except (KeyError, ValueError, argparse.ArgumentTypeError, toolkit.InvalidModelError) as e:
         code = next(c for t, c in ERROR_CODES.items() if isinstance(e, t))
         msg = e.args[0] if e.args else str(e)
         if getattr(args, "json", False):

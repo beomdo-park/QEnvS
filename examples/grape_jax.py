@@ -1,4 +1,4 @@
-"""GRAPE-like open-loop pulse optimisation through a QEnvS environment with optax.
+r"""GRAPE-like open-loop pulse optimisation through a QEnvS environment with optax.
 
 The pulse is parametrised as ``actions = action_bound * tanh(theta)`` with ``theta`` of
 shape ``(horizon, action_dim)``, so every amplitude stays inside the environment's

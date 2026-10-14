@@ -24,11 +24,17 @@ class TaskSpec:
     references: tuple[str, ...] = field(default_factory=tuple)
     kwargs: dict[str, str] = field(default_factory=dict)
     units: dict[str, str] = field(default_factory=dict)
+    #: Optional known-good open-loop solution: ``reference(env) -> actions`` of shape
+    #: ``(env.horizon, env.action_dim)``; used by ``qenvs run --policy reference``.
+    reference: Callable[[Environment], object] | None = None
 
 
 #: Units of the dimensionless models (TwoLevel, QubitBattery, DickeBattery, LambdaSystem).
 DIMENSIONLESS_UNITS: dict[str, str] = {
-    "energy": "units of omega0 (the transition frequency of the model); omega0 = 1 by default",
+    "energy": (
+        "units of the transition frequency omega0 of the model; omega0 = 1 unless the task "
+        "exposes an omega0 kwarg"
+    ),
     "time": "units of 1/omega0; hbar = 1",
     "rates": "decay, dephasing and loss rates in units of omega0",
 }
@@ -45,6 +51,7 @@ def register(
     references: tuple[str, ...] = (),
     kwargs: dict[str, str] | None = None,
     units: dict[str, str] | None = None,
+    reference: Callable[[Environment], object] | None = None,
 ) -> None:
     """Register a task factory under ``task_id``."""
     if task_id in registry:
@@ -58,6 +65,7 @@ def register(
         references=references,
         kwargs=kwargs or {},
         units=dict(units) if units else dict(DIMENSIONLESS_UNITS),
+        reference=reference,
     )
 
 

@@ -10,4 +10,12 @@
 
 ::: qenvs.models.LambdaSystem
 
+::: qenvs.models.transmon.Transmon
+
+::: qenvs.models.custom.HamiltonianModel
+
+## Gate fidelity tools
+
+::: qenvs.gates
+
 ::: qenvs.observables

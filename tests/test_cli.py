@@ -115,6 +115,60 @@ def test_validate_markdown_report(capsys):
     code, out = _run(capsys, "validate", "--markdown")
     assert code == 0
     assert out.startswith("**") and "| check | category |" in out
-    for model in ("TwoLevel", "QubitBattery", "DickeBattery", "LambdaSystem"):
+    for model in ("TwoLevel", "QubitBattery", "DickeBattery", "LambdaSystem", "Transmon"):
         assert f"## {model}" in out
     assert "FAIL" not in out
+
+
+@pytest.mark.parametrize(
+    ("task", "expected"),
+    [
+        ("qubit/StateTransfer-v0", 1.0),
+        ("battery/TwoLevel-v0", 1.0),
+        ("transfer/LambdaSTIRAP-v0", 0.9964),
+        ("transmon/XGate-v0", 2 / 3),
+        ("transmon/SXGate-v0", 1 / 3),
+    ],
+)
+def test_run_reference_policy(capsys, task, expected):
+    code, out = _run(capsys, "run", task, "--policy", "reference", "--json")
+    assert code == 0
+    res = json.loads(out)
+    assert res["policy"] == "reference"
+    assert res["return"] == pytest.approx(expected, abs=1e-4)
+
+
+def test_reference_policy_missing_is_a_json_error(capsys):
+    code, out = _run(capsys, "run", "battery/Dicke-v0", "--policy", "reference", "--json")
+    assert code == 1
+    err = json.loads(out)["error"]
+    assert err["code"] == "invalid_argument" and "no registered reference" in err["message"]
+
+
+def test_info_and_run_report_task_units(capsys):
+    code, out = _run(capsys, "info", "transmon/XGate-v0", "--json")
+    info = json.loads(out)
+    assert code == 0 and info["units"]["time"].startswith("ns")
+    assert info["reference_policy"] is True
+    code, out = _run(capsys, "run", "qubit/StateTransfer-v0", "--set", "horizon=3", "--json")
+    res = json.loads(out)
+    assert "1/omega0" in res["units"]["time"]
+    code, out = _run(capsys, "run", "transmon/XGate-v0", "--policy", "zero", "--json")
+    res = json.loads(out)
+    assert res["model_params"]["levels"] == 3 and isinstance(res["model_params"]["levels"], int)
+
+
+def test_environment_info_matches_the_last_step():
+    import jax
+    import jax.numpy as jnp
+
+    import qenvs
+
+    env = qenvs.make("qubit/StateTransfer-v0", horizon=4, dt=0.3)
+    state, ts = env.reset(jax.random.PRNGKey(0))
+    for _ in range(4):
+        state, ts = env.step(state, jnp.ones(env.action_dim))
+    info = env.info(state)
+    assert set(info) == set(ts.info)
+    for k in info:
+        assert float(info[k]) == pytest.approx(float(ts.info[k]))

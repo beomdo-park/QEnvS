@@ -23,17 +23,34 @@ class GymnasiumEnv(gym.Env):
     """Wrap a functional environment as a ``gymnasium.Env`` (single instance, numpy I/O).
 
     ``step`` and ``reset`` are jit-compiled once; subsequent calls are cheap.
-    For large-batch training prefer ``jax.vmap`` over the functional API directly.
+    For batched training use :class:`qenvs.wrappers.vector.GymnasiumVectorEnv` or
+    ``jax.vmap`` over the functional API directly.
+
+    Args:
+        env: functional environment.
+        seed: initial PRNG seed (overridden by ``reset(seed=...)``).
+        normalize_actions: if True, ``action_space`` is ``Box(-1, 1)`` and actions are
+            multiplied by ``env.action_bound`` before stepping (recommended for SB3 and
+            CleanRL, which assume symmetric normalised action spaces). The observation
+            space is unchanged.
+
+    Episode end: every episode ends with ``terminated=True`` after ``env.horizon``
+    steps. QEnvS tasks are fixed-duration control problems: the final time is part of
+    the task (the reward is the fidelity gain, so the return is the final fidelity), so
+    reaching the horizon is a true terminal state, not a time-limit cut-off, and value
+    bootstrapping must not continue past it. ``truncated`` is therefore always False.
     """
 
     metadata = {"render_modes": []}
 
-    def __init__(self, env: Environment, *, seed: int = 0) -> None:
+    def __init__(self, env: Environment, *, seed: int = 0, normalize_actions: bool = False) -> None:
         super().__init__()
         self.env = env
+        self.normalize_actions = normalize_actions
+        self._action_scale = float(env.action_bound) if normalize_actions else 1.0
         self._state: EnvState | None = None
         self._key = jax.random.PRNGKey(seed)
-        b = float(env.action_bound)
+        b = 1.0 if normalize_actions else float(env.action_bound)
         self.action_space = spaces.Box(-b, b, shape=(env.action_dim,), dtype=np.float32)
         self.observation_space = spaces.Box(
             -np.inf, np.inf, shape=(env.observation_dim,), dtype=np.float32
@@ -52,16 +69,18 @@ class GymnasiumEnv(gym.Env):
             self._key = jax.random.PRNGKey(seed)
         self._key, sub = jax.random.split(self._key)
         self._state, ts = self._reset(sub)
-        return np.asarray(ts.observation, dtype=np.float32), _to_numpy(ts.info)
+        return np.array(ts.observation, dtype=np.float32), _to_numpy(ts.info)
 
     def step(self, action: np.ndarray) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
         if self._state is None:
             msg = "call reset() before step()"
             raise RuntimeError(msg)
-        self._state, ts = self._step(self._state, jnp.asarray(action))
-        obs = np.asarray(ts.observation, dtype=np.float32)
+        self._state, ts = self._step(
+            self._state, jnp.asarray(action, dtype=jnp.float32) * self._action_scale
+        )
+        obs = np.array(ts.observation, dtype=np.float32)  # writable copy
         return obs, float(ts.reward), bool(ts.done), False, _to_numpy(ts.info)
 
 
 def _to_numpy(info: dict[str, Any]) -> dict[str, Any]:
-    return {k: np.asarray(v) for k, v in info.items()}
+    return {k: np.array(v) for k, v in info.items()}  # writable copies, not jax views

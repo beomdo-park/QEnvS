@@ -14,7 +14,8 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 QEnvS (Quantum Environment Suite) is a model zoo of open-quantum-system control
-problems, quantum batteries, qubit state transfer, thermal machines, packaged so
+problems (transmon gates, quantum batteries, qubit and three-level state transfer;
+thermal machines later), packaged so
 that you can plug them into an RL agent or a gradient-based optimiser in a few
 lines, instead of re-deriving the physics for every paper.
 
@@ -108,12 +109,20 @@ results, physical constraints and an independent simulator (QuTiP).
 
 | Task id | Model | Dissipation | Validated against | Status |
 |---|---|---|---|---|
+| `transmon/XGate-v0`, `transmon/SXGate-v0` | multi-level transmon (anharmonicity, I/Q drive, RWA) in hardware units (ns, rad/ns; kwargs in GHz and us) | optional T1, T2 (Lindblad; superoperator gate fidelity) | qubit limit, Rabi units, drift spectrum, gate-fidelity closed forms, idle T1/T2 fidelity, harmonic T1 ladder, CPTP superoperator, DRAG coefficient confirmed numerically, QuTiP cross-check, solver convergence | available |
 | `qubit/StateTransfer-v0` | driven qubit | T1, T_phi (Lindblad) | Rabi formula, pi-pulse, T1/T_phi decay, ergotropy, energy conservation, rho constraints, solver convergence | available |
 | `battery/TwoLevel-v0` | open qubit battery (`QubitBattery`) | thermal bath (T1, n_th), T_phi | thermal steady state and stationary Gibbs state, pi-pulse energy = ergotropy = omega0, charging-power bound, QuTiP cross-check, rho constraints, solver convergence | available |
 | `battery/Dicke-v0` | N cells + cavity (Tavis-Cummings / Dicke, symmetric subspace) | cavity loss, collective emission and dephasing | Jaynes-Cummings Rabi formula, excitation conservation, collective charging scaling (Ferraro 2018), RWA vs counter-rotating terms, QuTiP cross-check, rho constraints, operator algebra | available |
 | `transfer/LambdaSTIRAP-v0` | three-level Lambda (pump + Stokes) | spontaneous emission from the excited level | dark state, two-level Rabi limit, STIRAP transfer (P3 > 0.99, P2 < 0.05), intuitive-order and diabatic counterexamples, emission robustness, QuTiP cross-check | available |
 
-Each model has a page under `docs/models/` with its Hamiltonian, assumptions and validation table. See the [roadmap](docs/roadmap.md).
+Each model has a page under `docs/models/` with its Hamiltonian, assumptions and validation table.
+
+Bring your own system: `HamiltonianModel.from_operators(drift, controls, jump_ops, initial_state)`
+accepts NumPy, JAX, dynamiqs or QuTiP operators, plugs into every environment, and
+`qenvs validate --model my_module:MODEL` runs generic physics and numerics checks on it
+([guide](https://beomdo-park.github.io/QEnvS/guides/custom-models/)). For RL libraries,
+`GymnasiumEnv(env, normalize_actions=True)` and the batched `GymnasiumVectorEnv`
+([guide](https://beomdo-park.github.io/QEnvS/guides/rl-libraries/)). See the [roadmap](docs/roadmap.md).
 
 ## Baselines
 

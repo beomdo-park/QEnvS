@@ -151,7 +151,7 @@ the error reflects the model rather than the integrator; the default
 | `ergotropy_le_energy` | 20 random open steps: $0 \le \mathcal{E} \le E$ (max violation) | 1e-7 | 0 |
 | `charging_power_bound` | closed, $u = 1.4$, $\omega_0 = 0.9$: $\lvert \max_t \lvert dE/dt \rvert - \omega_0 u/2 \rvert$, 4th-order finite differences on 201 points | 1e-4 | 9.1e-8 |
 | `env_return_equals_gain` | random open rollout: $\lvert \sum_k r_k - (Q_T - Q_0) \rvert$ for energy and ergotropy | 1e-6 | 0 |
-| `qutip_cross_check` | QuTiP 5 `mesolve`, same $H(t)$ (12 random piecewise-constant steps, $\Delta = 0.3$) and jump operators ($\gamma_1 = 0.4$, $n_{\mathrm{th}} = 0.6$, $\gamma_\phi = 0.15$): $\max \lvert \rho_{\mathrm{dq}} - \rho_{\mathrm{qt}} \rvert$ | 1e-5 | 6.6e-8 |
+| `qutip_cross_check` | QuTiP 5 `mesolve`, same $H(t)$ (12 random piecewise-constant steps, $\Delta = 0.3$) and jump operators ($\gamma_1 = 0.4$, $n_{\mathrm{th}} = 0.6$, $\gamma_\phi = 0.15$): $\max \lvert \rho_{\mathrm{dq}} - \rho_{\mathrm{qt}} \rvert$ | 1e-6 | 6.6e-8 |
 | `density_matrix_constraints` | random open rollout: hermiticity, $\lvert \operatorname{tr}\rho - 1 \rvert$, negativity | 1e-6 | 1.1e-16 |
 | `t1_decay_matches_two_level` | $n_{\mathrm{th}} = 0$, from $\lvert 1\rangle$: $p_1 = e^{-\gamma_1 t}$ and equal to `TwoLevel` | 1e-6 | 3.4e-7 |
 | `detuned_rabi` | closed, $u = 1.2$, $\Delta = 0.9$: $p_1 = (u/\Omega)^2 \sin^2(\Omega t/2)$ | 1e-6 | 5.4e-9 |

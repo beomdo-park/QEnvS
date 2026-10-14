@@ -54,7 +54,7 @@ import qenvs
 env = qenvs.make("qubit/StateTransfer-v0", horizon=10, dt=0.2)
 actions = jnp.full((env.horizon, env.action_dim), jnp.pi / (env.horizon * env.dt))
 state, rewards = env.rollout(actions)
-print(float(rewards.sum()))   # 1.0: the pi-pulse transfers |0> to |1>
+print(float(rewards.sum()))  # 1.0: the pi-pulse transfers |0> to |1>
 ```
 
 ## Precision
@@ -65,7 +65,8 @@ your own scripts when you need it:
 
 ```python
 import jax
-jax.config.update("jax_enable_x64", True)   # before creating arrays
+
+jax.config.update("jax_enable_x64", True)  # before creating arrays
 ```
 
 Every validation check is designed to pass in both precisions.

@@ -18,4 +18,5 @@ Do not open a public issue. You should get a first answer within 7 days.
 * `qenvs validate --model package.module:attr` imports and executes the named Python module,
   in the same way `pytest` or `python -m` do. Only point it at code you trust.
 * Releases are built in GitHub Actions and published to PyPI through Trusted Publishing; each
-  GitHub release carries PEP 740 attestations for the wheel and the sdist.
+  release publishes PEP 740 attestations for the wheel and the sdist to PyPI, and the same
+  attestation files (`*.publish.attestation`) are attached to the GitHub release.

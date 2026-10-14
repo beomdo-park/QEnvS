@@ -97,7 +97,7 @@ convention = "google"
 
 [tool.codespell]
 skip = ".git,*.ipynb,uv.lock,site,.claude"
-ignore-words-list = "ket,braket,sme"
+ignore-words-list = "ket,braket,sme,commun"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

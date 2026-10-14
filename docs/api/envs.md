@@ -10,4 +10,6 @@
 
 ::: qenvs.envs.BatteryCharging
 
+::: qenvs.envs.gate.GateControl
+
 ::: qenvs.registry

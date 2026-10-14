@@ -166,7 +166,8 @@ $20 \times 0.5^2 \times 0.2 = 1$.
 * **Open Dicke tasks: the single pulse is as good as anything found.** GRAPE reaches the
   single-pulse value for $N = 2$ on every seed. For $N = 4$ one seed reaches it (0.6018)
   and two stop at a local optimum (0.6002). After 300 instead of 1500 steps GRAPE was
-  still below the single pulse (0.5975), so the number of optimiser steps matters here.
+  still below the single pulse (0.5975 mean over three seeds, 0.5978 for seed 0), so the
+  number of optimiser steps matters here.
   For $N = 4$ the best rectangular pulse starts late (step 11) and wins over an early
   start by only 0.0024; the cause is the collective emission $\gamma$ (with $\gamma$
   alone the best start is step 11, with the cavity loss $\kappa$ alone it is step 0). For
@@ -186,7 +187,7 @@ $20 \times 0.5^2 \times 0.2 = 1$.
   control energy, for any of the methods.
 * **Energy and ergotropy are different objectives.** In the closed resonant tasks both are
   functions of $\theta$ alone. For $N = 2$ (and the qubit) the two maxima coincide; for
-  $N = 4$ and $8$ they do not (energy maximum at $\theta = 0.9195$ and $0.6950$, ergotropy
+  $N = 4$ and $8$ they do not (energy maximum at $\theta = 0.9195$ and $0.6952$, ergotropy
   maximum at $\theta = 1.016$ and $0.6445$). This is why PPO ends with less energy but more
   ergotropy than GRAPE for $N = 4$ and $8$: its area error happens to point towards the
   ergotropy maximum. PPO does not optimise ergotropy. A `reward="ergotropy"` benchmark is

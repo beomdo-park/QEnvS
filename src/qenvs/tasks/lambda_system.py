@@ -6,7 +6,7 @@ import dynamiqs as dq
 
 from qenvs.envs.base import Environment
 from qenvs.envs.state_transfer import StateTransfer
-from qenvs.models.lambda_system import LambdaSystem
+from qenvs.models.lambda_system import LambdaSystem, stirap_pulses
 from qenvs.registry import DIMENSIONLESS_UNITS, register
 
 
@@ -22,6 +22,16 @@ def _lambda_stirap(**kw: object) -> Environment:
     kw.setdefault("dt", 0.2)
     kw.setdefault("action_bound", 1.0)
     return StateTransfer(model=model, target=target, **kw)  # type: ignore[arg-type]
+
+
+def stirap_reference(env: Environment) -> object:
+    """Counter-intuitive Gaussian pulse pair scaled to the episode length ``T``.
+
+    Width ``0.3 T`` and separation ``tau = 0.15 T`` at the full Rabi bound; on the default
+    task (T = 20) this transfers 0.9964 of the population to |3>.
+    """
+    t = env.horizon * env.dt
+    return stirap_pulses(env.horizon, env.dt, env.action_bound, 0.15 * t, 0.3 * t)
 
 
 register(
@@ -42,6 +52,7 @@ register(
         "Vitanov, Rangelov, Shore & Bergmann, Rev. Mod. Phys. 89, 015006 (2017)",
         "Shore, Acta Physica Slovaca 58, 243 (2008)",
     ),
+    reference=stirap_reference,
     units={
         **DIMENSIONLESS_UNITS,
         "control": (

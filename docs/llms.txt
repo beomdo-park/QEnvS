@@ -2,13 +2,17 @@
 
 > Physically validated quantum control environments (quantum batteries, qubit state transfer, open systems) for reinforcement learning and optimal control. Python package `qenvs`, built on JAX + dynamiqs. Apache-2.0.
 
-Tasks: `qubit/StateTransfer-v0`, `battery/TwoLevel-v0`, `battery/Dicke-v0`, `transfer/LambdaSTIRAP-v0`. Every model ships with analytic validation checks (53 in total: closed-form results, physical constraints, solver convergence, QuTiP cross-checks) that run as tests and are printed by `qenvs validate`. Environments are functional (jit/vmap/grad) with a Gymnasium adapter.
+Tasks: `transmon/XGate-v0`, `transmon/SXGate-v0`, `qubit/StateTransfer-v0`, `battery/TwoLevel-v0`, `battery/Dicke-v0`, `transfer/LambdaSTIRAP-v0`. Every model ships with analytic validation checks (67 in total: closed-form results, physical constraints, solver convergence, QuTiP cross-checks) that run as tests and are printed by `qenvs validate`. Environments are functional (jit/vmap/grad) with a Gymnasium adapter.
 
 ## Docs
 
 - [Overview and quickstart](https://beomdo-park.github.io/QEnvS/): install, functional API, gradient-based control, Gymnasium usage
 - [Getting started](https://beomdo-park.github.io/QEnvS/getting-started/): install (CPU, GPU), checking the installation, precision, troubleshooting
 - [Stability and versioning](https://beomdo-park.github.io/QEnvS/stability/): task-id versioning, API and CLI stability rules, supported Python / jax / OS versions
+- [Tutorial: X gate on a transmon](https://beomdo-park.github.io/QEnvS/tutorials/transmon-x-gate/): Gaussian pi pulse, DRAG sweep, GRAPE, T1/T2, pulse export in MHz, Gymnasium
+- [Model: transmon gates](https://beomdo-park.github.io/QEnvS/models/transmon/): tasks `transmon/XGate-v0`, `transmon/SXGate-v0`, multi-level transmon in ns / rad/ns (GHz, us kwargs), I/Q drive, T1/T2, leakage-aware average gate fidelity, DRAG
+- [Guide: bring your own Hamiltonian](https://beomdo-park.github.io/QEnvS/guides/custom-models/): `HamiltonianModel.from_operators`, generic validation, `qenvs validate --model`
+- [Guide: RL libraries](https://beomdo-park.github.io/QEnvS/guides/rl-libraries/): `GymnasiumEnv(normalize_actions=True)`, `GymnasiumVectorEnv`, SB3 and CleanRL usage, throughput
 - [Model: qubit battery](https://beomdo-park.github.io/QEnvS/models/qubit_battery/): task `battery/TwoLevel-v0`, open qubit with thermal bath, energy / ergotropy rewards, validation table
 - [Model: Dicke battery](https://beomdo-park.github.io/QEnvS/models/dicke/): task `battery/Dicke-v0`, N cells + cavity (Tavis-Cummings / Dicke), collective charging, Fock-cutoff caveats, validation table
 - [Model: Lambda system](https://beomdo-park.github.io/QEnvS/models/lambda_system/): task `transfer/LambdaSTIRAP-v0`, three-level STIRAP transfer with spontaneous emission, validation table
@@ -16,9 +20,10 @@ Tasks: `qubit/StateTransfer-v0`, `battery/TwoLevel-v0`, `battery/Dicke-v0`, `tra
 - [Review log](https://beomdo-park.github.io/QEnvS/review-log/): adversarial review rounds, counterexamples found, fixes and the checks that now guard them
 - [Benchmarks](https://beomdo-park.github.io/QEnvS/benchmarks/): qubit state transfer and battery charging; provable optimum for closed resonant batteries, single-pulse baseline, GRAPE (jax.grad), vectorised PPO, reproduction commands
 - [Roadmap](https://beomdo-park.github.io/QEnvS/roadmap/): models and validation gates
-- [API: models](https://beomdo-park.github.io/QEnvS/api/models/): `Model`, `TwoLevel`, `QubitBattery`, `DickeBattery`, `LambdaSystem`, observables (energy, ergotropy, fidelity)
-- [API: environments](https://beomdo-park.github.io/QEnvS/api/envs/): `Environment`, `EnvState`, `TimeStep`, `StateTransfer`, `BatteryCharging`, registry
-- [API: wrappers](https://beomdo-park.github.io/QEnvS/api/wrappers/): `GymnasiumEnv`
+- [API: models](https://beomdo-park.github.io/QEnvS/api/models/): `Model`, `Transmon`, `HamiltonianModel`, `TwoLevel`, `QubitBattery`, `DickeBattery`, `LambdaSystem`, observables (energy, ergotropy, fidelity), `qenvs.gates` (targets, leakage-aware gate fidelity)
+- [API: environments](https://beomdo-park.github.io/QEnvS/api/envs/): `Environment` (with `info(state)`), `EnvState`, `TimeStep`, `StateTransfer`, `BatteryCharging`, `GateControl`, registry
+- [API: wrappers](https://beomdo-park.github.io/QEnvS/api/wrappers/): `GymnasiumEnv`, `GymnasiumVectorEnv`
+- [API: validation](https://beomdo-park.github.io/QEnvS/api/validation/): `CheckResult`, generic `model_checks` for any model
 
 ## Agent interface
 

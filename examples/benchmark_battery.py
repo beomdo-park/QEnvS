@@ -78,7 +78,7 @@ def evaluate_pulse(env: object, actions: Array) -> dict[str, float]:
     """Final energy, ergotropy and control energy of an open-loop pulse."""
     actions = jnp.clip(jnp.asarray(actions, dtype=jnp.float32), -env.action_bound, env.action_bound)
     state, _ = env.rollout(actions)
-    info = env._info(state.qstate, state.t)
+    info = env.info(state)
     scale = n_max_energy(env)
     return {
         "energy": float(info["energy"]) / scale,
@@ -135,7 +135,7 @@ def single_pulse_baseline(env: object, areas: int = 201) -> dict[str, object]:
 
     def final_energy(actions: Array) -> Array:
         state, _ = env.rollout(actions)
-        return env._info(state.qstate, state.t)["energy"]
+        return env.info(state)["energy"]
 
     energies = np.asarray(jax.jit(jax.vmap(final_energy))(batch))
     best = int(np.argmax(energies))
@@ -154,7 +154,7 @@ def random_baseline(env: object, n: int = 256, seed: int = 0) -> dict[str, float
 
     def final(actions: Array) -> tuple[Array, Array]:
         state, _ = env.rollout(actions)
-        info = env._info(state.qstate, state.t)
+        info = env.info(state)
         return info["energy"], info["ergotropy"]
 
     e, w = jax.jit(jax.vmap(final))(batch)

@@ -212,7 +212,7 @@ def check_stirap_intuitive_order() -> CheckResult:
     """Intuitive order (pump first) populates |2> strongly: max_t P2 > 0.3.
 
     With the pump first, |1> is not the dark state but an equal superposition of the
-    two bright states, so the population oscillates through |2| (P2 reaches ~1) and
+    two bright states, so the population oscillates through |2> (P2 reaches ~1) and
     the final P3 = cos^2(phi) depends on the accumulated pulse area rather than on
     adiabaticity. The intermediate population is therefore the robust discriminator.
     """

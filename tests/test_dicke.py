@@ -42,12 +42,12 @@ def test_invalid_configurations_rejected():
 
 
 def test_closed_vs_open_state_types():
-    assert DickeBattery().initial_state().isket
+    assert DickeBattery().initial_state().isket()
     assert not DickeBattery().is_open
     for kw in ({"kappa": 0.1}, {"gamma": 0.1}, {"gamma_phi": 0.1}):
         m = DickeBattery(**kw)
         assert m.is_open
-        assert m.initial_state().isdm
+        assert m.initial_state().isdm()
         assert len(m.jump_ops()) == 1
 
 

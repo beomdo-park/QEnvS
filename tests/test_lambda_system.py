@@ -31,8 +31,8 @@ def test_physics_check_passes(check):
 
 # ----------------------------------------------------------------- model API
 def test_closed_vs_open_state_types():
-    assert LambdaSystem().initial_state().isket
-    assert LambdaSystem(gamma=0.1).initial_state().isdm
+    assert LambdaSystem().initial_state().isket()
+    assert LambdaSystem(gamma=0.1).initial_state().isdm()
     assert not LambdaSystem().is_open
     assert LambdaSystem(gamma=0.1).is_open
     assert LambdaSystem().dim == 3
@@ -101,12 +101,13 @@ def test_task_factory_and_defaults():
     assert env.action_dim == 2
     assert env.observation_dim == 7
     assert not env.model.is_open
-    assert env.target.isket
+    assert env.target.isket()
     env_open = qenvs.make(
         "transfer/LambdaSTIRAP-v0", gamma=0.2, horizon=5, dt=0.5, delta_one_photon=0.1
     )
     assert env_open.model.is_open
-    assert env_open.target.isdm
+    # the pure target stays a ket for open systems too: <t|rho|t> is exact and differentiable
+    assert env_open.target.isket()
     assert env_open.observation_dim == 19
     assert (env_open.horizon, env_open.dt) == (5, 0.5)
     assert env_open.model.delta_one_photon == 0.1

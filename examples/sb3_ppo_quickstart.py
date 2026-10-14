@@ -1,4 +1,4 @@
-"""Train PPO (stable-baselines3) on TwoLevelStateTransfer-v0.
+"""Train PPO (stable-baselines3) on qubit/StateTransfer-v0.
 
 pip install 'qenvs[gym]' stable-baselines3
 python examples/sb3_ppo_quickstart.py

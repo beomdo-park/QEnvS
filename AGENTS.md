@@ -23,14 +23,16 @@ qenvs validate --json
 qenvs doctor --json                           # versions, backend, optional extras, smoke run
 ```
 
-With `--json`, failures are `{"error": {"code": "unknown_task" | "invalid_argument", "message": ...}}`
+With `--json`, failures are `{"error": {"code": "unknown_task" | "invalid_argument" | "invalid_model", "message": ...}}`
 and exit code 1. Docs index for LLMs: https://beomdo-park.github.io/QEnvS/llms.txt
 
 ## Layout
 
 - `src/qenvs/models/` physics only (`Model`: drift, controls, jump_ops, initial_state, observables)
 - `src/qenvs/envs/` functional envs (`reset(key)`, `step(state, action)` -> `(EnvState, TimeStep)`)
-- `src/qenvs/wrappers/` Gymnasium adapter
+- `src/qenvs/wrappers/` Gymnasium adapters (`GymnasiumEnv`, batched `GymnasiumVectorEnv`)
+- `src/qenvs/gates.py` gate targets and leakage-aware gate fidelity (unitaries and superoperators)
+- `src/qenvs/models/custom.py` `HamiltonianModel` (bring your own operators); `src/qenvs/validation/generic.py` checks that run on any model (`qenvs validate --model mod:attr`)
 - `src/qenvs/registry.py` core registry; `src/qenvs/tasks/<model>.py` registers task ids `namespace/Name-vN` with metadata
 - `src/qenvs/validation/<model>.py` analytic / constraint / numerics checks exposing `CHECKS` (single source for tests + CLI); wired in `validation/__init__.py` `MODULES`
 - `src/qenvs/toolkit.py` plain-dict API behind `cli.py` (an MCP adapter can sit on it later)

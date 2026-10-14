@@ -217,7 +217,7 @@ dark-state and eigenvalue checks; a factor-2 error in a control breaks the two-l
 Rabi check; a jump operator pointing the wrong way or an unequal branching breaks the
 emission check; swapping the control order would turn `stirap_transfer` into the
 intuitive sequence and fail it; and the QuTiP comparison covers the full open
-dynamics with detunings. Check (3) uses the intermediate population rather than the
+dynamics with detunings. `stirap_intuitive_order` uses the intermediate population rather than the
 final $P_3$ because, as derived above, the intuitive-order $P_3(T) = \cos^2\varphi(T)$
 can take any value depending on the pulse area (it is 0.98 for $T_w = 10$,
 $\tau = 7$), whereas $\max_t P_2 \approx 1$ always.

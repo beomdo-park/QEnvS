@@ -45,7 +45,13 @@ extra_javascript:
 nav:
   - Home: index.md
   - Getting started: getting-started.md
+  - Tutorials:
+      - X gate on a transmon: tutorials/transmon-x-gate.md
+  - Guides:
+      - Bring your own Hamiltonian: guides/custom-models.md
+      - RL libraries (Gymnasium, vector envs): guides/rl-libraries.md
   - Models:
+      - Transmon gates (X, SX): models/transmon.md
       - Qubit battery: models/qubit_battery.md
       - Dicke battery: models/dicke.md
       - Lambda system (STIRAP): models/lambda_system.md
@@ -60,3 +66,4 @@ nav:
       - Models: api/models.md
       - Environments: api/envs.md
       - Wrappers: api/wrappers.md
+      - Validation: api/validation.md

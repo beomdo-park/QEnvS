@@ -8,7 +8,7 @@ with optional relaxation (rate ``gamma1``) and pure dephasing (rate ``gamma_phi`
 Energies are measured in units of the qubit frequency ``omega0`` through the
 battery Hamiltonian ``H_B = omega0 |1><1|``.
 
-Analytic references (checked in ``tests/test_two_level.py``):
+Analytic references (checked in ``qenvs.validation.qubit``):
 
 * Resonant Rabi drive of constant amplitude ``u``: ``P_1(t) = sin^2(u t / 2)``;
   a pi-pulse (``u t = pi``) gives full inversion.

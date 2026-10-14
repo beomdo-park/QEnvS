@@ -2,7 +2,7 @@
 
 QEnvS models are accepted only after adversarial review: independent reviewers try to
 refute the physics, re-derive the reference formulas, and mutate the code to see whether
-the tests notice. This page records what those reviews found (three rounds so far), the counterexample that
+the tests notice. This page records what those reviews found (four rounds so far), the counterexample that
 showed each problem, the fix, and the check that now guards against it. Every number below
 was reproduced independently of the code under review (numpy or scipy, or QuTiP 5).
 
@@ -49,6 +49,21 @@ raw results; one reviewed the benchmark code and reproduced numbers independentl
 | claims reviewer | Optimality argument re-derived and checked numerically: $[\hat N_{\mathrm{exc}}, V] = 0$, the initial state is an $\hat N_{\mathrm{exc}}$ eigenstate, every pulse area is reachable through clipping and float32 casting, $E(-\theta) = E(\theta)$. | Independent float64 optima $0.888888889$, $0.861460682$, $0.878688038$, $1$ agree with the published ones. | No change needed; the page now separates what is proven (the reduction, for every $N$) from what is numerical (the maximum for $N = 4, 8$). |
 | claims reviewer | "The single pulse beats GRAPE on open tasks" was an artefact of stopping GRAPE at 300 steps. | $N = 4$ open: GRAPE gives $0.5978$ after 300 steps and $0.6018$ after 1500, the single-pulse value. | GRAPE runs 1500 steps in the benchmark. It then reaches the single-pulse value for $N = 2$ on every seed and for $N = 4$ on one seed of three (the other two stop at 0.6002). |
 | claims reviewer | Interpretation of the late-starting pulse and of energy against ergotropy needed qualifiers. | Late start wins by only $0.0024$ for $N = 4$ open and is caused by the emission rate $\gamma$ (with $\gamma$ alone the best start is step 11, with $\kappa$ alone step 0); for $N = 2$ open the best start is step 0. The energy and ergotropy optima coincide for $N = 2$ and differ for $N = 4$ and $8$. | Both statements are qualified on the benchmark page. |
+
+## Round 4 (2026-10-14): practitioner features
+
+Four reviewers checked the transmon gate tasks (physics; mutation testing), the
+bring-your-own-Hamiltonian checks, and the Gymnasium wrappers. All four refuted at first;
+the findings were fixed and the previously surviving mutants re-run. A read-only QA sweep
+of the rest of the repository followed.
+
+| area | finding | counterexample | fix and guard |
+|---|---|---|---|
+| Transmon (physics review) | The info observables of `GateControl` are documented as the current map applied to the initial state, but no test fixed the orientation of the closed-system propagator. | Replacing `U @ psi0` by `U.T @ psi0` passed every test; on a random 3-level pulse it changes $p_1$ from 0.158 to 0.260. | Tests against an independent numpy propagator (closed) and Liouvillian (open), and the check `info_observables_orientation`. |
+| Transmon (mutation review) | The model page claimed that fidelity and leakage are unchanged under a row/column-stacking swap of the superoperator. True for leakage and for real targets only: the swap maps $U$ to $\bar U$. | Fidelity against SX changes under the swap (0.554 against 0.354 on a random unitary), while X, Y, Z and H do not ($\bar Y = -Y$ is a global phase). | Docs corrected; a test pins the difference. The SX target and its adjoint are now told apart by the check `sx_orientation`. 11 of the 12 requested mutants were caught at first; the twelfth is mathematically equivalent. |
+| Custom models | A tolerance of the battery-consistency check was 10x tighter than the norm check it stands for, so valid models failed on long rollouts; and 13 of 32 mutants of the generic checks survived. | Built-in `TwoLevel()` at horizon 400 failed while every other check passed. | Rollout tolerances scale with the integrated time; near-threshold tests kill all 24 mutants defined in the fix. The self-consistency QuTiP check is now named `qutip_solver_cross_check` and states that it does not verify the physics; `--reference` compares against an independent model. |
+| Gymnasium | The wrappers returned read-only numpy views of jax arrays. | `gymnasium.wrappers.vector.ClipReward` failed with "assignment destination is read-only". | Writable copies; tests run the official vector wrappers, also on gymnasium 1.0.0 with jax 0.4.36. |
+| QA sweep | Six test assertions used `.isket` / `.isdm` without calling them, so they were always true. Fixing them exposed one stale expectation: the Lambda task keeps its pure target as a ket for open systems since 0.1.0, and the test still expected a density matrix. | `bool(state.isket)` is `True` for any state. | Assertions call the methods; the expectation is updated. 27 other findings (stale text, wrong file paths, inconsistent numbers, a missing import in a tutorial snippet) were fixed. One finding was rejected after checking: the GitHub releases do carry the PEP 740 attestation files. |
 
 ## How to reproduce
 

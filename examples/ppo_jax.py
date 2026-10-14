@@ -1,4 +1,4 @@
-"""Vectorised PPO on a QEnvS environment with the functional JAX API (equinox + optax).
+r"""Vectorised PPO on a QEnvS environment with the functional JAX API (equinox + optax).
 
 ``num_envs`` environments are stepped in lock-step with ``jax.vmap(env.step)``, rollouts
 are collected with ``lax.scan`` and the whole training run (rollout, GAE, clipped PPO

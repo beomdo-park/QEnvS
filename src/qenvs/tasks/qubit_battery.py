@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import jax.numpy as jnp
+
 from qenvs.envs.base import Environment
 from qenvs.envs.battery import BatteryCharging
 from qenvs.models.qubit_battery import QubitBattery
@@ -22,6 +24,11 @@ def two_level_battery(**kw: object) -> Environment:
     return BatteryCharging(model=model, **kw)  # type: ignore[arg-type]
 
 
+def pi_pulse(env: Environment) -> jnp.ndarray:
+    """Constant resonant drive with area pi over the episode (the closed-system optimum)."""
+    return jnp.full((env.horizon, env.action_dim), jnp.pi / (env.horizon * env.dt))
+
+
 register(
     "battery/TwoLevel-v0",
     two_level_battery,
@@ -37,6 +44,7 @@ register(
         "Alicki & Fannes, Phys. Rev. E 87, 042123 (2013)",
         "Breuer & Petruccione, The Theory of Open Quantum Systems (2002), Sec. 3.4",
     ),
+    reference=pi_pulse,
     units={
         **DIMENSIONLESS_UNITS,
         "control": "amplitude u multiplies sigma_x/2, Rabi frequency u (units of omega0)",
@@ -52,6 +60,6 @@ register(
         "(default 0)",
         "gamma_phi": "float, pure dephasing rate (default 0)",
         "initial": "'ground' or 'thermal' (Gibbs state p1 = n_th/(2 n_th + 1); needs gamma1 > 0 "
-        "when n_th > 0) (default 'ground')",
+        "(or gamma_phi > 0) when n_th > 0) (default 'ground')",
     },
 )

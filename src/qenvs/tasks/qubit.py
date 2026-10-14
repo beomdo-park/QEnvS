@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dynamiqs as dq
+import jax.numpy as jnp
 
 from qenvs.envs.base import Environment
 from qenvs.envs.state_transfer import StateTransfer
@@ -19,6 +20,11 @@ def _qubit_state_transfer(**kw: object) -> Environment:
     return StateTransfer(model=model, target=target, **kw)  # type: ignore[arg-type]
 
 
+def pi_pulse(env: Environment) -> jnp.ndarray:
+    """Constant resonant drive with area pi over the episode (the closed-system optimum)."""
+    return jnp.full((env.horizon, env.action_dim), jnp.pi / (env.horizon * env.dt))
+
+
 register(
     "qubit/StateTransfer-v0",
     _qubit_state_transfer,
@@ -32,6 +38,7 @@ register(
         "Rabi, Phys. Rev. 51, 652 (1937)",
         "Breuer & Petruccione, The Theory of Open Quantum Systems (2002), Sec. 3.4",
     ),
+    reference=pi_pulse,
     units={
         **DIMENSIONLESS_UNITS,
         "control": "amplitude u multiplies sigma_x/2, Rabi frequency u (units of omega0)",

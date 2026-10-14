@@ -49,7 +49,7 @@ def test_jump_operators_and_rates():
     emission, absorption, dephasing = QubitBattery(gamma1=g, n_th=n, gamma_phi=0.4).jump_ops()
     e1 = dq.basis(2, 1)
     e0 = dq.basis(2, 0)
-    # emission |1> -> |0| at rate gamma1 (n_th + 1); annihilates |0>
+    # emission |1> -> |0> at rate gamma1 (n_th + 1); annihilates |0>
     assert float((emission @ e1).norm()) ** 2 == pytest.approx(g * (n + 1))
     assert float(dq.fidelity((emission @ e1).unit(), e0)) == pytest.approx(1.0)
     assert float((emission @ e0).norm()) == 0.0
