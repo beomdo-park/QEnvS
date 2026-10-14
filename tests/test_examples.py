@@ -14,6 +14,7 @@ if str(EXAMPLES) not in sys.path:
     sys.path.insert(0, str(EXAMPLES))
 
 import benchmark  # noqa: E402
+import benchmark_battery  # noqa: E402
 import grape_jax  # noqa: E402
 import ppo_jax  # noqa: E402
 
@@ -135,3 +136,65 @@ def test_benchmark_table_format():
     assert "| grape | 2 | 0.9900 +- 0.0100 | 1.000 | 4.0 s (2.0 s/seed) |" in lines[2]
     assert "n/a (pi-pulse 0.850)" in lines[3]
     assert benchmark.pi_pulse_return(TASK, horizon=10, dt=0.2) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_battery_known_optimum_matches_closed_forms():
+    import qenvs
+
+    # resonant closed TC, N = n = 2: E(theta) peaks at (8/9) N omega0 for theta = pi/sqrt(6)
+    env = qenvs.make("battery/Dicke-v0", n_cells=2)
+    opt = benchmark_battery.known_optimum(env)
+    assert opt["energy"] == pytest.approx(8 / 9, abs=1e-6)
+    assert opt["theta"] == pytest.approx(math.pi / math.sqrt(6), abs=1e-3)
+    # resonant closed qubit battery: a pi area stores omega0 (reachable since g_max T > pi)
+    env_q = qenvs.make("battery/TwoLevel-v0")
+    assert benchmark_battery.known_optimum(env_q)["energy"] == pytest.approx(1.0, abs=1e-6)
+    # no provable optimum for open or detuned variants
+    assert benchmark_battery.known_optimum(qenvs.make("battery/Dicke-v0", kappa=0.1)) is None
+    assert benchmark_battery.known_optimum(qenvs.make("battery/Dicke-v0", omega_c=1.2)) is None
+
+
+def test_battery_single_pulse_reaches_the_closed_optimum():
+    import qenvs
+
+    env = qenvs.make("battery/Dicke-v0", n_cells=2)
+    sp = benchmark_battery.single_pulse_baseline(env, areas=161)
+    assert sp["energy"] == pytest.approx(8 / 9, abs=1e-4)
+    assert 0.0 <= sp["ergotropy"] <= sp["energy"] + 1e-6
+    assert sp["control_energy"] > 0
+
+
+def test_battery_benchmark_quick_runs(capsys):
+    assert benchmark_battery.main(["--quick", "--json"]) == 0
+    out = json.loads(capsys.readouterr().out)
+    closed = out["results"][0]
+    assert closed["optimum"]["energy"] == pytest.approx(8 / 9, abs=1e-6)
+    for method in ("grape", "ppo"):
+        e = closed[method]["energy_mean_std"][0]
+        assert math.isfinite(e) and e <= closed["optimum"]["energy"] + 1e-5
+
+
+def test_example_arguments_never_capture_task_kwargs():
+    # A method argument with the same name as a task kwarg silently swallows it (PPO's
+    # discount used to be called ``gamma``, the Dicke emission rate).
+    import inspect
+
+    import qenvs
+
+    task_kwargs = {k for spec in qenvs.registry.values() for k in spec.kwargs}
+    assert "gamma" in task_kwargs  # the case that motivated this test
+    for fn in (grape_jax.run_grape, ppo_jax.run_ppo):
+        named = {
+            n
+            for n, prm in inspect.signature(fn).parameters.items()
+            if prm.kind is not inspect.Parameter.VAR_KEYWORD
+        }
+        assert not named & task_kwargs, (fn.__name__, named & task_kwargs)
+
+
+def test_ppo_forwards_the_dicke_emission_rate():
+    out = ppo_jax.run_ppo(
+        "battery/Dicke-v0", num_envs=4, updates=1, n_cells=2, gamma=0.05, horizon=3
+    )
+    assert out["task_kwargs"]["gamma"] == 0.05
+    assert out["hyperparameters"]["discount"] == 0.99

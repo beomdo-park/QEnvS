@@ -124,7 +124,7 @@ def run_ppo(
     lr: float = 1e-3,
     epochs: int = 4,
     minibatches: int = 4,
-    gamma: float = 0.99,
+    discount: float = 0.99,
     gae_lambda: float = 0.95,
     clip_eps: float = 0.2,
     ent_coef: float = 0.01,
@@ -145,7 +145,8 @@ def run_ppo(
         lr: Adam learning rate.
         epochs: passes over the collected batch per update.
         minibatches: minibatches per epoch (must divide ``num_steps * num_envs``).
-        gamma: discount factor.
+        discount: discount factor. (Named ``discount`` rather than ``gamma`` so it can never
+            capture a task kwarg: ``battery/Dicke-v0`` has a decay rate called ``gamma``.)
         gae_lambda: GAE lambda.
         clip_eps: PPO clipping parameter (policy ratio and value).
         ent_coef: entropy bonus coefficient.
@@ -211,8 +212,8 @@ def run_ppo(
         def body(carry: tuple[Array, Array], tr: Transition) -> tuple[tuple[Array, Array], Array]:
             adv, next_value = carry
             not_done = 1.0 - tr.done.astype(adv.dtype)
-            delta = tr.reward + gamma * next_value * not_done - tr.value
-            adv = delta + gamma * gae_lambda * not_done * adv
+            delta = tr.reward + discount * next_value * not_done - tr.value
+            adv = delta + discount * gae_lambda * not_done * adv
             return (adv, tr.value), adv
 
         _, adv = jax.lax.scan(body, (jnp.zeros_like(last_value), last_value), traj, reverse=True)
@@ -282,16 +283,16 @@ def run_ppo(
         return runner[0], metrics
 
     @jax.jit
-    def evaluate(p: object, key: Array) -> tuple[Array, Array]:
+    def evaluate(p: object, key: Array) -> tuple[Array, Array, Array]:
         """Deterministic policy (mean action) vs uniform random actions, same ``eval_envs`` keys."""
         keys = jax.random.split(key, eval_envs)
         state0, ts0 = v_reset(keys)
 
-        def det_body(carry: tuple[EnvState, Array], _: None) -> tuple[tuple, Array]:
+        def det_body(carry: tuple[EnvState, Array], _: None) -> tuple[tuple, tuple]:
             state, obs = carry
             mean, _, _ = policy(p, obs)
             state, ts = v_step(state, mean)
-            return (state, ts.observation), ts.reward
+            return (state, ts.observation), (ts.reward, mean[0])
 
         def rand_body(carry: tuple[EnvState, Array], _: None) -> tuple[tuple, Array]:
             state, k = carry
@@ -300,9 +301,11 @@ def run_ppo(
             state, ts = v_step(state, a)
             return (state, k), ts.reward
 
-        _, det_rewards = jax.lax.scan(det_body, (state0, ts0.observation), None, horizon)
+        _, (det_rewards, det_actions) = jax.lax.scan(
+            det_body, (state0, ts0.observation), None, horizon
+        )
         _, rand_rewards = jax.lax.scan(rand_body, (state0, key), None, horizon)
-        return det_rewards.sum(0), rand_rewards.sum(0)
+        return det_rewards.sum(0), rand_rewards.sum(0), det_actions
 
     t0 = time.perf_counter()
     key, k_train, k_eval = jax.random.split(key, 3)
@@ -311,7 +314,7 @@ def run_ppo(
     params, metrics = train_compiled(params, k_train)
     jax.block_until_ready(metrics)
     train_time = time.perf_counter() - t0 - compile_time
-    det_returns, rand_returns = evaluate(params, k_eval)
+    det_returns, rand_returns, det_actions = evaluate(params, k_eval)
     jax.block_until_ready(det_returns)
     wall = time.perf_counter() - t0
 
@@ -328,7 +331,7 @@ def run_ppo(
             "lr": lr,
             "epochs": epochs,
             "minibatches": minibatches,
-            "gamma": gamma,
+            "discount": discount,
             "gae_lambda": gae_lambda,
             "clip_eps": clip_eps,
             "ent_coef": ent_coef,
@@ -346,6 +349,8 @@ def run_ppo(
         "initial_return": curve[0],
         "final_return": float(det_returns.mean()),
         "final_return_std": float(det_returns.std()),
+        # deterministic (mean-action) pulse of the first evaluation env, clipped as in env.step
+        "policy_pulse": [[float(x) for x in jnp.clip(row, -bound, bound)] for row in det_actions],
         "random_return": float(rand_returns.mean()),
         "learning_curve": curve,
         "final_entropy": float(metrics["entropy"][-1]),

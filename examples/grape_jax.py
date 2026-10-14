@@ -170,6 +170,7 @@ def run_grape(
         "wall_time_s": wall,
         "compile_time_s": compile_time,
         "best_actions": pulse_summary(pulse_from_theta(best_theta, bound), dt),
+        "best_pulse": [[float(x) for x in row] for row in pulse_from_theta(best_theta, bound)],
         "final_actions": pulse_summary(pulse_from_theta(theta, bound), dt),
     }
 
