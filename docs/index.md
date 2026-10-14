@@ -77,3 +77,11 @@ QEnvS is accepted only with checks in `qenvs.validation`:
 
 The agent's control period `dt` and the integrator's internal step are
 independent: the ODE solver adapts inside each control interval.
+
+## Citation
+
+If you use QEnvS, please cite the software DOI
+[10.5281/zenodo.23359969](https://doi.org/10.5281/zenodo.23359969) (all versions; version
+0.1.0 is [10.5281/zenodo.23359970](https://doi.org/10.5281/zenodo.23359970)). A BibTeX
+entry and `CITATION.cff` are in the
+[repository](https://github.com/beomdo-park/QEnvS#citation).

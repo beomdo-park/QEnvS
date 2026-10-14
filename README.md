@@ -9,6 +9,7 @@
 [![ci](https://github.com/beomdo-park/QEnvS/actions/workflows/ci.yml/badge.svg)](https://github.com/beomdo-park/QEnvS/actions/workflows/ci.yml)
 [![docs](https://github.com/beomdo-park/QEnvS/actions/workflows/docs.yml/badge.svg)](https://beomdo-park.github.io/QEnvS)
 [![PyPI](https://img.shields.io/pypi/v/qenvs)](https://pypi.org/project/qenvs/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23359969.svg)](https://doi.org/10.5281/zenodo.23359969)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
@@ -135,7 +136,22 @@ validation tests.
 
 ## Citation
 
-See [CITATION.cff](CITATION.cff). A Zenodo DOI will be attached to the first release.
+Software DOI (all versions): [10.5281/zenodo.23359969](https://doi.org/10.5281/zenodo.23359969).
+Version 0.1.0: [10.5281/zenodo.23359970](https://doi.org/10.5281/zenodo.23359970).
+Machine-readable metadata is in [CITATION.cff](CITATION.cff) (GitHub shows a "Cite this
+repository" button).
+
+```bibtex
+@software{park_qenvs,
+  author  = {Park, Beomdo},
+  title   = {{QEnvS}: physically validated quantum control environments for
+             reinforcement learning and optimal control},
+  year    = {2026},
+  version = {0.1.0},
+  doi     = {10.5281/zenodo.23359969},
+  url     = {https://github.com/beomdo-park/QEnvS}
+}
+```
 
 ## License
 

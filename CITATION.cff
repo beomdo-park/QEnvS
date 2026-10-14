@@ -4,6 +4,14 @@ message: "If you use QEnvS, please cite it using this metadata."
 type: software
 version: 0.1.0
 date-released: 2026-10-14
+doi: 10.5281/zenodo.23359969
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23359969
+    description: Concept DOI (all versions)
+  - type: doi
+    value: 10.5281/zenodo.23359970
+    description: Version 0.1.0
 authors:
   - family-names: Park
     given-names: Beomdo
