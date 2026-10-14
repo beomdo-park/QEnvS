@@ -188,8 +188,8 @@ detuning-sign and dephasing-rate errors, which population-only checks cannot see
   from a thermal state is therefore not available in this version.
 * The environment casts actions to float32 before building $H(t)$; the QuTiP
   cross-check uses the same rounded amplitudes.
-* `qutip_cross_check` needs the `qenvs[dev]` extra. Without QuTiP it reports
-  `error = nan` with a "not run" detail rather than raising, so `qenvs validate`
-  still runs; that row counts as FAIL.
-* Only one qubit: no collective effects. See `battery/Dicke-v0` (planned) for
-  $N$-qubit charging.
+* `qutip_cross_check` needs the `qenvs[dev]` extra. Without QuTiP it is reported as
+  skipped (status `SKIP`) with a "not run" detail rather than raising, so
+  `qenvs validate` still runs; a skipped check never counts as passed.
+* Only one qubit: no collective effects. See `battery/Dicke-v0` for $N$-qubit
+  charging.

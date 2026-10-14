@@ -27,6 +27,13 @@ Conventions:
 * Tensor order: battery (first) x cavity (second), ``dim = (N + 1)(n_max + 1)``.
 * Battery Hamiltonian ``H_B = omega0 (Jz + N/2)``: 0 when all cells are in the ground
   state, ``N omega0`` when fully charged.
+* Energy and ergotropy are properties of the cells alone: :meth:`battery_reduced`
+  traces out the cavity and returns ``H_B`` on the ``(N + 1)``-dimensional Dicke space.
+  For closed dynamics the reduced cell state is mixed whenever cells and cavity are
+  entangled, so the ergotropy is then strictly below the stored energy.
+* No diamagnetic ``A^2`` term: this is the bare Dicke Hamiltonian of Ferraro et al. 2018.
+* ``g -> -g`` for the whole protocol is a gauge symmetry (``U = (-1)^(a^dag a)`` maps
+  ``a -> -a``); a sign change *within* a protocol is physical and can reverse charging.
 
 Dissipation (all collective, i.e. permutation invariant, so the symmetric subspace
 stays exact): cavity loss ``sqrt(kappa) a``, collective emission ``sqrt(gamma) J-``
@@ -215,12 +222,39 @@ class DickeBattery(Model):
         return ket.todm() if self.is_open else ket
 
     def battery_hamiltonian(self) -> QArray:
-        """``H_B = omega0 (Jz + N/2)``: 0 for all cells ground, ``N omega0`` fully charged."""
+        """``H_B = omega0 (Jz + N/2)`` on the full space (0 all ground, ``N omega0`` charged)."""
         return self.omega0 * (self.jz() + self.j * self._qarray(np.eye(self.dim)))
+
+    def local_battery_hamiltonian(self) -> QArray:
+        """``H_B = omega0 (Jz + N/2)`` on the ``(N + 1)``-dimensional Dicke space alone."""
+        _, _, jz = collective_spin_matrices(self.n_cells)
+        return self.omega0 * dq.asqarray(jnp.asarray(jz + self.j * np.eye(self.dim_battery)))
+
+    def battery_reduced(self, qstate: QArray) -> tuple[QArray, QArray]:
+        """Reduced cell state ``tr_cavity(rho)`` and ``H_B`` on the Dicke space.
+
+        Energy and ergotropy are properties of the cells, so the cavity (subsystem 1)
+        is traced out first. Evaluating the ergotropy on the full cells+cavity state
+        with ``H_B (x) 1`` would give ``ergotropy == energy`` for every pure global
+        state (closed dynamics); on the reduced state it is strictly smaller whenever
+        the cells are entangled with the cavity.
+        """
+        return dq.ptrace(qstate, 0), self.local_battery_hamiltonian()
+
+    def top_fock(self) -> QArray:
+        """Projector ``1 (x) |n_max><n_max|`` on the highest kept Fock level.
+
+        Its expectation value is the population at the Fock cutoff; a value that is
+        not negligible means the truncation is affecting the dynamics (raise ``n_max``).
+        """
+        proj = np.zeros((self.dim_cavity, self.dim_cavity))
+        proj[self.cutoff, self.cutoff] = 1.0
+        return self._qarray(np.kron(np.eye(self.dim_battery), proj))
 
     def observables(self) -> dict[str, QArray]:
         return {
             "energy": self.battery_hamiltonian(),
             "n_photons": self.number(),
             "excitation": self.excitation_number(),
+            "top_fock": self.top_fock(),
         }

@@ -17,6 +17,7 @@ def _dicke_battery(**kw: object) -> Environment:
         n_cells=int(kw.pop("n_cells", 3)),
         n_photons=_optional_int(kw.pop("n_photons", None)),
         n_max=_optional_int(kw.pop("n_max", None)),
+        omega0=float(kw.pop("omega0", 1.0)),
         omega_c=float(kw.pop("omega_c", 1.0)),
         rwa=bool(kw.pop("rwa", True)),
         kappa=float(kw.pop("kappa", 0.0)),
@@ -36,9 +37,15 @@ register(
         "Charge N two-level cells from a cavity initially holding n_photons photons (Ferraro "
         "et al. 2018) by controlling the collective coupling g(t) in the Tavis-Cummings "
         "(rwa=True) or Dicke (rwa=False) Hamiltonian, within the permutation-symmetric "
-        "subspace. Reward per step = gain of stored energy <H_B> (or ergotropy); return = "
-        "Q_final - Q_initial, Q <= N omega0. Constant g charges in a time ~ N^(-1/2) "
-        "(collective advantage); switching g to 0 holds the charge."
+        "subspace. Reward per step = gain of the stored energy <H_B> (reward='energy') or of "
+        "the ergotropy of the reduced cell state, cavity traced out (reward='ergotropy'); "
+        "return = Q_final - Q_initial, Q <= N omega0. Constant g charges in a time that "
+        "decreases with N (collective advantage): the fitted exponent in this protocol is "
+        "about -0.40 for N <= 48, below the asymptotic N^(-1/2) of Ferraro et al. "
+        "Switching g to 0 holds the charge. WARNING: for rwa=False the default Fock cutoff "
+        "n_max = n_photons + 4 is NOT converged at the default action_bound = 0.5 (N=3 "
+        "constant-g return 1.75 vs 1.53 converged, about 15 percent); set n_max >= "
+        "n_photons + 24 or action_bound <= 0.1 and watch the 'top_fock' observable."
     ),
     model="qenvs.models.DickeBattery",
     references=(
@@ -46,17 +53,18 @@ register(
         "Tavis & Cummings, Phys. Rev. 170, 379 (1968)",
         "Dicke, Phys. Rev. 93, 99 (1954)",
         "Andolina, Keck, Mari, Giovannetti, Polini, Phys. Rev. B 99, 205437 (2019)",
-        "Erdman, Andolina, Giovannetti, Noé, arXiv:2212.12397 (2022)",
+        "Erdman, Andolina, Giovannetti, Noé, Phys. Rev. Lett. 133, 243602 (2024), arXiv:2212.12397",
         "Shammah, Ahmed, Lambert, De Liberato, Nori, Phys. Rev. A 98, 063815 (2018)",
     ),
     kwargs={
         "n_cells": "int, number of two-level cells N (default 3)",
         "n_photons": "int, initial cavity Fock number (default n_cells)",
         "n_max": (
-            "int, Fock cutoff (default n_photons if rwa else n_photons + 4; check convergence "
-            "for rwa=False)"
+            "int, Fock cutoff (default n_photons if rwa else n_photons + 4; NOT converged for "
+            "rwa=False at action_bound=0.5, see the task description)"
         ),
-        "omega_c": "float, cavity frequency in units of omega0 = 1 (default 1.0, resonant)",
+        "omega0": "float, cell transition frequency, energy unit of H_B (default 1.0)",
+        "omega_c": "float, cavity frequency; detuning omega_c - omega0 (default 1.0, resonant)",
         "rwa": "bool, True = Tavis-Cummings, False = full Dicke with counter-rotating terms",
         "kappa": "float, cavity photon loss rate; >0 switches to Lindblad dynamics (default 0)",
         "gamma": "float, collective emission rate sqrt(gamma) J- (default 0)",
@@ -64,6 +72,6 @@ register(
         "horizon": "int, control steps per episode (default 20)",
         "dt": "float, control period in units of 1/omega0 (default 0.2)",
         "action_bound": "float, |g| <= action_bound = g_max (default 0.5)",
-        "reward": "'energy' or 'ergotropy' (default 'energy')",
+        "reward": "'energy' or 'ergotropy' of the reduced cell state (default 'energy')",
     },
 )

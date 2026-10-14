@@ -1,7 +1,7 @@
 """Validation checks for the open two-level quantum battery (:class:`QubitBattery`).
 
 The QuTiP cross-check needs ``qutip`` (``qenvs[dev]`` extra); without it that single
-check reports ``error = nan`` (FAIL, detail says why) instead of raising.
+check is reported as skipped (status SKIP, detail says why) instead of raising.
 """
 
 from __future__ import annotations

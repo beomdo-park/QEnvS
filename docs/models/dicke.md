@@ -26,7 +26,8 @@ $$
 The two differ by the counter-rotating terms $a J_-$ and $a^\dagger J_+$. The
 Tavis-Cummings (TC) Hamiltonian conserves the excitation number
 $\hat N_{\mathrm{exc}} = a^\dagger a + J_z + N/2$; the Dicke Hamiltonian only conserves
-its parity and creates photons out of the vacuum.
+its parity and creates photons out of the vacuum. There is no diamagnetic $A^2$ term:
+this is the bare Dicke Hamiltonian as used by Ferraro et al. (2018).
 
 The stored energy is measured by the battery Hamiltonian
 
@@ -35,6 +36,13 @@ H_B = \omega_0 \left(J_z + \tfrac{N}{2}\right), \qquad 0 \le \langle H_B \rangle
 $$
 
 which is $0$ for all cells in the ground state and $N\omega_0$ when fully charged.
+Energy and ergotropy are properties of the cells alone: the model's
+`battery_reduced(state)` traces out the cavity (`dq.ptrace(state, 0)`) and returns
+$H_B$ on the $(N+1)$-dimensional Dicke space, and `BatteryCharging` evaluates both
+quantities on that reduced state. For closed dynamics the global state stays pure, so
+an ergotropy computed on the full cells+cavity state with $H_B \otimes 1$ would equal
+the energy identically; on the reduced cell state it is strictly below the energy
+whenever the cells are entangled with the cavity (see Reward).
 
 Optional collective dissipators (Lindblad jump operators):
 
@@ -58,20 +66,22 @@ rate $\gamma_\phi / 2$, i.e. `DickeBattery(gamma_phi=x)` corresponds to
   $J_+ = |1\rangle\langle 0|$, $J_z = \sigma_z / 2$ (`collective_spin_matrices(1)`).
 * Cavity Fock space $|0\rangle, \dots, |n_{\max}\rangle$ with $a|n\rangle = \sqrt{n}\,|n-1\rangle$
   (`boson_matrices(n_max)`).
-* Tensor order: battery (first) $\otimes$ cavity (second), $\dim = (N+1)(n_{\max}+1)$.
+* Tensor order: battery (first) $\otimes$ cavity (second), $\dim = (N+1)(n_{\max}+1)$;
+  the qarrays carry `dims = (N + 1, n_max + 1)`, so `dq.ptrace(state, 0)` is the cell
+  state.
 * Initial state: all cells ground, cavity in the Fock state $|n\rangle$,
   $|{-j}\rangle \otimes |n\rangle$ (ket for closed models, density matrix when any rate is
   positive).
 * Note that QuTiP's `jmat` orders $m$ from $+j$ down to $-j$, the opposite of this
-  library; the QuTiP cross-check permutes the spin index accordingly.
+  library; the QuTiP cross-checks permute the spin index accordingly.
 
 ## Assumptions and validity
 
 * **Rotating-wave approximation** (`rwa=True`, the default) is justified for
   $g \ll \omega_0$ near resonance ($\omega_c \approx \omega_0$). The check
   `rwa_weak_coupling` shows that at $g = 0.01\,\omega_0$ the TC and Dicke energies agree
-  to $6 \times 10^{-4}$ over a collective Rabi period, while at $g = 0.5\,\omega_0$ they
-  differ by order 1 (`counter_rotating_terms`). The default task bound
+  to $6 \times 10^{-4}$ for $t \in [0, \pi/(g\sqrt{N})]$, while at $g = 0.5\,\omega_0$
+  they differ by order 1 (`counter_rotating_terms`). The default task bound
   `action_bound = 0.5` therefore lets an agent leave the RWA regime; set a smaller bound
   if you need the TC model to be physically faithful.
 * **Symmetric subspace.** Working in the $j = N/2$ sector is exact as long as the
@@ -79,11 +89,21 @@ rate $\gamma_\phi / 2$, i.e. `DickeBattery(gamma_phi=x)` corresponds to
   collective operators used here. *Local* (per-cell) decay or dephasing couples the
   symmetric sector to lower-$j$ sectors and is **not** supported in v0; a
   permutation-invariant (PIQS-style, Shammah et al. 2018) solver is planned.
-* **Fock cutoff.** For TC the excitation number is conserved, so
-  $n_{\max} = n$ is exact (the default). For the Dicke model the counter-rotating terms
-  create photons; the default $n_{\max} = n + 4$ is a convenience, not a convergence
-  guarantee. Increase `n_max` until your observables stop changing, especially for
-  $g \gtrsim 0.1\,\omega_0$.
+* **Fock cutoff (read this before using `rwa=False`).** For TC the excitation number
+  is conserved, so $n_{\max} = n$ is exact (the default). For the Dicke model the
+  counter-rotating terms create photons and the default $n_{\max} = n + 4$ is a
+  convenience, not a convergence guarantee. It is converged for weak coupling:
+  `cutoff_convergence` finds $|\Delta\langle H_B\rangle| = 8.5 \times 10^{-6}$ between
+  $n_{\max} = 6$ and $12$ at $g = 0.1\,\omega_0$, $N = 2$ (top-Fock population
+  $2.4 \times 10^{-5}$). **It is not converged at the task default
+  `action_bound = 0.5`**: for constant $g = 0.5$ over the default episode (20 steps,
+  `dt = 0.2`) the return is $1.754$ with the default $n_{\max} = 7$ for $N = 3$ but
+  $1.530$ once converged ($n_{\max} \ge 27$), an error of about 15 percent; for
+  $N = 2$ it is $1.017$ ($n_{\max} = 6$) versus $1.000$ ($n_{\max} \ge 12$), and the
+  energy curves at $n_{\max} = 6$ and $12$ differ by up to $0.13$ along the episode.
+  With `rwa=False` either keep $|g| \lesssim 0.1\,\omega_0$ or set
+  `n_max >= n_photons + 24`, and monitor the `top_fock` observable (population of the
+  highest kept Fock level): it should stay negligible throughout the episode.
 * Energies and rates are in units of $\omega_0$ (= 1 by default), times in $1/\omega_0$.
 
 ## Parameters
@@ -92,40 +112,63 @@ rate $\gamma_\phi / 2$, i.e. `DickeBattery(gamma_phi=x)` corresponds to
 |---|---|---|
 | `n_cells` | 3 | number of cells $N$ |
 | `n_photons` | `None` ($= N$) | initial cavity Fock number $n$ (Ferraro protocol: $n = N$) |
-| `n_max` | `None` ($n$ if `rwa` else $n + 4$) | Fock cutoff |
+| `n_max` | `None` ($n$ if `rwa` else $n + 4$) | Fock cutoff (see above for `rwa=False`) |
 | `omega0` | 1.0 | cell frequency, energy unit of $H_B$ |
 | `omega_c` | 1.0 | cavity frequency; detuning $\omega_c - \omega_0$ |
 | `rwa` | `True` | Tavis-Cummings (`True`) or Dicke (`False`) |
 | `kappa`, `gamma`, `gamma_phi` | 0.0 | collective dissipation rates (any $> 0$ switches to Lindblad dynamics) |
 
-Observables reported in `info`: `energy` ($\langle H_B\rangle$), `n_photons`
-($\langle a^\dagger a\rangle$), `excitation` ($\langle \hat N_{\mathrm{exc}}\rangle$), plus
-the generic `ergotropy`, `power` and `purity` of `BatteryCharging`.
+Observables reported in `info`: `energy` ($\langle H_B\rangle$ of the reduced cell
+state), `ergotropy` (of the reduced cell state with respect to $H_B$), `n_photons`
+($\langle a^\dagger a\rangle$), `excitation` ($\langle \hat N_{\mathrm{exc}}\rangle$),
+`top_fock` (population of the Fock level $|n_{\max}\rangle$, a truncation monitor), plus
+the generic `power` and `purity` (of the full cells+cavity state) of `BatteryCharging`.
 
 ## Control semantics
 
 One control channel, the coupling $g(t)$, piecewise constant over each control period
 `dt` and clipped to $[-g_{\max}, g_{\max}]$ with $g_{\max} =$ `action_bound` (task
-default 0.5). Physically $g \ge 0$; a negative $g$ is equivalent to $g \to |g|$ with a
-phase redefinition of the cavity mode ($a \to -a$), which leaves every observable in this
-model unchanged (also for the Dicke term, since it is linear in $a + a^\dagger$), so
-negative actions are simply allowed. Setting $g = 0$ decouples the cells and holds the
-stored charge (closed system), which makes "charge, then switch off" the natural
-optimal strategy.
+default 0.5). Physically $g \ge 0$. Replacing $g \to -g$ for the *whole* protocol is a
+gauge symmetry: $U = (-1)^{a^\dagger a}$ maps $a \to -a$ and leaves every observable
+unchanged (also for the Dicke term, which is linear in $a + a^\dagger$), so negative
+actions are allowed. A sign change *within* a protocol is physical and can reverse
+charging: for $N = n = 1$ the steps $[+g, -g]$ with $g\,\mathrm{dt} = \pi/4$ return the
+cell to the ground state while $[+g, +g]$ charges it fully (tested). Setting $g = 0$
+decouples the cells and holds the stored charge (closed system), which makes "charge,
+then switch off" the natural optimal strategy.
 
 Task kwargs (`qenvs.make("battery/Dicke-v0", ...)`): `n_cells`, `n_photons`, `n_max`,
-`omega_c`, `rwa`, `kappa`, `gamma`, `gamma_phi`, `horizon` (20), `dt` (0.2),
+`omega0`, `omega_c`, `rwa`, `kappa`, `gamma`, `gamma_phi`, `horizon` (20), `dt` (0.2),
 `action_bound` (0.5), `reward` (`"energy"`).
 
 ## Reward
 
 Per-step gain of the stored quantity $Q$, so the undiscounted return equals
 $Q(\text{final}) - Q(\text{initial})$ with $Q = \langle H_B\rangle$ (`reward="energy"`)
-or the ergotropy of the cell state with respect to $H_B$ (`reward="ergotropy"`). The
-return is bounded by $N\omega_0$. With the Ferraro protocol ($n = N$ photons) the
-maximum energy reachable by a constant coupling is $N\omega_0$ only for $N = 1$; for
-$N = 2, 4, 8$ the first energy peak reaches $0.89, 0.86, 0.88$ of $N\omega_0$ (the cells
-and the cavity do not fully swap excitations for $N > 1$).
+or the ergotropy of the reduced cell state $\rho_B = \mathrm{tr}_{\mathrm{cav}}\,\rho$
+with respect to $H_B$ (`reward="ergotropy"`). The return is bounded by $N\omega_0$.
+For closed dynamics the ergotropy is strictly below the energy whenever the cells and
+the cavity are entangled, so the two rewards are different objectives: for $N = 2$,
+constant $g = 0.5$ and $t = 1$ the energy is $0.784\,\omega_0$ but the ergotropy is
+only $0.277\,\omega_0$ (while the global state is pure, `purity` = 1). The two
+coincide only when the reduced cell state is pure, e.g. at full charge.
+
+Closed-form landmarks (resonant TC, constant $g$):
+
+* $N = n = 1$ (Jaynes-Cummings): $P_e(t) = \sin^2(g t)$. At $g t = \pi/4$ the reduced
+  cell state is $\mathrm{diag}(1/2, 1/2)$: energy $\omega_0/2$, ergotropy $0$. At
+  $g t = \pi/2$ the cell is fully excited: ergotropy = energy = $\omega_0$
+  (`reduced_ergotropy`).
+* $N = n = 2$: in the two-excitation manifold the coupling matrix has eigenfrequencies
+  $0$ and $\pm\sqrt{6}\,g$, so
+  $E(t)/\omega_0 = \tfrac{2}{3}\sin^2(\sqrt{6}\,g t) + \tfrac{4}{9}\,(1 - \cos\sqrt{6}\,g t)^2$,
+  with the first maximum $E_{\max} = \tfrac{8}{9}\,N\omega_0$ at
+  $t^* = \pi/(\sqrt{6}\,g)$ (`two_cells_closed_form`).
+
+With the Ferraro protocol ($n = N$ photons) the maximum energy reachable by a constant
+coupling is $N\omega_0$ only for $N = 1$; for $N = 2, 4, 8$ the first energy peak
+reaches $0.89, 0.86, 0.88$ of $N\omega_0$ (the cells and the cavity do not fully swap
+excitations for $N > 1$).
 
 ```python
 import jax.numpy as jnp
@@ -144,42 +187,63 @@ All numbers below are from `qenvs.validation.dicke.CHECKS` on this machine
 (dynamiqs 0.3.6, JAX 0.7.2, QuTiP 5.3.1, CPU). The analytic and cross-check
 integrations use a tight adaptive Tsit5 (`rtol=1e-8, atol=1e-10`) so that they
 measure physics rather than the default solver tolerance; the default solver is covered
-by `solver_convergence`. Every check passes in float64 and in float32.
+by `solver_convergence` (closed) and `open_solver_convergence` (Lindblad). Every check
+passes in float64 and in float32.
 
 | check | reference | tolerance | measured (float64) | measured (float32) |
 |---|---|---|---|---|
 | `operator_algebra` | $[J_+, J_-] = 2J_z$ for $N \le 6$; $[a, a^\dagger] = 1$ below the cutoff | 1e-12 | 3.6e-15 | 3.6e-15 |
 | `jaynes_cummings_limit` | $N = 1$, $n \in \{1, 3\}$, resonant TC, $g = 0.5$: $P_e(t) = \sin^2(g\sqrt{n}\,t)$ (Jaynes-Cummings) | 1e-6 | 1.1e-8 | 4.2e-7 |
-| `excitation_conservation` | closed TC, random piecewise-constant $g(t)$, $n_{\max} = 6 > n$: $\langle \hat N_{\mathrm{exc}}\rangle$ constant (renormalised state; norm drift reported in `detail`) | 1e-6 | 1.8e-15 | 1.3e-15 |
-| `energy_bounds` | $0 \le \langle H_B\rangle \le N\omega_0$ along random rollouts (closed TC and open Dicke) | 1e-7 | 0 | 0 |
+| `detuned_jaynes_cummings` | $N = 1$, $g = 0.5$, $(\omega_0, \omega_c, n) \in \{(1, 1.7, 1), (1, 0.3, 2), (1.3, 1.0, 1)\}$: $P_e = \frac{4g^2 n}{\Omega^2}\sin^2\frac{\Omega t}{2}$, $\Omega^2 = (\omega_c - \omega_0)^2 + 4g^2 n$, and $\langle a^\dagger a\rangle = n - P_e$ | 1e-6 | 1.3e-8 | 7.2e-7 |
+| `two_cells_closed_form` | $N = n = 2$, $g = 0.5$: $t^* = \pi/(\sqrt{6}\,g)$ (grid of 601 points, parabolic refinement) and $E(t^*) = \tfrac{8}{9} N\omega_0$; error $= \max(|\Delta t^*|, 100\,|\Delta E_{\max}|)$ so the single tolerance enforces 1e-4 on $t^*$ and 1e-6 on $E_{\max}$ | 1e-4 | 7.5e-7 ($|\Delta t^*| = 1.7\times10^{-8}$, $|\Delta E_{\max}| = 7.4\times10^{-9}$) | 2.0e-5 ($2.0\times10^{-5}$, $1.3\times10^{-8}$) |
+| `reduced_ergotropy` | $N = n = 1$: reduced cell state at $g t = \pi/4$ has $E = \omega_0/2$, ergotropy $0$; at $g t = \pi/2$ ergotropy $= E = \omega_0$ | 1e-6 | 3.8e-9 | 1.2e-7 |
+| `omega0_scaling` | resonant TC, $N = 2$, same random $g(t)$ with $\omega_0 = 1$ and $1.5$: energy and ergotropy scale exactly by $1.5$ (max abs residual over 10 env steps) | 1e-6 | 1.3e-9 | 4.1e-8 |
+| `excitation_conservation` | closed TC, random piecewise-constant $g(t)$, $n_{\max} = 6 > n$: $\langle \hat N_{\mathrm{exc}}\rangle = n_{\mathrm{photons}}$ at every time, including $t = 0$ (renormalised state; norm drift reported in `detail`) | 1e-6 | 1.3e-15 | 1.3e-15 |
+| `ergotropy_bounds` | $0 \le \mathcal{E}(\rho_B) \le \langle H_B\rangle \le N\omega_0$ along 15-step random rollouts (closed TC and open Dicke), plus $|\mathrm{tr}\rho - 1|$ for the open rollout; min gap $E - \mathcal{E}$ in `detail` ($1.7\times10^{-3}$ closed, $0.175$ open) | 1e-6 | 6.7e-16 | 2.4e-7 |
 | `collective_advantage` | Ferraro et al. 2018: $t^*(N)$ strictly decreasing, log-log slope of $t^*$ vs $N$ within $-0.5 \pm 0.25$ for $N \in \{1, 2, 4, 8\}$, $g = 0.05$ | 0.25 (on the slope) | fitted exponent $-0.401$; $t^* = 31.42, 25.64, 18.37, 13.89$ | $-0.401$ |
-| `rwa_weak_coupling` | Dicke ($n_{\max} = n + 6$) vs TC energy, $N = 2$, $g = 0.01\,\omega_0$, one collective Rabi period | 2e-3 | 5.8e-4 | 5.8e-4 |
+| `rwa_weak_coupling` | Dicke ($n_{\max} = n + 6$) vs TC energy, $N = 2$, $g = 0.01\,\omega_0$, $t \in [0, \pi/(g\sqrt{N})]$ | 2e-3 | 5.8e-4 | 5.8e-4 |
 | `counter_rotating_terms` | same at $g = 0.5\,\omega_0$: energies must differ by $> 0.05$ (error = shortfall) | 0 | 0 (difference 1.03) | 0 (1.03) |
+| `cutoff_convergence` | closed Dicke, $N = 2$, constant $g = 0.1\,\omega_0$, 20 steps of `dt = 0.2`: $\langle H_B\rangle(t)$ with $n_{\max} = 6$ (default) vs $12$; max `top_fock` population at $n_{\max} = 6$ in `detail` ($2.4\times10^{-5}$) | 1e-3 | 8.5e-6 | 8.3e-6 |
 | `qutip_tavis_cummings` | open TC, $N = n = 3$, $\kappa = 0.1$, $\gamma = 0.05$, $\gamma_\phi = 0.03$, random $g(t)$: final $\rho$ vs QuTiP 5 `mesolve` (max abs element) | 1e-5 | 5.8e-11 | 6.1e-8 |
 | `qutip_dicke` | open Dicke, $N = n = 3$, $n_{\max} = 7$, $\kappa = 0.1$, random $g(t)$: final $\rho$ vs QuTiP 5 `mesolve` | 1e-5 | 5.8e-10 | 6.4e-8 |
+| `qutip_detuned` | open TC, $N = n = 2$, $\omega_0 = 0.8$, $\omega_c = 1.3$, $\kappa = 0.05$, $\gamma = 0.02$, random $g(t)$: final $\rho$ vs QuTiP 5 built with explicit $\omega_0$, $\omega_c$ (the coherences fix the sign of the detuning) | 1e-5 | 4.0e-11 | 8.7e-8 |
 | `density_matrix_constraints` | open Dicke after random driving: Hermitian, trace 1, positive semidefinite | 1e-6 | 1.1e-16 | 0 |
 | `solver_convergence` | default Tsit5 (env rollout) vs exact `Expm` propagator, closed Dicke, dim 32, 8 random steps | 2e-5 | 4.4e-6 | 5.1e-6 |
+| `open_solver_convergence` | default Tsit5 vs `Tsit5(rtol=1e-10, atol=1e-12)`, open Dicke ($\kappa = 0.1$, $\gamma = 0.05$), dim 21, 8 random steps, final $\rho$ | 1e-5 | 5.4e-6 | 6.1e-6 |
 
 Notes on the scaling check: the fitted exponent is $-0.40$ for $N \in \{1, 2, 4, 8\}$
-(and also $-0.40$ when extended to $N = 16$, $t^* = 10.60$). This is the finite-$N$
-exponent of the TC model with $n = N$ photons at $g = 0.05\,\omega_0$; the $N^{-1/2}$ law
-of Ferraro et al. is the large-$N$ statement, so the check accepts a window
-$[-0.75, -0.25]$ rather than asserting $-0.5$ exactly. The check is still
-discriminating: it fails if $t^*$ does not decrease with $N$ (no collective advantage).
+and stays at $-0.40$ when the fit is extended offline to $N = 16, 32, 48$
+($t^* = 10.60, 8.06, 6.87$; exponents $-0.402, -0.401, -0.400$ for $N \le 16, 32, 48$).
+This is the finite-$N$ exponent of the TC model with $n = N$ photons at
+$g = 0.05\,\omega_0$ in this protocol (constant coupling, first energy peak), not the
+asymptotic $N^{-1/2}$ law of Ferraro et al., which is a large-$N$ statement; the check
+therefore accepts a window $[-0.75, -0.25]$ rather than asserting $-0.5$ exactly. It is
+still discriminating: it fails if $t^*$ does not decrease with $N$ (no collective
+advantage).
 
-The QuTiP cross-checks (`qutip_tavis_cummings`, `qutip_dicke`) are the independent
-confirmation of the operator construction, the basis ordering, the jump-operator
-directions and the control sign: a reversed $J_-$, a factor 2 in $g$, or a mis-signed
-counter-rotating term changes the final density matrix at the $10^{-2}$ level. Without
-`qutip` installed these two checks report `error = nan` (FAIL) with an explanatory
-`detail`.
+Which check catches what (verified by mutating the model): a drift that uses
+$\omega_0$ for the cavity fails `detuned_jaynes_cummings` and `qutip_detuned`; a flipped
+detuning sign leaves every population unchanged and is caught only by `qutip_detuned`
+(coherences); an $H_B$ without $\omega_0$ fails `detuned_jaynes_cummings`,
+`omega0_scaling` and `qutip_detuned`; ergotropy evaluated on the full cells+cavity state
+fails `reduced_ergotropy`; a missing $+N/2$ offset fails `excitation_conservation` (and
+`reduced_ergotropy`, `ergotropy_bounds` if it is in $H_B$); a task factory that drops a
+kwarg fails `test_task_factory_forwards_every_model_kwarg`. The QuTiP cross-checks are
+the independent confirmation of the operator construction, the basis ordering, the
+jump-operator directions and the control sign: a reversed $J_-$, a factor 2 in $g$, or
+a mis-signed counter-rotating term changes the final density matrix at the $10^{-2}$
+level. Without `qutip` installed the three QuTiP checks are reported as skipped
+(status `SKIP` in `qenvs validate`, `skipped: true` in `--json`) with an explanatory
+`detail`; they never count as passed.
 
 ## Known limitations
 
 * Collective dissipation only. Local decay / dephasing (which breaks permutation
   symmetry) is not available; planned via a PIQS-style solver.
-* `n_max` for `rwa=False` must be converged by the user; the default $n + 4$ is a
-  starting point.
+* `n_max` for `rwa=False` must be converged by the user; the default $n + 4$ is only
+  adequate for $|g| \lesssim 0.1\,\omega_0$ and is about 15 percent off in the return
+  at the task default `action_bound = 0.5` (see Assumptions and validity). Watch
+  `top_fock`.
 * The symmetric subspace is $N + 1$ dimensional, but the open-system Liouvillian is
   $((N+1)(n_{\max}+1))^2$ dimensional, so open-system episodes with large $N$ and large
   cutoffs are slow on CPU.
@@ -202,10 +266,11 @@ counter-rotating term changes the final density matrix at the $10^{-2}$ level. W
    classical many-body batteries", Phys. Rev. B 99, 205437 (2019). Ergotropy and
    collective charging of Dicke batteries.
 5. P. A. Erdman, G. M. Andolina, V. Giovannetti, F. Noé, "Reinforcement learning
-   optimization of the charging of a Dicke quantum battery", arXiv:2212.12397 (2022).
+   optimization of the charging of a Dicke quantum battery", Phys. Rev. Lett. 133,
+   243602 (2024), arXiv:2212.12397.
 6. N. Shammah, S. Ahmed, N. Lambert, S. De Liberato, F. Nori, "Open quantum systems
    with local and collective incoherent processes: Efficient numerical simulations
    using permutational invariance", Phys. Rev. A 98, 063815 (2018). PIQS.
 7. E. T. Jaynes, F. W. Cummings, "Comparison of quantum and semiclassical radiation
    theories with application to the beam maser", Proc. IEEE 51, 89 (1963). Single-cell
-   limit used in `jaynes_cummings_limit`.
+   limit used in `jaynes_cummings_limit` and `detuned_jaynes_cummings`.
