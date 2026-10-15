@@ -169,8 +169,9 @@ validation tests.
 ## Citation
 
 Software DOI (all versions): [10.5281/zenodo.23359969](https://doi.org/10.5281/zenodo.23359969).
-Version 0.2.0: [10.5281/zenodo.23374561](https://doi.org/10.5281/zenodo.23374561)
-(0.1.0: [10.5281/zenodo.23359970](https://doi.org/10.5281/zenodo.23359970)).
+Version 0.3.0: [10.5281/zenodo.23401877](https://doi.org/10.5281/zenodo.23401877)
+(0.2.0: [10.5281/zenodo.23374561](https://doi.org/10.5281/zenodo.23374561),
+0.1.0: [10.5281/zenodo.23359970](https://doi.org/10.5281/zenodo.23359970)).
 Machine-readable metadata is in [CITATION.cff](CITATION.cff) (GitHub shows a "Cite this
 repository" button).
 
@@ -180,7 +181,7 @@ repository" button).
   title   = {{QEnvS}: physically validated quantum control environments for
              reinforcement learning and optimal control},
   year    = {2026},
-  version = {0.2.0},
+  version = {0.3.0},
   doi     = {10.5281/zenodo.23359969},
   url     = {https://github.com/beomdo-park/QEnvS}
 }
