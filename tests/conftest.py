@@ -34,6 +34,24 @@ def _limit_cpus() -> None:
 
 _limit_cpus()
 
+import gc  # noqa: E402
+
 import jax  # noqa: E402 (after the CPU limit above)
+import pytest  # noqa: E402
 
 jax.config.update("jax_enable_x64", True)
+
+
+@pytest.fixture(autouse=True, scope="module")
+def _free_jax_caches():
+    """Drop compiled functions after each test module.
+
+    A pytest-xdist worker runs many modules in one process, and jax keeps every compiled
+    function. Measured over the full suite with three workers: 19.9 GB in total at peak
+    (7.4 GB for one worker) without this, 12.6 GB with it, for about 5% more time. Four
+    workers without it would need more than the 16 GB of a GitHub runner, whose Linux jobs
+    shut down at about 77 percent of the suite in every attempt.
+    """
+    yield
+    jax.clear_caches()
+    gc.collect()

@@ -65,7 +65,9 @@ jobs:
           uv pip install --resolution lowest-direct -e ".[dev]"
       - name: versions
         run: uv run --no-sync python -c "import sys, jax, dynamiqs, numpy, qutip; print(sys.version, jax.__version__, dynamiqs.__version__, numpy.__version__, qutip.__version__)"
-      - run: uv run --no-sync pytest -n 4
+      # 3 workers: the runner has 16 GB; the full suite peaks at about 12.6 GB with 3 workers
+      # (tests/conftest.py clears jax caches after each module)
+      - run: uv run --no-sync pytest -n 3
 
   build:
     runs-on: ubuntu-latest
