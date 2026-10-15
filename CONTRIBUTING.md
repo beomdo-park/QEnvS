@@ -6,7 +6,7 @@ Participation follows the [code of conduct](CODE_OF_CONDUCT.md). Report security
 git clone https://github.com/beomdo-park/QEnvS && cd QEnvS
 uv sync --extra dev          # or: pip install -e '.[dev]'
 uv run pre-commit install
-uv run pytest -n auto
+uv run pytest -n 4
 ```
 
 ## Adding a model
