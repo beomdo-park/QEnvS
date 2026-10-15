@@ -328,6 +328,11 @@ task the calibrated reference pulse reaches $F$ = 0.984331 in float32 and 0.9843
 
 ## Known limitations
 
+* Randomisation (`qenvs.wrappers.ParameterRandomization`): `detuning_ghz` is refused in 0.3
+  because the target stays in the nominal frame. The supported parameters (`coupling_ghz` and the
+  two anharmonicities) also shift the static dressing phases that the target keeps at their
+  nominal values; estimated (not measured) at about 0.006 rad for a 10% coupling spread, of order
+  1e-5 in infidelity, growing with the randomisation strength.
 * No echo pulses: there is no drive at the control frequency, so the echoed CR sequence
   (control $\pi$ pulses) cannot be built. Single-qubit gates on the control are not available.
 * No tunable couplers, no spectator qubits, no classical crosstalk.

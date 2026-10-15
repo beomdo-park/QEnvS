@@ -102,6 +102,6 @@ def make(
         env,
         "state" if observation is None else observation,
         shots=shots,
-        diagnostics=bool(diagnostics) if diagnostics is not None else False,
+        diagnostics=False if diagnostics is None else diagnostics,
         observables=observables,
     )

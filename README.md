@@ -119,6 +119,14 @@ results, physical constraints and an independent simulator (QuTiP).
 
 Each model has a page under `docs/models/` with its Hamiltonian, assumptions and validation table.
 
+Realistic RL conditions (0.3): `ParameterRandomization` draws model parameters per episode,
+`ControlErrors` adds gain, offset and step noise, `ObservationModel` (or
+`qenvs.make(task, observation=..., shots=...)`) gives expectation-value observations with
+exact finite-shot noise, and `qenvs.robust.evaluate` reports mean and lower-tail performance
+over a parameter distribution
+([uncertainty](https://beomdo-park.github.io/QEnvS/guides/uncertainty/),
+[observation and evaluation](https://beomdo-park.github.io/QEnvS/guides/observation-and-evaluation/)).
+
 Bring your own system: `HamiltonianModel.from_operators(drift, controls, jump_ops, initial_state)`
 accepts NumPy, JAX, dynamiqs or QuTiP operators, plugs into every environment, and
 `qenvs validate --model my_module:MODEL` runs generic physics and numerics checks on it

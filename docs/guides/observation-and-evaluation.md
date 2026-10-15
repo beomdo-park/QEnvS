@@ -45,7 +45,7 @@ dynamics and rewards are those of the wrapped environment.
   `observables=("energy",)`, which keeps the order you give.
 * Gate tasks (`GateControl`) support `"state"` and `"time"` only. `"expectations"` of a gate
   needs probe input states and a measurement design, which is planned for 0.4. The attribute
-  `observation_kind` tells what `"state"` carries: `"state"`, `"propagator"` (closed gate task) or
+  `observation_kind` of an `ObservationModel` tells what `"state"` carries: `"state"`, `"propagator"` (closed gate task) or
   `"superoperator"` (open gate task). The last two are accumulated maps that an experiment only
   obtains by process tomography, so the `"state"` mode of a gate task is an ideal-simulator
   baseline, not a measurement.
@@ -93,7 +93,8 @@ observables or any other wrapper does not change the draws of the other leaves.
    keys `shots_used` and `clip_fraction`. The `"state"` mode keeps the released `info`.
 3. `diagnostics=True` adds the exact values as `info["diagnostics"]`, for evaluation and
    debugging.
-4. `env.info(state)` and `env.diagnostics(state)` always return the exact values. The API cannot
+4. `env.info(state)` (any environment) and `env.diagnostics(state)` (wrapped environments) always
+   return the exact values. The API cannot
    prevent a caller from feeding them to a policy; keep training loops and evaluation code
    separate (as the examples do).
 5. **The reward is not changed by the mode.** It is the exact simulator gain of the task quantity
@@ -118,8 +119,8 @@ One run key makes every episode reproducible: episode `i` uses
   sub-environment `b` is episode `i = j * num_envs + b`. The vector env therefore replays the
   episodes of a single env of the same seed in interleaved order. (Before 0.3 sub-environment `b`
   used the stream of `GymnasiumEnv(seed=seed + b)`. Deterministic tasks ignore the key, so their
-  behaviour is unchanged; only environments with random resets, such as randomised or measured
-  ones, see different samples.)
+  behaviour is unchanged; only user-defined environments with random resets see different
+  samples.)
 
 ## Evaluating a policy
 
@@ -196,7 +197,9 @@ result.return_mean  # the training reward summed over the episode, reported sepa
   it separately and do not merge the two into one interval.
 * `stability(env, policy, key, sizes=(256, 1024, 4096))` evaluates once at the largest size and
   reports the mean and CVaR for nested prefixes (the same episode keys as `evaluate(n=...)`), with
-  the spread of each across the sizes, so you can see whether they have settled.
+  the spread of each across the sizes. The prefixes are nested, so the spread understates the
+  sampling variation; it is a rough check that the estimates have stopped moving, not a
+  convergence test.
 * `nominal_env` runs the policy on the nominal (not randomised) task so that robustness bought at
   the price of nominal performance is visible. It is assumed deterministic and run for two
   episodes; a warning is issued if the two differ.

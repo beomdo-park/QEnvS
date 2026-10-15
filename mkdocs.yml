@@ -1,4 +1,7 @@
 site_name: QEnvS
+# internal design and planning documents (docs/superpowers) are not part of the user docs
+exclude_docs: |
+  superpowers/
 site_description: Physically validated quantum control environments for RL and optimal control.
 site_url: https://beomdo-park.github.io/QEnvS
 repo_url: https://github.com/beomdo-park/QEnvS

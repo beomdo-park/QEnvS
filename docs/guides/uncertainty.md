@@ -144,6 +144,11 @@ model = HamiltonianModel.from_operators(
 The drift is then `H_0 + J * sx`, with `J` the randomisable parameter. The operator must be
 Hermitian (checked at construction). Without `parameters` the drift is exactly `H_0`.
 
+Only the drift follows the sampled value. If the same physical quantity also enters an
+observable, the battery Hamiltonian, the target or the initial state of your model, those keep the
+nominal value, and the score then measures a mismatch you did not intend. Keep such quantities
+out of the parameter terms, or build them from the episode model yourself.
+
 A model class of your own joins the same contract by implementing `parameter_specs()` (name to
 `ParameterSpec(unit, support, w_ref)`) and, when a parameter is not a field of the model,
 `with_parameters(**values)` (a pure function that works under `jit` and `vmap`). The default
@@ -177,6 +182,11 @@ value, an unknown name, or a drift that is not Hermitian.
     correct. Supporting it needs the target, and any virtual-Z frame update, recomputed from the
     episode model; that is planned as separate work. The single-transmon `detuning_ghz` (X, SX
     gates) is supported.
+* The supported CR parameters (`coupling_ghz`, `anharmonicity_c_ghz`, `anharmonicity_t_ghz`)
+  change the static dressing of the two transmons, while the target keeps the nominal frame. The
+  same mechanism as for the refused detuning therefore adds a small uncorrectable phase: estimated
+  (not measured) at about 0.006 rad for a 10% coupling spread, of order 1e-5 in infidelity, and
+  growing with `strength`.
 * For `levels = 2` the transmon anharmonicity term vanishes, so randomising it changes nothing.
 
 ## Control errors
@@ -211,7 +221,8 @@ defined simulation model, not a claim about the order in which every device prod
 ## Reproducibility and the key tree
 
 All random numbers of an episode derive from the episode key alone, through a fixed tree
-(`qenvs.keys`): one leaf per randomised parameter (named by the CRC32 of its name), one for the
+(`qenvs.keys`): one leaf per randomised parameter (named by the CRC32 of its name, masked to 31 bits so it fits
+`fold_in`), one for the
 gain error, one for the offset, and one per step for the noise. Changing how one leaf is used
 (another distribution, switching it on or off, `correlated`, adding or removing a parameter)
 never changes the samples of another leaf. The wrappers pass the episode key unchanged to the
@@ -220,7 +231,7 @@ index `i` of a run is always `jax.random.fold_in(run_key, i)`, so any episode ca
 from the run key and its number.
 
 Within the same execution mode (both eager or both jitted) a key gives identical results.
-Between a single run and a batched run the random samples are identical; the simulated
+Between a single run and a batched run, both jitted, the random samples are identical; the simulated
 observations and rewards agree to about 1e-12 in float64, because XLA may order floating-point
 operations differently. An eager and a jitted program can differ in the last bit of draws that
 use `erf_inv` (Gaussian samples) because XLA fuses the scaling.

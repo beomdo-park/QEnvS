@@ -73,10 +73,10 @@ Scope: dense Liouvillians. The construction raises ``ValueError`` when the Liouv
 dimension exceeds :data:`MAX_LIOUVILLIAN_DIM` or the stored matrix dimension exceeds
 :data:`MAX_HILBERT_DIM`. Rates are static model parameters (not differentiable).
 
-Randomisable parameters (:meth:`DickeBatteryLocal.parameter_specs`): ``omega0`` and
-``omega_c``, as in :class:`~qenvs.models.dicke.DickeBattery` (``omega0`` also sets the
-energy unit of ``H_B``). The dissipator is cached by its (static) rates and does not
-depend on them, so a randomised frequency never changes the Liouvillian dissipator.
+Randomisable parameters (:meth:`DickeBatteryLocal.parameter_specs`): ``omega_c`` only,
+as in :class:`~qenvs.models.dicke.DickeBattery` (``omega0`` is refused in 0.3: it is also
+the energy unit of ``H_B``). The dissipator is cached by its (static) rates and does not
+depend on the frequencies, so a randomised ``omega_c`` never changes it.
 """
 
 from __future__ import annotations

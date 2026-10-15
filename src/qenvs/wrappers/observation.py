@@ -14,8 +14,10 @@ Modes (``observation=``):
 * ``"expectations"``: ``<O_j>`` for the observables of ``Model.observables()`` of the
   nominal model, in insertion order, then the time fraction ``t / duration``.
 * ``"correlations"``: the ``"expectations"`` list followed by the observables of
-  ``Model.correlation_observables()`` (second-order correlators; a model without that
-  method contributes none), then the time fraction. The common observables get the same
+  ``Model.correlation_observables()`` (second-order correlators), then the time fraction.
+  Only ``DickeBattery`` and ``DickeBatteryLocal`` define correlators among the built-in
+  models; for any other model the base method returns none and ``"correlations"`` gives
+  the same observables as ``"expectations"``. The common observables get the same
   measurement noise as in ``"expectations"`` (same key leaves).
 * ``"time"``: only ``t / duration``.
 
@@ -246,7 +248,8 @@ class ObservationModel(Wrapper):
         observation: ``"state"`` (default), ``"expectations"``, ``"correlations"`` or
             ``"time"``.
         shots: ``None`` (exact expectation values) or a positive integer number of
-            measurements per observable and observation. Only allowed with
+            measurements per observable and observation, at most ``MAX_SHOTS = 2**24``
+            (outcome counts stay exact integers in float32). Only allowed with
             ``"expectations"`` and ``"correlations"``.
         diagnostics: if True, ``info["diagnostics"]`` holds the exact values (evaluation and
             debugging only; never feed them to a policy).
@@ -256,10 +259,12 @@ class ObservationModel(Wrapper):
             rejected as a duplicate.
 
     Raises:
-        ValueError: unknown mode, ``shots`` that is not a positive integer or is given for
-            ``"state"``/``"time"``, a gate task in ``"expectations"``/``"correlations"``,
-            no observables, an unknown name, a non-Hermitian operator, or two observables
-            that are the same operator.
+        ValueError: unknown mode, ``shots`` that is not a positive integer, is above
+            ``2**24`` or is given for ``"state"``/``"time"``, a gate task in
+            ``"expectations"``/``"correlations"``, no observables, an unknown name, a
+            non-Hermitian operator, two observables that are the same operator, or a
+            ``diagnostics`` that is not a bool.
+        TypeError: ``observables`` given as a single string instead of a sequence.
 
     Attributes:
         observation: the mode.
@@ -326,6 +331,9 @@ class ObservationModel(Wrapper):
             model = base.model  # type: ignore[attr-defined]
             first = dict(model.observables())
             if observables is not None:
+                if isinstance(observables, str):
+                    msg = f"observables must be a sequence of names, got the string {observables!r}"
+                    raise TypeError(msg)
                 unknown = [n for n in observables if n not in first]
                 if unknown:
                     msg = f"unknown observables {unknown}; the model defines {list(first)}"

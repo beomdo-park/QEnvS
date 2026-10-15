@@ -2,7 +2,7 @@
 
 > Physically validated quantum control environments (quantum batteries, qubit state transfer, open systems) for reinforcement learning and optimal control. Python package `qenvs`, built on JAX + dynamiqs. Apache-2.0.
 
-Tasks: `transmon/XGate-v0`, `transmon/SXGate-v0`, `qubit/StateTransfer-v0`, `battery/TwoLevel-v0`, `battery/Dicke-v0`, `transfer/LambdaSTIRAP-v0`. Every model ships with analytic validation checks (67 in total: closed-form results, physical constraints, solver convergence, QuTiP cross-checks) that run as tests and are printed by `qenvs validate`. Environments are functional (jit/vmap/grad) with a Gymnasium adapter.
+Tasks: `transmon/XGate-v0`, `transmon/SXGate-v0`, `transmon/CRGate-v0`, `qubit/StateTransfer-v0`, `battery/TwoLevel-v0`, `battery/Dicke-v0`, `battery/DickeLocal-v0`, `transfer/LambdaSTIRAP-v0`. Every model ships with analytic validation checks (86 in total: closed-form results, physical constraints, solver convergence, QuTiP cross-checks) that run as tests and are printed by `qenvs validate`. Environments are functional (jit/vmap/grad) with a Gymnasium adapter.
 
 ## Docs
 
@@ -27,7 +27,8 @@ Tasks: `transmon/XGate-v0`, `transmon/SXGate-v0`, `qubit/StateTransfer-v0`, `bat
 - [Roadmap](https://beomdo-park.github.io/QEnvS/roadmap/): models and validation gates
 - [API: models](https://beomdo-park.github.io/QEnvS/api/models/): `Model`, `Transmon`, `HamiltonianModel`, `TwoLevel`, `QubitBattery`, `DickeBattery`, `LambdaSystem`, observables (energy, ergotropy, fidelity), `qenvs.gates` (targets, leakage-aware gate fidelity)
 - [API: environments](https://beomdo-park.github.io/QEnvS/api/envs/): `Environment` (with `info(state)`), `EnvState`, `TimeStep`, `StateTransfer`, `BatteryCharging`, `GateControl`, registry
-- [API: wrappers](https://beomdo-park.github.io/QEnvS/api/wrappers/): `GymnasiumEnv`, `GymnasiumVectorEnv`
+- [API: wrappers](https://beomdo-park.github.io/QEnvS/api/wrappers/): `GymnasiumEnv`, `GymnasiumVectorEnv`, `ParameterRandomization`, `ControlErrors`, `ObservationModel`, distributions (`Normal`, `Uniform`, `TruncatedNormal`), `Wrapper`
+- [API: robust evaluation](https://beomdo-park.github.io/QEnvS/api/robust/): `qenvs.robust.evaluate`, `stability`, `performance_metric`, and the key tree `qenvs.keys`
 - [API: validation](https://beomdo-park.github.io/QEnvS/api/validation/): `CheckResult`, generic `model_checks` for any model
 
 ## Agent interface

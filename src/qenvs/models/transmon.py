@@ -97,7 +97,7 @@ class Transmon(Model):
         anharmonicity (about 1.5% of -340 MHz, the device-to-device spread of a
         fabricated junction). A transmon anharmonicity is negative, so a Gaussian offset
         needs a ``TruncatedNormal``. At this width the anharmonicity barely changes the
-        error of the reference X-gate pulse (adversarial review, round 6), so a robustness
+        error of the reference X-gate pulse, so a robustness
         result under ``anharmonicity_ghz`` alone at ``w_ref`` is close to a null test; widen
         it deliberately if that axis is the point.
         """

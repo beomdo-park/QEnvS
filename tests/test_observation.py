@@ -645,3 +645,15 @@ def test_float32_statistics_and_determinism():
     res = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
     assert res.returncode == 0, res.stderr[-3000:]
     assert "float32 ok" in res.stdout
+
+
+# ------------------------------------------- argument checks from the pre-release review
+def test_make_rejects_non_bool_diagnostics_and_a_bare_observables_string():
+    import qenvs
+
+    with pytest.raises(ValueError, match="diagnostics must be a bool"):
+        qenvs.make("battery/TwoLevel-v0", diagnostics="no")
+    with pytest.raises(TypeError, match="sequence of names"):
+        qenvs.make("battery/TwoLevel-v0", observation="expectations", observables="energy")
+    env = qenvs.make("battery/TwoLevel-v0", observation="expectations", observables=("energy",))
+    assert env.observation_dim == 2  # one observable plus the time fraction

@@ -16,8 +16,10 @@ can rely on when you build on it.
 Public API means everything importable without a leading underscore from `qenvs`,
 `qenvs.models` (including `qenvs.models.transmon` and `qenvs.models.custom`),
 `qenvs.envs` (including `qenvs.envs.gate`), `qenvs.gates`, `qenvs.wrappers` (including
-`qenvs.wrappers.vector`), `qenvs.observables`, `qenvs.validation` (including
-`qenvs.validation.generic`) and `qenvs.registry`. Use `Environment.info(state)` for
+`qenvs.wrappers.vector`, `qenvs.wrappers.randomization`, `qenvs.wrappers.control`,
+`qenvs.wrappers.observation`), `qenvs.observables`, `qenvs.pulses`, `qenvs.distributions`,
+`qenvs.robust`, `qenvs.keys`, `qenvs.validation` (including `qenvs.validation.generic`) and
+`qenvs.registry`. Use `Environment.info(state)` for
 diagnostics; methods starting with `_` (for example `Environment._info`) are internal.
 `qenvs.toolkit` is the plain-dict layer behind the CLI and follows the CLI rules below.
 

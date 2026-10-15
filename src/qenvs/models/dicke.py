@@ -41,11 +41,11 @@ and collective dephasing ``sqrt(gamma_phi) Jz``. Local (per-cell) decay or depha
 couples the symmetric subspace to lower-``j`` sectors and is out of scope for v0
 (a PIQS-style permutation-invariant solver is planned).
 
-Randomisable parameters (:meth:`DickeBattery.parameter_specs`): the cell frequency
-``omega0`` and the cavity frequency ``omega_c``. Note that ``omega0`` also sets the energy
-unit of ``H_B`` (the battery energy, hence the reward), so a randomised ``omega0``
-rescales the reward of its episode together with the physics; randomise ``omega_c`` to
-vary the detuning at a fixed reward scale.
+Randomisable parameters (:meth:`DickeBattery.parameter_specs`): the cavity frequency
+``omega_c`` only. ``omega0`` is refused in 0.3 (see ``non_parameters``): it is also the
+energy unit of ``H_B``, so a sampled ``omega0`` would rescale the reward and the
+evaluation metric of its episode. Randomise ``omega_c`` to vary the cell-cavity detuning
+at a fixed energy scale.
 """
 
 from __future__ import annotations

@@ -245,7 +245,7 @@ class TestEvaluateRandomised:
             small = robust.evaluate(noisy, pi_pulse(), KEY, n=100)
         assert small.mean_interval is None and small.cvar_interval is None
         assert small.n == 100 and np.isfinite(small.cvar)
-        with pytest.warns(UserWarning, match="CVaR interval is only validated"):
+        with pytest.warns(UserWarning, match="CVaR interval is only checked"):
             mid = robust.evaluate(noisy, pi_pulse(), KEY, n=256)
         assert mid.mean_interval is not None and mid.cvar_interval is None
         with warnings.catch_warnings():

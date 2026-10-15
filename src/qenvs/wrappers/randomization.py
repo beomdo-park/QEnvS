@@ -8,7 +8,7 @@ fixed for the whole episode, and runs the inner environment on
 
 The episode data are ``"offset/<name>"`` (the drawn offset ``delta``, in the unit of the
 parameter) and ``"value/<name>"`` (``nominal + delta``). Samples never leave the support of
-a parameter: a distribution whose range could is rejected at construction (never clipped).
+a parameter: a distribution whose range could leave it is rejected at construction (never clipped).
 """
 
 from __future__ import annotations

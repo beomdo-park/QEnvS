@@ -339,7 +339,7 @@ def _summarise(
         )
     elif warn and not want_tail:
         warnings.warn(
-            f"n = {n} < {MIN_N_CVAR_INTERVAL}: the CVaR interval is only validated for "
+            f"n = {n} < {MIN_N_CVAR_INTERVAL}: the CVaR interval is only checked for "
             f"n >= {MIN_N_CVAR_INTERVAL}; reporting the CVaR point estimate and the mean interval",
             UserWarning,
             stacklevel=3,
