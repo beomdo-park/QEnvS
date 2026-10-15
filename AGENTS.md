@@ -3,6 +3,32 @@
 QEnvS (`qenvs`): physically validated quantum control environments on JAX + dynamiqs.
 Read this before changing anything.
 
+## Before you write code (people and agents)
+
+Several contributors work on QEnvS asynchronously, each with their own agents. GitHub is the
+only place where work is coordinated; do not start from a local guess about what is free.
+
+1. Find the issue. `gh issue list --label "in progress"` and `gh pr list` show what is being
+   worked on. If your task overlaps, comment there instead of writing a second implementation.
+2. Claim it. Comment on the issue, assign yourself, add the `in progress` label, and open a draft
+   PR within a day (the draft PR is the lock). A claim with no activity for 14 days may be taken
+   over after a comment on the issue. No issue yet: open one first.
+3. Design first when it matters. A change to the public API, to physics, or to a released task
+   needs a short design in `docs/design/<slug>.md` (template below) marked `Accepted` by a
+   maintainer before implementation. Implement the accepted design; do not redesign it. Record
+   every deviation with its reason under "Implementation notes" in the same file.
+4. Keep the diff to the claim: no drive-by refactors or formatting of other files. Search for an
+   existing helper before writing one.
+5. Hand off in the PR description, not in your head: Done, Next, Decisions, Open questions (the PR
+   template has the fields), so the next person or agent continues without re-deriving.
+6. Shared machines: run only the tests you touched (`pytest tests/test_x.py`), keep `-n 4` or
+   less, and let CI run the full suite. The test conftest pins each pytest process to a few
+   cores (`QENVS_TEST_CPUS`).
+
+Design template (`docs/design/<slug>.md`): Status (Proposed, Accepted, Implemented,
+Superseded), Owner, Issue, Problem, Decision (API, physics, validation gates), Out of scope,
+Implementation notes.
+
 ## Commands
 
 ```bash

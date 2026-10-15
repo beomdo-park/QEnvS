@@ -1,6 +1,16 @@
 ## What and why
 
-<!-- One paragraph: the change and the reason. Link the issue. -->
+<!-- One paragraph: the change and the reason. -->
+
+Issue: #
+Design: <!-- docs/design/<slug>.md, or "not needed" -->
+
+## Status (hand-off for the next person or agent)
+
+- Done:
+- Next:
+- Decisions (and deviations from the design, with reasons):
+- Open questions:
 
 ## Checklist
 

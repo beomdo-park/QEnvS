@@ -17,3 +17,15 @@ body:
     id: alternatives
     attributes:
       label: Alternatives or workarounds you tried
+  - type: dropdown
+    id: claim
+    attributes:
+      label: Who implements it?
+      description: >-
+        Claiming means you (or your agent) will open a draft PR soon. Changes to the public API,
+        physics or a released task need an accepted design in docs/design/ first (AGENTS.md).
+      options:
+        - I will implement it (I claim this issue)
+        - I would like someone else to
+    validations:
+      required: true

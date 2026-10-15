@@ -9,6 +9,15 @@ uv run pre-commit install
 uv run pytest -n 4
 ```
 
+## How work is coordinated
+
+Contributors work asynchronously and often through coding agents, so every piece of work is
+claimed on GitHub before it is written: find or open an issue, comment and assign yourself, add
+the `in progress` label, and open a draft PR early. Changes to the public API, to physics or to a
+released task start with a short design in `docs/design/` that a maintainer accepts first. The
+full rules (for people and agents) are in [AGENTS.md](AGENTS.md), section "Before you write
+code".
+
 ## Adding a model
 
 1. Subclass `qenvs.models.Model` in `src/qenvs/models/<name>.py`: implement
