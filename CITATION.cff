@@ -2,8 +2,8 @@ cff-version: 1.2.0
 title: "QEnvS: physically validated quantum control environments"
 message: "If you use QEnvS, please cite it using this metadata."
 type: software
-version: 0.2.0
-date-released: 2026-10-15
+version: 0.3.0
+date-released: 2026-10-16
 doi: 10.5281/zenodo.23359969
 identifiers:
   - type: doi

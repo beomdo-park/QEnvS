@@ -5,6 +5,8 @@ suffix (`-vN`); a released task is never changed in place.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-16
+
 ### Added
 
 - `transmon/CRGate-v0`: two-qubit cross-resonance gate on two coupled multi-level transmons
