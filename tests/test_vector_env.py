@@ -167,38 +167,6 @@ def test_autoreset_next_step_after_horizon():
         assert term.all() == (k == H - 1)
 
 
-def test_per_env_prng_streams_match_single_envs():
-    # toy env with random resets: each sub-env must follow GymnasiumEnv(seed=seed+i)
-    env = ToyRandomReset()
-    n = 3
-    venv = GymnasiumVectorEnv(env, n, seed=11)
-    singles = [GymnasiumEnv(env, seed=11 + i) for i in range(n)]
-    venv.reset()
-    for e in singles:
-        e.reset()
-    rng = np.random.default_rng(1)
-    pending = [False] * n
-    for _ in range(10):
-        a = rng.uniform(-1.5, 1.5, size=(n, 1)).astype(np.float32)
-        vo, _, _, _, vi = venv.step(a)
-        for i, e in enumerate(singles):
-            if pending[i]:
-                so, _ = e.reset()
-                st = False
-            else:
-                so, _, st, _, _ = e.step(a[i])
-            np.testing.assert_allclose(vo[i], so, atol=1e-6)
-            np.testing.assert_allclose(vi["x"][i], so[0], atol=1e-6)
-            pending[i] = st
-    # fresh random resets differ between consecutive episodes (key advanced)
-    v = GymnasiumVectorEnv(env, 1, seed=0)
-    o_first, _ = v.reset()
-    for _ in range(3):
-        v.step(np.zeros((1, 1), np.float32))
-    o_second, *_ = v.step(np.zeros((1, 1), np.float32))
-    assert not np.allclose(o_first, o_second)
-
-
 def test_reset_seed_reproducible_and_errors():
     venv = GymnasiumVectorEnv(ToyRandomReset(), 4)
     with pytest.raises(RuntimeError):

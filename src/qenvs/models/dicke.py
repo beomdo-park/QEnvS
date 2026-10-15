@@ -40,16 +40,24 @@ stays exact): cavity loss ``sqrt(kappa) a``, collective emission ``sqrt(gamma) J
 and collective dephasing ``sqrt(gamma_phi) Jz``. Local (per-cell) decay or dephasing
 couples the symmetric subspace to lower-``j`` sectors and is out of scope for v0
 (a PIQS-style permutation-invariant solver is planned).
+
+Randomisable parameters (:meth:`DickeBattery.parameter_specs`): the cell frequency
+``omega0`` and the cavity frequency ``omega_c``. Note that ``omega0`` also sets the energy
+unit of ``H_B`` (the battery energy, hence the reward), so a randomised ``omega0``
+rescales the reward of its episode together with the physics; randomise ``omega_c`` to
+vary the detuning at a fixed reward scale.
 """
 
 from __future__ import annotations
+
+from typing import ClassVar
 
 import dynamiqs as dq
 import jax.numpy as jnp
 import numpy as np
 from dynamiqs import QArray
 
-from qenvs.models.base import Model
+from qenvs.models.base import DISSIPATION, STRUCTURAL, Model, ParameterSpec
 
 NON_RWA_EXTRA_PHOTONS = 4
 """Default Fock headroom above ``n_photons`` for the Dicke model (``rwa=False``)."""
@@ -70,6 +78,43 @@ def collective_spin_matrices(n_cells: int) -> tuple[np.ndarray, np.ndarray, np.n
     for i in range(n_cells):
         jplus[i + 1, i] = np.sqrt(j * (j + 1) - m[i] * (m[i] + 1))
     return jplus, jplus.T.copy(), np.diag(m)
+
+
+SECOND_MOMENT_TOL = 1e-12
+"""Relative Hermiticity tolerance of :func:`spin_second_moments`."""
+
+
+def spin_second_moments(jp: np.ndarray, jm: np.ndarray, jz: np.ndarray) -> dict[str, np.ndarray]:
+    """The six symmetrised second moments of a collective spin, as dense complex matrices.
+
+    With ``Jx = (J+ + J-)/2`` and ``Jy = (J+ - J-)/(2i)`` the returned entries are
+    ``Jx2 = Jx^2``, ``Jy2``, ``Jz2``, ``JxJy = (Jx Jy + Jy Jx)/2``, ``JyJz`` and
+    ``JzJx``. Every entry is Hermitian; this is checked (``ValueError`` beyond a relative
+    ``1e-12``) and then enforced exactly. ``jp``, ``jm``, ``jz`` may act on any space (for
+    example the Dicke space tensored with the cavity identity).
+    """
+    jx = 0.5 * (jp + jm)
+    jy = (jp - jm) / 2j
+    jz = jz.astype(complex)
+
+    def sym(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+        return 0.5 * (a @ b + b @ a)
+
+    out = {
+        "Jx2": jx @ jx,
+        "Jy2": jy @ jy,
+        "Jz2": jz @ jz,
+        "JxJy": sym(jx, jy),
+        "JyJz": sym(jy, jz),
+        "JzJx": sym(jz, jx),
+    }
+    for name, m in out.items():
+        asym = float(np.max(np.abs(m - m.conj().T), initial=0.0))
+        if asym > SECOND_MOMENT_TOL * max(float(np.max(np.abs(m), initial=0.0)), 1.0):
+            msg = f"second moment {name} is not Hermitian: max|A - A^dagger| = {asym:.3e}"
+            raise ValueError(msg)
+        out[name] = 0.5 * (m + m.conj().T)
+    return out
 
 
 def boson_matrices(n_max: int) -> tuple[np.ndarray, np.ndarray]:
@@ -111,6 +156,39 @@ class DickeBattery(Model):
     kappa: float = 0.0
     gamma: float = 0.0
     gamma_phi: float = 0.0
+
+    non_parameters: ClassVar[dict[str, str]] = {
+        "omega0": (
+            "not supported in this release: omega0 is also the energy unit of H_B, so a sampled "
+            "omega0 rescales the reward and the evaluation metric of its episode (a change of "
+            "units, roughly 7 to 10 times larger than its effect on the charging dynamics), "
+            "not only the physics. Randomise omega_c for a cell-cavity detuning at a fixed "
+            "energy scale. Support would need a scale-normalised objective (for example energy "
+            "over N omega0) and the same contract on the other battery models"
+        ),
+        "n_cells": STRUCTURAL,
+        "n_photons": STRUCTURAL,
+        "n_max": STRUCTURAL,
+        "rwa": STRUCTURAL,
+        "kappa": DISSIPATION,
+        "gamma": DISSIPATION,
+        "gamma_phi": DISSIPATION,
+    }
+
+    def parameter_specs(self) -> dict[str, ParameterSpec]:
+        """``omega_c`` in ``[0, inf)``, reference width 0.05.
+
+        Units are those of the model (``omega0 = omega_c = 1`` by default). A frequency is
+        non-negative. 0.05 is a 5% spread, the order of the frequency mismatch between an
+        emitter ensemble and its cavity. ``omega0`` is not declared in this release (it is
+        also the energy unit of ``H_B``; see ``non_parameters``). It is a modest
+        perturbation of the charging protocol: with the constant coupling ``g = 0.25``
+        over the default episode (20 steps of 0.2, ``N = 3``) the stored energy
+        ``<H_B>`` changes from 2.582 to 2.568 for ``omega_c = 0.95`` or ``1.05``
+        (0.5%) and to 2.527 for ``omega_c = 1.1``; a pulse tuned for the nominal
+        detuning loses more.
+        """
+        return {"omega_c": ParameterSpec("omega0", (0.0, float("inf")), 0.05)}
 
     def __check_init__(self) -> None:
         if self.n_cells < 1:
@@ -258,3 +336,13 @@ class DickeBattery(Model):
             "excitation": self.excitation_number(),
             "top_fock": self.top_fock(),
         }
+
+    def correlation_observables(self) -> dict[str, QArray]:
+        """Second moments of the collective spin on the full (cells x cavity) space.
+
+        ``Jx2``, ``Jy2``, ``Jz2``, ``JxJy``, ``JyJz`` and ``JzJx``, where the mixed ones
+        are symmetrised, ``JxJy = (Jx Jy + Jy Jx)/2``, so all six are Hermitian (checked).
+        """
+        eye = np.eye(self.dim_cavity)
+        jp, jm, jz = (np.kron(m, eye) for m in collective_spin_matrices(self.n_cells))
+        return {k: self._qarray(v) for k, v in spin_second_moments(jp, jm, jz).items()}

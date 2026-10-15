@@ -51,6 +51,8 @@ nav:
       - Bring your own Hamiltonian: guides/custom-models.md
       - RL libraries (Gymnasium, vector envs): guides/rl-libraries.md
       - Pulses for hardware toolchains: guides/pulses.md
+      - "Uncertainty: randomised parameters, control errors": guides/uncertainty.md
+      - Observation modes, finite shots, robust evaluation: guides/observation-and-evaluation.md
   - Models:
       - Transmon gates (X, SX): models/transmon.md
       - Cross-resonance gate (two transmons): models/cross_resonance.md
@@ -69,4 +71,5 @@ nav:
       - Models: api/models.md
       - Environments: api/envs.md
       - Wrappers: api/wrappers.md
+      - Robust evaluation: api/robust.md
       - Validation: api/validation.md

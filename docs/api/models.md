@@ -2,6 +2,8 @@
 
 ::: qenvs.models.Model
 
+::: qenvs.models.ParameterSpec
+
 ::: qenvs.models.TwoLevel
 
 ::: qenvs.models.QubitBattery

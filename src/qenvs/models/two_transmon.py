@@ -35,11 +35,16 @@ computational subspace (checked in ``qenvs.validation.cross_resonance``).
 Dissipation (Lindblad, per transmon, enabled by ``t1_*_us`` / ``t2_*_us``): the same
 harmonic-ladder relaxation ``sqrt(1/T1) a`` and dephasing ``sqrt(2/T_phi) n`` as
 :class:`~qenvs.models.transmon.Transmon`, applied to the bare (uncoupled) operators.
+
+Randomisable parameters (:meth:`TwoTransmon.parameter_specs`): ``detuning_ghz``,
+``anharmonicity_c_ghz``, ``anharmonicity_t_ghz`` and ``coupling_ghz``, all in GHz.
+Coherence times, ``levels`` and ``initial`` are not declared.
 """
 
 from __future__ import annotations
 
 import math
+from typing import ClassVar
 
 import dynamiqs as dq
 import equinox as eqx
@@ -49,7 +54,7 @@ from dynamiqs import QArray
 from jax import Array
 
 from qenvs.gates import _arr, unitary_to_superop
-from qenvs.models.base import Model
+from qenvs.models.base import DISSIPATION, STRUCTURAL, Model, ParameterSpec
 
 TWO_PI = 2.0 * math.pi
 NS_PER_US = 1000.0
@@ -93,6 +98,38 @@ class TwoTransmon(Model):
     t1_t_us: float | None = None
     t2_t_us: float | None = None
     initial: str = "00"
+
+    non_parameters: ClassVar[dict[str, str]] = {
+        "detuning_ghz": (
+            "not supported in this release: the CR target is the ZX gate pulled back with the "
+            "nominal detuning (transmon/CRGate-v0), so a sampled detuning would add a control "
+            "Z phase 2 pi d T that no pulse can correct and the score would measure frame "
+            "bookkeeping, not robustness. Supporting it needs the target (and any virtual-Z "
+            "frame update) to be recomputed from the episode model; that is separate work"
+        ),
+        "levels": STRUCTURAL,
+        "initial": STRUCTURAL,
+        "t1_c_us": DISSIPATION,
+        "t2_c_us": DISSIPATION,
+        "t1_t_us": DISSIPATION,
+        "t2_t_us": DISSIPATION,
+    }
+
+    def parameter_specs(self) -> dict[str, ParameterSpec]:
+        """Both anharmonicities and the coupling, in GHz.
+
+        Supports: anharmonicities ``(-inf, 0]``, coupling ``[0, inf)`` (a negative exchange
+        sign is a different device, not a variation of this one). Reference widths: 5 MHz
+        for each anharmonicity and 0.3 MHz for the coupling (10% of the nominal 3 MHz, the
+        usual fabrication spread of a capacitive coupling). The detuning is not declared in
+        this release; see ``non_parameters`` for the reason.
+        """
+        inf = float("inf")
+        return {
+            "anharmonicity_c_ghz": ParameterSpec("GHz", (-inf, 0.0), 0.005),
+            "anharmonicity_t_ghz": ParameterSpec("GHz", (-inf, 0.0), 0.005),
+            "coupling_ghz": ParameterSpec("GHz", (0.0, inf), 0.0003),
+        }
 
     def __check_init__(self) -> None:
         if not isinstance(self.levels, int) or self.levels < 2:

@@ -27,6 +27,14 @@ jump operators becomes a density matrix. A *pure* density matrix without jump op
 reduced to a ket; a *mixed* density matrix without jump operators is kept as a density
 matrix and integrated with the master equation (empty dissipator), so ``is_open`` is true
 whenever the model carries a density matrix.
+
+Parameter terms (randomisation). ``parameters={"J": (nominal, operator, unit, support,
+w_ref)}`` adds named real parameters ``p_k`` to the drift, ``H_drift = H_0 + sum_k p_k O_k``
+with Hermitian ``O_k`` (checked at construction), so
+:class:`~qenvs.wrappers.randomization.ParameterRandomization` can draw ``p_k`` per episode.
+``support`` is the closed interval ``(lo, hi)`` of valid values (infinite ends allowed),
+``w_ref`` the reference width used to normalise the oracle observation (0: none). Without
+``parameters`` the drift is exactly ``H_0``, bit for bit.
 """
 
 from __future__ import annotations
@@ -44,7 +52,7 @@ from dynamiqs import QArray, TimeQArray
 from dynamiqs.method import Method
 from jax import Array
 
-from qenvs.models.base import Model
+from qenvs.models.base import Model, ParameterSpec
 
 HERMITIAN_RTOL = 1e-8
 """Relative tolerance on ``max|A - A^dag| / max|A|`` for drift, controls, observables, H_B."""
@@ -232,6 +240,45 @@ def _resolve_dims(n: int, dims: Sequence[int] | None, sources: Sequence[object])
     return found if found is not None else (n,)
 
 
+def _parameter_terms(
+    parameters: Mapping[str, Sequence[object]] | None, n: int
+) -> tuple[tuple[str, ...], dict[str, float], dict[str, np.ndarray], dict[str, ParameterSpec]]:
+    """Validated parameter terms: names (sorted), nominal values, operators and specs."""
+    if parameters is None:
+        return (), {}, {}, {}
+    if not isinstance(parameters, Mapping):
+        msg = "parameters must be a mapping name -> (nominal, operator, unit, support, w_ref)"
+        raise ValueError(msg)
+    nominal: dict[str, float] = {}
+    mats: dict[str, np.ndarray] = {}
+    specs: dict[str, ParameterSpec] = {}
+    for name, entry in parameters.items():
+        label = f"parameters[{name!r}]"
+        if not isinstance(name, str) or not name:
+            msg = f"parameter names must be non-empty strings, got {name!r}"
+            raise ValueError(msg)
+        if not isinstance(entry, Sequence) or isinstance(entry, str) or len(entry) != 5:
+            msg = f"{label} must be (nominal, operator, unit, support, w_ref)"
+            raise ValueError(msg)
+        value, op, unit, support, w_ref = entry
+        try:
+            p0 = float(value)  # type: ignore[arg-type]
+            lo, hi = support  # type: ignore[misc]
+            spec = ParameterSpec(str(unit), (float(lo), float(hi)), float(w_ref))  # type: ignore[arg-type]
+        except (TypeError, ValueError) as e:
+            msg = f"{label} is invalid: {e}"
+            raise ValueError(msg) from e
+        if not np.isfinite(p0) or not spec.contains(p0):
+            msg = (
+                f"{label} nominal value {value!r} is not finite or outside the support {support!r}"
+            )
+            raise ValueError(msg)
+        nominal[name] = p0
+        mats[name] = _hermitian(op, f"{label} operator", n)
+        specs[name] = spec
+    return tuple(sorted(nominal)), nominal, mats, specs
+
+
 class HamiltonianModel(Model):
     """Model defined by user supplied matrices: ``H(t) = H_0 + sum_k u_k(t) H_k`` plus Lindblad ops.
 
@@ -255,6 +302,12 @@ class HamiltonianModel(Model):
         dims: subsystem dimensions of a composite system, e.g. ``(2, 2)`` for two qubits
             (their product must be ``n``). Inferred from ``QArray``/``Qobj`` inputs when
             omitted, else ``(n,)``. Needed for ``dq.ptrace`` on the model's states.
+        parameters: named real drift parameters, mapping name to
+            ``(nominal, operator, unit, support, w_ref)``: the drift becomes
+            ``H_0 + sum_k p_k O_k``. ``operator`` is Hermitian ``(n, n)``, ``unit`` a string,
+            ``support`` the closed interval ``(lo, hi)`` of valid values (ends may be
+            infinite) containing ``nominal``, ``w_ref >= 0`` the reference width of the
+            oracle observation. See :class:`~qenvs.models.base.ParameterSpec`.
 
     Raises:
         ValueError: on any violated construction guarantee, naming the operator.
@@ -267,6 +320,9 @@ class HamiltonianModel(Model):
         observable_matrices: stored observables by name.
         battery_matrix: stored ``H_B`` or ``None``.
         dims: composite subsystem dimensions (static).
+        parameter_nominals: current values ``p_k`` of the parameter terms, by name.
+        parameter_matrices: operators ``O_k`` of the parameter terms, by name.
+        parameter_spec_items: ``(name, ParameterSpec)`` pairs of the parameter terms (static).
     """
 
     drift_matrix: Array
@@ -276,6 +332,9 @@ class HamiltonianModel(Model):
     observable_matrices: dict[str, Array]
     battery_matrix: Array | None
     dims: tuple[int, ...] = eqx.field(static=True)
+    parameter_nominals: dict[str, Array]
+    parameter_matrices: dict[str, Array]
+    parameter_spec_items: tuple[tuple[str, ParameterSpec], ...] = eqx.field(static=True)
 
     def __init__(
         self,
@@ -286,6 +345,7 @@ class HamiltonianModel(Model):
         observables: Mapping[str, object] | None = None,
         battery_hamiltonian: object | None = None,
         dims: Sequence[int] | None = None,
+        parameters: Mapping[str, Sequence[object]] | None = None,
     ) -> None:
         h0 = _hermitian(drift, "drift")
         n = h0.shape[0]
@@ -328,9 +388,14 @@ class HamiltonianModel(Model):
             if battery_hamiltonian is None
             else _hermitian(battery_hamiltonian, "battery_hamiltonian", n)
         )
+        pnames, pnominal, pmats, pspecs = _parameter_terms(parameters, n)
         sources = [drift, *ctrl_in, *jump_in]
         self.dims = _resolve_dims(n, dims, sources)
         cdt = jax.dtypes.canonicalize_dtype(complex)
+        rdt = jax.dtypes.canonicalize_dtype(float)
+        self.parameter_nominals = {k: jnp.asarray(v, dtype=rdt) for k, v in pnominal.items()}
+        self.parameter_matrices = {k: jnp.asarray(pmats[k], dtype=cdt) for k in pnames}
+        self.parameter_spec_items = tuple((k, pspecs[k]) for k in pnames)
         self.drift_matrix = jnp.asarray(h0, dtype=cdt)
         self.control_matrices = jnp.asarray(np.stack(ctrls), dtype=cdt)
         self.jump_matrices = jnp.asarray(
@@ -350,6 +415,7 @@ class HamiltonianModel(Model):
         observables: Mapping[str, object] | None = None,
         battery_hamiltonian: object | None = None,
         dims: Sequence[int] | None = None,
+        parameters: Mapping[str, Sequence[object]] | None = None,
     ) -> HamiltonianModel:
         """Build and validate a model from operators; see the class docstring for the arguments."""
         return cls(
@@ -360,6 +426,7 @@ class HamiltonianModel(Model):
             observables=observables,
             battery_hamiltonian=battery_hamiltonian,
             dims=dims,
+            parameters=parameters,
         )
 
     # ------------------------------------------------------------------ Model API
@@ -376,7 +443,34 @@ class HamiltonianModel(Model):
         return bool(self.jump_matrices.shape[0] > 0 or self.initial_matrix.shape[-1] != 1)
 
     def drift(self) -> QArray:
-        return self._q(self.drift_matrix)
+        """``H_0``, plus ``sum_k p_k O_k`` over the parameter terms (names in sorted order)."""
+        if not self.parameter_matrices:
+            return self._q(self.drift_matrix)
+        h = self.drift_matrix
+        for name in sorted(self.parameter_matrices):
+            h = h + self.parameter_nominals[name] * self.parameter_matrices[name]
+        return self._q(h)
+
+    def parameter_specs(self) -> dict[str, ParameterSpec]:
+        """The parameter terms declared with ``parameters=`` (empty if there are none)."""
+        return dict(self.parameter_spec_items)
+
+    def parameter_values(self) -> dict[str, Array | float]:
+        """Current values ``p_k`` of the parameter terms."""
+        return dict(self.parameter_nominals)
+
+    def with_parameters(self, **values: Array | float) -> HamiltonianModel:
+        """Copy with the named parameter terms set to ``values`` (pure, jit and vmap safe)."""
+        for name in values:
+            if name not in self.parameter_nominals:
+                raise self._unknown_parameter_error(name)
+        if not values:
+            return self
+        names = tuple(values)
+        new = tuple(
+            jnp.asarray(v, dtype=self.parameter_nominals[n].dtype) for n, v in values.items()
+        )
+        return eqx.tree_at(lambda m: tuple(m.parameter_nominals[n] for n in names), self, new)
 
     def controls(self) -> list[QArray]:
         return [self._q(c) for c in self.control_matrices]

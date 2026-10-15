@@ -8,6 +8,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from qenvs import keys
 from qenvs.envs.base import Environment
 
 try:
@@ -47,9 +48,14 @@ class GymnasiumVectorEnv(VectorEnv):
     Episodes in QEnvS always end by termination at the horizon, so ``truncated``
     is always False (see the RL libraries guide).
 
-    Sub-environment ``i`` uses the PRNG stream of ``GymnasiumEnv(seed=seed + i)``, so a
-    vector env reproduces ``num_envs`` independent single envs exactly, including
-    stochastic resets.
+    Episode keys follow the single-run rule of :class:`GymnasiumEnv`: the run key is
+    ``jax.random.PRNGKey(seed)`` and the episode with index ``i`` uses
+    ``keys.episode_key(run_key, i) = fold_in(run_key, i)``. The ``j``-th episode of
+    sub-environment ``b`` has index ``i = j * num_envs + b``, so the vector env replays, in
+    an interleaved order, the episodes of ``GymnasiumEnv(seed=seed)``, and any episode can be
+    regenerated from the seed and its index (stochastic resets included).
+    The ``info`` of a wrapped environment may hold a nested dictionary (``"diagnostics"``);
+    it is returned as a nested dictionary of batched arrays with its own ``_key`` masks.
 
     Args:
         env: functional environment.
@@ -88,19 +94,24 @@ class GymnasiumVectorEnv(VectorEnv):
             self.single_observation_space, self.num_envs
         )
         self._state: Any = None
-        self._keys = self._make_keys(seed)
+        self._run_key = jax.random.PRNGKey(seed)
+        self._episodes = jnp.zeros(self.num_envs, dtype=jnp.uint32)  # episodes started per env
         self._autoreset = jnp.zeros(self.num_envs, dtype=bool)
         scale = self._action_scale
+        n_envs = self.num_envs
+        slot = jnp.arange(n_envs, dtype=jnp.uint32)
 
-        def _reset(keys: jax.Array):
-            pairs = jax.vmap(jax.random.split)(keys)
-            state, ts = jax.vmap(env.reset)(pairs[:, 1])
-            return state, ts, pairs[:, 0]
+        def _episode_keys(run_key: jax.Array, started: jax.Array) -> jax.Array:
+            # sub-env b, j-th episode: i = j * num_envs + b
+            return jax.vmap(keys.episode_key, in_axes=(None, 0))(run_key, started * n_envs + slot)
 
-        def _step(state, actions, autoreset, keys):
+        def _reset(run_key: jax.Array, started: jax.Array):
+            state, ts = jax.vmap(env.reset)(_episode_keys(run_key, started))
+            return state, ts, started + 1
+
+        def _step(state, actions, autoreset, run_key, started):
             stepped, ts = jax.vmap(env.step)(state, actions * scale)
-            pairs = jax.vmap(jax.random.split)(keys)
-            rstate, rts = jax.vmap(env.reset)(pairs[:, 1])
+            rstate, rts = jax.vmap(env.reset)(_episode_keys(run_key, started))
 
             def pick(r, s):
                 return jnp.where(_bmask(autoreset, s), r, s)
@@ -110,14 +121,11 @@ class GymnasiumVectorEnv(VectorEnv):
             reward = jnp.where(autoreset, 0.0, ts.reward)
             done = jnp.logical_and(ts.done, jnp.logical_not(autoreset))
             info = jax.tree.map(pick, rts.info, ts.info)
-            new_keys = jnp.where(_bmask(autoreset, keys), pairs[:, 0], keys)
-            return new_state, obs, reward, done, info, new_keys
+            new_started = jnp.where(autoreset, started + 1, started)
+            return new_state, obs, reward, done, info, new_started
 
         self._reset_fn = jax.jit(_reset)
         self._step_fn = jax.jit(_step)
-
-    def _make_keys(self, seed: int) -> jax.Array:
-        return jnp.stack([jax.random.PRNGKey(seed + i) for i in range(self.num_envs)])
 
     def reset(
         self,
@@ -127,8 +135,9 @@ class GymnasiumVectorEnv(VectorEnv):
     ) -> tuple[np.ndarray, dict[str, Any]]:
         super().reset(seed=seed)
         if seed is not None:
-            self._keys = self._make_keys(seed)
-        self._state, ts, self._keys = self._reset_fn(self._keys)
+            self._run_key = jax.random.PRNGKey(seed)
+            self._episodes = jnp.zeros(self.num_envs, dtype=jnp.uint32)
+        self._state, ts, self._episodes = self._reset_fn(self._run_key, self._episodes)
         self._autoreset = jnp.zeros(self.num_envs, dtype=bool)
         return np.array(ts.observation, dtype=np.float32), self._infos(ts.info)
 
@@ -144,8 +153,8 @@ class GymnasiumVectorEnv(VectorEnv):
         if a.shape != expected:
             msg = f"actions must have shape {expected}, got {a.shape}"
             raise ValueError(msg)
-        self._state, obs, reward, done, info, self._keys = self._step_fn(
-            self._state, a, self._autoreset, self._keys
+        self._state, obs, reward, done, info, self._episodes = self._step_fn(
+            self._state, a, self._autoreset, self._run_key, self._episodes
         )
         self._autoreset = done
         # np.array copies: np.asarray of a jax array is a read-only view, which breaks
@@ -161,6 +170,6 @@ class GymnasiumVectorEnv(VectorEnv):
     def _infos(self, info: dict[str, Any]) -> dict[str, Any]:
         out: dict[str, Any] = {}
         for k, v in info.items():
-            out[k] = np.array(v)  # writable copy
+            out[k] = self._infos(v) if isinstance(v, dict) else np.array(v)  # writable copy
             out[f"_{k}"] = np.ones(self.num_envs, dtype=np.bool_)
         return out

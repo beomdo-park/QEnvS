@@ -7,7 +7,7 @@ never silently change a released task.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 
 from qenvs.envs.base import Environment
@@ -69,12 +69,39 @@ def register(
     )
 
 
-def make(task_id: str, **kwargs: object) -> Environment:
-    """Instantiate a registered task, forwarding ``kwargs`` to its factory."""
+def make(
+    task_id: str,
+    *,
+    observation: str | None = None,
+    shots: int | None = None,
+    diagnostics: bool | None = None,
+    observables: Sequence[str] | None = None,
+    **kwargs: object,
+) -> Environment:
+    """Instantiate a registered task, forwarding ``kwargs`` to its factory.
+
+    ``observation``, ``shots``, ``diagnostics`` and ``observables`` select the observation
+    mode and the finite-shot measurement of the task: if any of them is given, the task is
+    wrapped in :class:`qenvs.wrappers.observation.ObservationModel` (see its documentation
+    for the modes, the information boundary and the errors raised). If none is given the
+    task is returned unwrapped, exactly as before.
+    """
     try:
         spec = registry[task_id]
     except KeyError as e:
         known = ", ".join(sorted(registry))
         msg = f"unknown task id {task_id!r}; known: {known}"
         raise KeyError(msg) from e
-    return spec.factory(**kwargs)
+    env = spec.factory(**kwargs)
+    if observation is None and shots is None and diagnostics is None and observables is None:
+        return env
+    # imported here: the wrappers package is only needed when an observation option is given
+    from qenvs.wrappers.observation import ObservationModel
+
+    return ObservationModel(
+        env,
+        "state" if observation is None else observation,
+        shots=shots,
+        diagnostics=bool(diagnostics) if diagnostics is not None else False,
+        observables=observables,
+    )

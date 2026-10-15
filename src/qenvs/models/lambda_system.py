@@ -23,16 +23,22 @@ Analytic references (checked in ``qenvs.validation.lambda_system``):
 * Counter-intuitive pulse order (Stokes before pump) with ``Omega_0 T >> 1``
   transfers |1> -> |3> adiabatically through the dark state with negligible
   population of the lossy state |2> (STIRAP; Bergmann et al. 1998, Vitanov et al. 2017).
+
+Randomisable parameters (:meth:`LambdaSystem.parameter_specs`): the one-photon detuning
+``delta_one_photon`` and the two-photon detuning ``delta_two_photon``. The decay rate
+``gamma`` is dissipation and is not declared.
 """
 
 from __future__ import annotations
+
+from typing import ClassVar
 
 import dynamiqs as dq
 import jax.numpy as jnp
 from dynamiqs import QArray
 from jax import Array
 
-from qenvs.models.base import Model
+from qenvs.models.base import DISSIPATION, STRUCTURAL, Model, ParameterSpec
 
 PULSE_ORDERS = ("counterintuitive", "intuitive")
 INITIAL_STATES = ("1", "2", "3")
@@ -54,6 +60,25 @@ class LambdaSystem(Model):
     delta_two_photon: float = 0.0
     gamma: float = 0.0
     initial: str = "1"
+
+    non_parameters: ClassVar[dict[str, str]] = {"gamma": DISSIPATION, "initial": STRUCTURAL}
+
+    def parameter_specs(self) -> dict[str, ParameterSpec]:
+        """Both detunings: ``(-inf, inf)``; reference widths 0.05 and 0.01.
+
+        Units are those of the Rabi frequencies (the default bound is 1, ``T = 20``).
+        Adiabatic transfer tolerates a one-photon detuning of a few percent of the peak
+        Rabi frequency, but is more sensitive to the two-photon detuning, which tilts the
+        dark state; its reference width is therefore five times smaller. Measured on the
+        reference STIRAP pulse of the default task: ``1 - F`` is 3.6e-3 at nominal, 4.2e-3
+        for ``delta_one_photon = 0.05``, 3.8e-3 for ``delta_two_photon = 0.01`` and 9.7e-3
+        for ``delta_two_photon = 0.05``.
+        """
+        inf = float("inf")
+        return {
+            "delta_one_photon": ParameterSpec("Rabi frequency", (-inf, inf), 0.05),
+            "delta_two_photon": ParameterSpec("Rabi frequency", (-inf, inf), 0.01),
+        }
 
     def __check_init__(self) -> None:
         if self.initial not in INITIAL_STATES:

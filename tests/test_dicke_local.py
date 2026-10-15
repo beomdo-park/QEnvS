@@ -104,6 +104,73 @@ def test_pumping_truncation_two_cells():
     assert top_small > 1e-2 and abs(e_small - e_ref) > 1e-2
 
 
+def test_ergotropy_from_blocks_accepts_a_traced_omega0():
+    import equinox as eqx
+
+    env = qenvs.make("battery/DickeLocal-v0", n_cells=2)
+    state, _ = env.rollout(jnp.full((env.horizon, env.action_dim), 0.5))  # charged cells
+    model, rho = env.model, state.qstate
+
+    def ergo(w):
+        return eqx.tree_at(lambda m: m.omega0, model, w).ergotropy_from_blocks(rho)
+
+    eager = ergo(1.3)
+    assert float(eager) > 0.1  # a charged state, so the comparison is not 0 == 0
+    traced = jax.jit(ergo)(1.3)
+    np.testing.assert_allclose(np.asarray(traced), np.asarray(eager), rtol=1e-12, atol=1e-12)
+    # omega0 scales the levels and the energy alike, so the ergotropy scales linearly
+    np.testing.assert_allclose(np.asarray(ergo(2.6)), 2.0 * np.asarray(eager), rtol=1e-12)
+
+
+def _charged_ergotropy(w):
+    """Ergotropy from the blocks of a charged two-cell state, with omega0 replaced by w."""
+    import equinox as eqx
+
+    env = qenvs.make("battery/DickeLocal-v0", n_cells=2)
+    state, _ = env.rollout(jnp.full((env.horizon, env.action_dim), 0.5))
+    return eqx.tree_at(lambda m: m.omega0, env.model, w).ergotropy_from_blocks(state.qstate)
+
+
+def test_ergotropy_from_blocks_is_differentiable_in_omega0():
+    # the ergotropy is linear in omega0 at a fixed state, so d/d omega0 = value / omega0
+    value = float(_charged_ergotropy(1.3))
+    grad = float(jax.jit(jax.grad(_charged_ergotropy))(1.3))
+    assert value > 0.1
+    np.testing.assert_allclose(grad, value / 1.3, rtol=1e-10)
+
+
+def test_ergotropy_from_blocks_float32_matches_float64():
+    # float32 runs in a fresh process: switching x64 off inside this one leaves int32 state
+    # behind in jax that breaks later x64 tests (order dependent), as the other float32 tests
+    # of this repository also avoid
+    import os
+    import subprocess
+    import sys
+
+    ref = float(_charged_ergotropy(1.3))
+    assert ref > 0.1  # charged state: the relative error has a safe denominator
+    code = (
+        "import jax; jax.config.update('jax_enable_x64', False)\n"
+        "import jax.numpy as jnp, equinox as eqx, qenvs\n"
+        "env = qenvs.make('battery/DickeLocal-v0', n_cells=2)\n"
+        "state, _ = env.rollout(jnp.full((env.horizon, env.action_dim), 0.5))\n"
+        "f = lambda w: eqx.tree_at(lambda m: m.omega0, env.model, w)"
+        ".ergotropy_from_blocks(state.qstate)\n"
+        "x = jax.jit(f)(1.3)\n"
+        "print(x.dtype, float(x))\n"
+    )
+    env = {**os.environ, "JAX_PLATFORMS": "cpu", "JAX_ENABLE_X64": "0"}
+    out = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, env=env, timeout=600
+    )
+    assert out.returncode == 0, out.stderr[-2000:]
+    dtype, value = out.stdout.split()[-2:]
+    assert dtype == "float32"
+    rel = abs(float(value) - ref) / abs(ref)
+    print(f"float32 vs float64 relative error of the ergotropy: {rel:.2e}")
+    assert rel < 1e-4, rel
+
+
 def test_invalid_configurations_rejected():
     with pytest.raises(ValueError, match="n_cells"):
         DickeBatteryLocal(n_cells=0)

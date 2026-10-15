@@ -1,6 +1,6 @@
 """Physical models: drift + control Hamiltonians, dissipators, initial states, observables."""
 
-from qenvs.models.base import Model
+from qenvs.models.base import Model, ParameterSpec
 from qenvs.models.custom import HamiltonianModel
 from qenvs.models.dicke import DickeBattery
 from qenvs.models.dicke_local import DickeBatteryLocal
@@ -16,6 +16,7 @@ __all__ = [
     "HamiltonianModel",
     "LambdaSystem",
     "Model",
+    "ParameterSpec",
     "QubitBattery",
     "Transmon",
     "TwoLevel",

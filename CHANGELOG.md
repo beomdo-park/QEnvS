@@ -20,9 +20,31 @@ suffix (`-vN`); a released task is never changed in place.
   NPZ round trips, exact resampling of piecewise-constant pulses to an AWG sample period,
   padding, rad/ns and MHz conversion; `Transmon.from_properties` reads T1, T2, frequency
   and anharmonicity from a plain dict with explicit units or Qiskit-style SI values.
+- Realistic RL conditions (design: `docs/superpowers/specs/2026-10-15-realistic-rl-conditions-proposal.md`):
+  `qenvs.wrappers.ParameterRandomization` (episode-fixed model parameters drawn from
+  `Normal`, `Uniform` or `TruncatedNormal` offsets with support checks at construction, optional
+  oracle observation), `qenvs.wrappers.ControlErrors` (gain and offset errors per episode,
+  relative noise per step, `info["clip_fraction"]`), `qenvs.wrappers.ObservationModel` and
+  `qenvs.make(..., observation=, shots=, diagnostics=, observables=)` (modes `state`,
+  `expectations`, `correlations`, `time`; exact finite-shot measurement in the eigenbasis of each
+  observable; exact values only in `info["diagnostics"]` when asked for), and
+  `qenvs.robust.evaluate` and `stability` (mean, CVaR of the lowest 10 percent, percentile
+  bootstrap intervals, episode return reported separately). Every random number comes from a
+  fixed key tree (`qenvs.keys`). The model contract gains `parameter_specs`, `parameter_values`,
+  `with_parameters`, `check_parameters` and `correlation_observables` (all additive), and
+  `HamiltonianModel.from_operators(..., parameters=...)` adds randomisable terms
+  `H0 + sum_k p_k O_k`. `qenvs.wrappers` no longer needs gymnasium for these classes.
 - Release safety rails: an API gate (`tests/test_api_stability.py`, griffe diff against the
   last release tag), a behaviour snapshot of every released task
   (`tests/golden/tasks.json`), and `RELEASING.md` with a release-candidate process.
+
+### Changed
+
+- `GymnasiumEnv` and `GymnasiumVectorEnv` derive episode keys as
+  `fold_in(PRNGKey(seed), i)`; in the vector environment the `j`-th episode of sub-environment
+  `b` is episode `i = j * num_envs + b`. Environments with random resets therefore see different
+  samples than in 0.2 (sub-environment `b` used to follow `GymnasiumEnv(seed=seed + b)`). The
+  built-in tasks reset deterministically and are unchanged (behaviour snapshot).
 
 ### Deprecated
 

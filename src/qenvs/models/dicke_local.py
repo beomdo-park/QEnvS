@@ -72,13 +72,18 @@ diagnostic: raise ``n_max`` until it is negligible. For ``rwa=False`` the defaul
 Scope: dense Liouvillians. The construction raises ``ValueError`` when the Liouvillian
 dimension exceeds :data:`MAX_LIOUVILLIAN_DIM` or the stored matrix dimension exceeds
 :data:`MAX_HILBERT_DIM`. Rates are static model parameters (not differentiable).
+
+Randomisable parameters (:meth:`DickeBatteryLocal.parameter_specs`): ``omega0`` and
+``omega_c``, as in :class:`~qenvs.models.dicke.DickeBattery` (``omega0`` also sets the
+energy unit of ``H_B``). The dissipator is cached by its (static) rates and does not
+depend on them, so a randomised frequency never changes the Liouvillian dissipator.
 """
 
 from __future__ import annotations
 
 import functools
 import math
-from typing import NamedTuple
+from typing import ClassVar, NamedTuple
 
 import dynamiqs as dq
 import jax
@@ -88,8 +93,13 @@ from dynamiqs import QArray, TimeQArray
 from dynamiqs.method import Method
 from jax import Array
 
-from qenvs.models.base import Model
-from qenvs.models.dicke import NON_RWA_EXTRA_PHOTONS, boson_matrices, collective_spin_matrices
+from qenvs.models.base import DISSIPATION, STRUCTURAL, Model, ParameterSpec
+from qenvs.models.dicke import (
+    NON_RWA_EXTRA_PHOTONS,
+    boson_matrices,
+    collective_spin_matrices,
+    spin_second_moments,
+)
 
 MAX_LIOUVILLIAN_DIM = 2100
 """Largest allowed ``sum_j ((2j + 1)(n_max + 1))^2`` (dense ``expm`` per control step)."""
@@ -406,6 +416,35 @@ class DickeBatteryLocal(Model):
             )
             raise ValueError(msg)
 
+    non_parameters: ClassVar[dict[str, str]] = {
+        "omega0": (
+            "not supported in this release: omega0 is also the energy unit of H_B, so a sampled "
+            "omega0 rescales the reward and the evaluation metric of its episode (a change of "
+            "units, roughly 7 to 10 times larger than its effect on the charging dynamics), "
+            "not only the physics. Randomise omega_c for a cell-cavity detuning at a fixed "
+            "energy scale. Support would need a scale-normalised objective (for example energy "
+            "over N omega0) and the same contract on the other battery models"
+        ),
+        "n_cells": STRUCTURAL,
+        "n_photons": STRUCTURAL,
+        "n_max": STRUCTURAL,
+        "rwa": STRUCTURAL,
+        "kappa": DISSIPATION,
+        "gamma": DISSIPATION,
+        "gamma_phi": DISSIPATION,
+        "gamma_local": DISSIPATION,
+        "gamma_phi_local": DISSIPATION,
+        "pumping_local": DISSIPATION,
+    }
+
+    def parameter_specs(self) -> dict[str, ParameterSpec]:
+        """``omega_c`` in ``[0, inf)``, reference width 0.05.
+
+        Same declaration and justification as :meth:`DickeBattery.parameter_specs`
+        (``omega0`` is not declared in this release).
+        """
+        return {"omega_c": ParameterSpec("omega0", (0.0, float("inf")), 0.05)}
+
     RATES = (
         "kappa",
         "gamma",
@@ -613,6 +652,16 @@ class DickeBatteryLocal(Model):
             "symmetric": self.symmetric_projector(),
         }
 
+    def correlation_observables(self) -> dict[str, QArray]:
+        """Second moments of the collective spin on the full ``2^N (n_max + 1)`` stored space.
+
+        ``Jx2``, ``Jy2``, ``Jz2``, ``JxJy``, ``JyJz`` and ``JzJx`` (the mixed ones
+        symmetrised, all Hermitian, checked), built from the collective operators in the
+        Schur basis, so each is block diagonal with identical copies per sector.
+        """
+        mats = (self._full(n) for n in ("jp", "jm", "jz"))
+        return {k: self._qarray(v) for k, v in spin_second_moments(*mats).items()}
+
     # ------------------------------------------------- permutation-invariant core
     def to_blocks(self, qstate: QArray | Array) -> Array:
         """Compact vector of the joint blocks ``sigma_j = d_j R_j`` (row-major, sum of traces 1)."""
@@ -664,17 +713,20 @@ class DickeBatteryLocal(Model):
             evals.append(jnp.repeat(jnp.linalg.eigvalsh(blk) / d, d))
             i += tj + 1
         r = jnp.sort(jnp.concatenate(evals))[::-1]
-        levels = np.concatenate(
-            [np.full(math.comb(self.n_cells, k), k * self.omega0) for k in range(self.n_cells + 1)]
+        # level k (multiplicity C(N, k)) in ascending order, scaled by omega0 with jnp so that
+        # a traced omega0 works
+        steps = np.concatenate(
+            [np.full(math.comb(self.n_cells, k), k) for k in range(self.n_cells + 1)]
         )
+        levels = self.omega0 * jnp.asarray(steps, dtype=r.dtype)
         energy = jnp.real(jnp.trace(rho_d @ self._dicke_hb()))
-        return energy - jnp.sum(r * jnp.asarray(np.sort(levels), dtype=r.dtype))
+        return energy - jnp.sum(r * levels)
 
     def _dicke_hb(self) -> Array:
         diag = []
         for tj in self.layout.two_js:
             diag.extend(list(-tj / 2.0 + np.arange(tj + 1) + self.j))
-        return jnp.asarray(self.omega0 * np.diag(np.asarray(diag)))
+        return self.omega0 * jnp.asarray(np.diag(np.asarray(diag)))
 
     def dissipator(self) -> np.ndarray:
         """Constant (collective + local) part of the Liouvillian on the compact vector.

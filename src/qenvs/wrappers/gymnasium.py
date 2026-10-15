@@ -9,6 +9,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from qenvs import keys
 from qenvs.envs.base import Environment, EnvState
 
 try:
@@ -39,6 +40,13 @@ class GymnasiumEnv(gym.Env):
     the task (the reward is the fidelity gain, so the return is the final fidelity), so
     reaching the horizon is a true terminal state, not a time-limit cut-off, and value
     bootstrapping must not continue past it. ``truncated`` is therefore always False.
+
+    Episode keys: the run key is ``jax.random.PRNGKey(seed)`` and the ``i``-th episode since
+    the last seeding (``i = 0`` at the first ``reset``) uses ``keys.episode_key(run_key, i)
+    = fold_in(run_key, i)``, so any episode can be regenerated from the seed and its index.
+    ``reset(seed=...)`` restarts the run (episode index 0). Deterministic tasks ignore the key.
+    The ``info`` of a wrapped environment may hold a nested dictionary (``"diagnostics"``);
+    it is returned as a nested dictionary of numpy arrays.
     """
 
     metadata = {"render_modes": []}
@@ -49,7 +57,8 @@ class GymnasiumEnv(gym.Env):
         self.normalize_actions = normalize_actions
         self._action_scale = float(env.action_bound) if normalize_actions else 1.0
         self._state: EnvState | None = None
-        self._key = jax.random.PRNGKey(seed)
+        self._run_key = jax.random.PRNGKey(seed)
+        self._episode = 0
         b = 1.0 if normalize_actions else float(env.action_bound)
         self.action_space = spaces.Box(-b, b, shape=(env.action_dim,), dtype=np.float32)
         self.observation_space = spaces.Box(
@@ -66,8 +75,10 @@ class GymnasiumEnv(gym.Env):
     ) -> tuple[np.ndarray, dict[str, Any]]:
         super().reset(seed=seed)
         if seed is not None:
-            self._key = jax.random.PRNGKey(seed)
-        self._key, sub = jax.random.split(self._key)
+            self._run_key = jax.random.PRNGKey(seed)
+            self._episode = 0
+        sub = keys.episode_key(self._run_key, self._episode)
+        self._episode += 1
         self._state, ts = self._reset(sub)
         return np.array(ts.observation, dtype=np.float32), _to_numpy(ts.info)
 
@@ -83,4 +94,5 @@ class GymnasiumEnv(gym.Env):
 
 
 def _to_numpy(info: dict[str, Any]) -> dict[str, Any]:
-    return {k: np.array(v) for k, v in info.items()}  # writable copies, not jax views
+    # writable copies, not jax views; nested dictionaries (``diagnostics``) stay nested
+    return {k: _to_numpy(v) if isinstance(v, dict) else np.array(v) for k, v in info.items()}

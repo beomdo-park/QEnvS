@@ -26,6 +26,11 @@ Dissipation (Lindblad, enabled when ``t1_us`` and/or ``t2_us`` is given):
   0-1 coherence decays at ``1/T2`` and the ``m``-``n`` coherence at
   ``(n - m)^2 / T_phi + (m + n) / (2 T1)``.
 
+Randomisable parameters (:meth:`Transmon.parameter_specs`): ``detuning_ghz`` and
+``anharmonicity_ghz``, both in GHz. Relaxation and dephasing times, ``levels`` and
+``initial`` are not declared. For ``levels = 2`` the anharmonicity term vanishes
+(``n (n - 1) = 0``), so randomising it has no effect on the dynamics.
+
 Analytic references are checked in :mod:`qenvs.validation.transmon`.
 """
 
@@ -33,6 +38,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
+from typing import ClassVar
 
 import dynamiqs as dq
 import equinox as eqx
@@ -40,7 +46,7 @@ import jax.numpy as jnp
 from dynamiqs import QArray
 from jax import Array
 
-from qenvs.models.base import Model
+from qenvs.models.base import DISSIPATION, STRUCTURAL, Model, ParameterSpec
 
 TWO_PI = 2.0 * math.pi
 NS_PER_US = 1000.0
@@ -74,6 +80,32 @@ class Transmon(Model):
     t1_us: float | None = None
     t2_us: float | None = None
     initial: str = "0"
+
+    non_parameters: ClassVar[dict[str, str]] = {
+        "levels": STRUCTURAL,
+        "initial": STRUCTURAL,
+        "t1_us": DISSIPATION,
+        "t2_us": DISSIPATION,
+    }
+
+    def parameter_specs(self) -> dict[str, ParameterSpec]:
+        """``detuning_ghz`` on the whole line and ``anharmonicity_ghz`` in ``(-inf, 0]`` (GHz).
+
+        Reference widths: 2 MHz for the detuning (frequency drift and two-level-system
+        shifts of a fixed-frequency transmon between calibrations are of order 0.1 to a few
+        MHz, against the 50 MHz Rabi bound of the gate tasks) and 5 MHz for the
+        anharmonicity (about 1.5% of -340 MHz, the device-to-device spread of a
+        fabricated junction). A transmon anharmonicity is negative, so a Gaussian offset
+        needs a ``TruncatedNormal``. At this width the anharmonicity barely changes the
+        error of the reference X-gate pulse (adversarial review, round 6), so a robustness
+        result under ``anharmonicity_ghz`` alone at ``w_ref`` is close to a null test; widen
+        it deliberately if that axis is the point.
+        """
+        inf = float("inf")
+        return {
+            "detuning_ghz": ParameterSpec("GHz", (-inf, inf), 0.002),
+            "anharmonicity_ghz": ParameterSpec("GHz", (-inf, 0.0), 0.005),
+        }
 
     def __check_init__(self) -> None:
         if not isinstance(self.levels, int) or self.levels < 2:

@@ -1,6 +1,6 @@
 """QEnvS: physically validated quantum control environments for RL and optimal control."""
 
-from qenvs import envs, gates, models, observables, pulses, tasks, validation
+from qenvs import envs, gates, keys, models, observables, pulses, robust, tasks, validation
 from qenvs.envs.base import Environment, EnvState, TimeStep
 from qenvs.registry import make, register, registry
 
@@ -16,12 +16,14 @@ __all__ = [
     "__version__",
     "envs",
     "gates",
+    "keys",
     "make",
     "models",
     "observables",
     "pulses",
     "register",
     "registry",
+    "robust",
     "tasks",
     "validation",
 ]

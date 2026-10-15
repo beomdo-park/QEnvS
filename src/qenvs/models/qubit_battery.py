@@ -24,15 +24,21 @@ Analytic references (checked in ``qenvs.validation.qubit_battery``):
 * Closed resonant drive ``u``: ``P_1(t) = sin^2(u t / 2)``, so a pi-pulse
   stores energy ``omega0`` with ergotropy ``omega0``, and the charging power
   obeys ``|dE/dt| <= omega0 u / 2``.
+
+Randomisable parameter (:meth:`QubitBattery.parameter_specs`): the detuning only (the
+bath coupling, ``n_th`` and the dephasing rate are dissipation; ``omega0`` is the energy
+unit of the readout and does not enter the Hamiltonian).
 """
 
 from __future__ import annotations
+
+from typing import ClassVar
 
 import dynamiqs as dq
 import jax.numpy as jnp
 from dynamiqs import QArray
 
-from qenvs.models.base import Model
+from qenvs.models.base import DISSIPATION, STRUCTURAL, Model, ParameterSpec
 
 INITIAL_STATES = ("ground", "thermal")
 
@@ -57,6 +63,21 @@ class QubitBattery(Model):
     n_th: float = 0.0
     gamma_phi: float = 0.0
     initial: str = "ground"
+
+    non_parameters: ClassVar[dict[str, str]] = {
+        "omega0": (
+            "it only sets the energy unit of H_B and of the energy readout and does not enter "
+            "the Hamiltonian, so randomising it would rescale the reward, not the physics"
+        ),
+        "gamma1": DISSIPATION,
+        "n_th": DISSIPATION,
+        "gamma_phi": DISSIPATION,
+        "initial": STRUCTURAL,
+    }
+
+    def parameter_specs(self) -> dict[str, ParameterSpec]:
+        """``detuning``: ``(-inf, inf)``, reference width 0.05 (see :class:`TwoLevel`)."""
+        return {"detuning": ParameterSpec("omega0", (-float("inf"), float("inf")), 0.05)}
 
     def __check_init__(self) -> None:
         if self.initial not in INITIAL_STATES:

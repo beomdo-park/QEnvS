@@ -14,15 +14,22 @@ Analytic references (checked in ``qenvs.validation.qubit``):
   a pi-pulse (``u t = pi``) gives full inversion.
 * Free decay from |1> with ``gamma1``: ``P_1(t) = exp(-gamma1 t)``.
 * Ergotropy of |1> equals ``omega0``; of the maximally mixed state equals 0.
+
+Randomisable parameter (:meth:`TwoLevel.parameter_specs`): the detuning ``detuning``
+only. ``omega0`` is not declared: it enters ``H_B`` and the ``energy`` observable (the
+energy unit of the readout) but not the Hamiltonian, so randomising it would rescale the
+reward instead of changing the physics.
 """
 
 from __future__ import annotations
+
+from typing import ClassVar
 
 import dynamiqs as dq
 import jax.numpy as jnp
 from dynamiqs import QArray
 
-from qenvs.models.base import Model
+from qenvs.models.base import DISSIPATION, STRUCTURAL, Model, ParameterSpec
 
 
 class TwoLevel(Model):
@@ -41,6 +48,26 @@ class TwoLevel(Model):
     gamma1: float = 0.0
     gamma_phi: float = 0.0
     initial: str = "ground"
+
+    non_parameters: ClassVar[dict[str, str]] = {
+        "omega0": (
+            "it only sets the energy unit of H_B and of the energy readout and does not enter "
+            "the Hamiltonian, so randomising it would rescale the reward, not the physics"
+        ),
+        "gamma1": DISSIPATION,
+        "gamma_phi": DISSIPATION,
+        "initial": STRUCTURAL,
+    }
+
+    def parameter_specs(self) -> dict[str, ParameterSpec]:
+        """``detuning``: ``(-inf, inf)``, reference width 0.05.
+
+        The detuning has no sign constraint. The reference width 0.05 is about 3% of the
+        Rabi rate ``pi / T = 1.57`` of the default pi pulse (``T = 2``): a visible but
+        small error (about ``1 - F = 1e-3``), the scale of a calibration drift relative to
+        the drive strength. Units are those of the model (``omega0 = 1``).
+        """
+        return {"detuning": ParameterSpec("omega0", (-float("inf"), float("inf")), 0.05)}
 
     @property
     def dim(self) -> int:

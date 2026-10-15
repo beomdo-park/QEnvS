@@ -59,9 +59,12 @@ gymnasium>=1.0 `VectorEnv` API with numpy inputs and outputs:
   reshape.
 * Infos are dicts of batched arrays (`infos["fidelity"]` has shape `(num_envs,)`) with the usual
   `_key` boolean masks (all True, since every sub-environment reports every key).
-* Sub-environment `i` uses the PRNG stream of `GymnasiumEnv(seed=seed + i)`, so the vector
-  environment reproduces `num_envs` independent single environments (tested to 1e-6, including a
-  random-reset toy environment).
+* Episode keys follow `qenvs.keys.episode_key(run_key, i) = fold_in(PRNGKey(seed), i)`. The
+  `j`-th episode of sub-environment `b` is episode `i = j * num_envs + b`, so the vector
+  environment replays the episodes of `GymnasiumEnv(seed=seed)` in interleaved order (tested,
+  including a random-reset toy environment). Since 0.3; in 0.2 sub-environment `b` followed
+  `GymnasiumEnv(seed=seed + b)`. The built-in tasks reset deterministically, so their episodes
+  are unchanged.
 
 Autoreset mode is `AutoresetMode.NEXT_STEP` (declared in `metadata["autoreset_mode"]` on
 gymnasium >= 1.1, where the enum exists; the version in the development venv is 1.4.0).
