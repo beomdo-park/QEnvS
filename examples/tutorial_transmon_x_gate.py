@@ -9,6 +9,8 @@ The workflow of a pulse engineer, end to end, in hardware units (ns, rad/ns, GHz
 5. exporting the pulse as Rabi frequencies in MHz on the time grid;
 6. handing the same task to an RL library through Gymnasium.
 
+Needs ``pip install "qenvs[gym]" optax`` (GRAPE uses optax, step 6 uses gymnasium).
+
 Run::
 
     python examples/tutorial_transmon_x_gate.py            # about a minute on CPU

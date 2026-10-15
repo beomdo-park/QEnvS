@@ -6,6 +6,14 @@ then look at the same pulses with decoherence and export the result. All numbers
 page come from `examples/tutorial_transmon_x_gate.py` (float64, CPU, about 15 s), which
 `tests/test_tutorials.py` also runs in a reduced form.
 
+The script uses the GRAPE helper in `examples/grape_jax.py`, which needs `optax` and, for the
+last step, `gymnasium`:
+
+```bash
+pip install "qenvs[gym]" optax
+python examples/tutorial_transmon_x_gate.py
+```
+
 ## The task
 
 ```python

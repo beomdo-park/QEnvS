@@ -162,7 +162,7 @@ def doctor() -> dict[str, object]:
         "optional": optional,
         "smoke": smoke,
         "notes": [
-            "GPU: install a CUDA-enabled jax (<0.8) yourself; qenvs only pins the CPU package.",
+            "GPU: install a CUDA-enabled jax (<0.11) yourself; qenvs only pins the CPU package.",
             "x64 is recommended for validation tolerances: "
             "jax.config.update('jax_enable_x64', True).",
         ],
