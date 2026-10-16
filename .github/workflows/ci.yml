@@ -69,6 +69,26 @@ jobs:
       # (tests/conftest.py clears jax caches after each module)
       - run: uv run --no-sync pytest -n 3
 
+  test-float32:
+    name: float32 validation (ubuntu-latest, py3.12)
+    runs-on: ubuntu-latest
+    env:
+      UV_PYTHON: "3.12"
+      JAX_PLATFORMS: cpu
+      JAX_ENABLE_X64: "0"
+      QENVS_TEST_X64: "0"
+      QENVS_TEST_CPUS: "4"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --extra dev
+      - name: versions and precision
+        run: uv run --no-sync python -c "import sys, jax, dynamiqs, numpy, qutip; print(sys.version, jax.__version__, dynamiqs.__version__, numpy.__version__, qutip.__version__, jax.config.jax_enable_x64); assert not jax.config.jax_enable_x64"
+      - run: uv run --no-sync pytest tests/test_validation.py
+
   build:
     runs-on: ubuntu-latest
     steps:

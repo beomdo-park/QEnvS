@@ -39,7 +39,7 @@ import gc  # noqa: E402
 import jax  # noqa: E402 (after the CPU limit above)
 import pytest  # noqa: E402
 
-jax.config.update("jax_enable_x64", True)
+jax.config.update("jax_enable_x64", os.environ.get("QENVS_TEST_X64", "1") != "0")
 
 
 @pytest.fixture(autouse=True, scope="module")
