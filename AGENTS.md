@@ -25,6 +25,25 @@ only place where work is coordinated; do not start from a local guess about what
    less, and let CI run the full suite. The test conftest pins each pytest process to a few
    cores (`QENVS_TEST_CPUS`).
 
+## Project resource policy
+
+The `.33` host and EcoAI-Thor are shared laboratory servers, not private runners. This policy is
+specific to QEnvS work on those two machines.
+
+- Before starting a test, benchmark, training run or agent workflow, check CPU load, process count,
+  GPU utilisation and GPU memory use. Defer the job when another lab user is active or the host is
+  already busy.
+- Keep the combined QEnvS CPU use from the lead process and all agents at 12 cores or fewer on each
+  server. Keep pytest at `-n 4` or fewer. On `.33`, do not launch new work when the 1-minute load
+  average is above 50.
+- Run at most one GPU-consuming QEnvS job per server unless the user explicitly approves more. Do
+  not reserve most of the GPU or unified memory when a smaller batch, device or serial run works.
+- Do not launch unattended sweeps, parallel training runs or full-suite repetitions on either
+  server without explicit user approval. Prefer targeted local checks and let GitHub CI run the
+  ordinary full test matrix.
+- If a required run would exceed these limits, stop and report the estimated CPU, GPU, memory and
+  duration before asking for approval.
+
 Design template (`docs/design/<slug>.md`): Status (Proposed, Accepted, Implemented,
 Superseded), Owner, Issue, Problem, Decision (API, physics, validation gates), Out of scope,
 Implementation notes.
