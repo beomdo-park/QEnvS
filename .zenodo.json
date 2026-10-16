@@ -1,13 +1,13 @@
 {
   "title": "QEnvS: physically validated quantum control environments for reinforcement learning and optimal control",
-  "description": "Model zoo of open-quantum-system control problems (quantum batteries, qubit state transfer) with analytic validation checks, a functional JAX environment API (jit/vmap/grad), a Gymnasium adapter and a JSON command-line interface. Built on dynamiqs.",
+  "description": "Model zoo of open-quantum-system control problems, including transmon gate synthesis, cross-resonance control, quantum batteries with collective and local dissipation, and qubit and three-level state transfer. It provides model-specific physics checks, a functional JAX environment API (jit/vmap/grad), parameter randomisation, finite-shot observations, robust evaluation, a Gymnasium adapter and a JSON command-line interface. Built on dynamiqs.",
   "creators": [
     { "name": "Park, Beomdo", "affiliation": "Hanbat National University" }
   ],
   "license": "Apache-2.0",
   "upload_type": "software",
   "access_right": "open",
-  "keywords": ["quantum control", "reinforcement learning", "quantum battery", "open quantum systems", "JAX", "Gymnasium"],
+  "keywords": ["quantum control", "reinforcement learning", "quantum battery", "open quantum systems", "transmon", "robust control", "finite-shot measurement", "JAX", "Gymnasium"],
   "related_identifiers": [
     { "identifier": "https://github.com/beomdo-park/QEnvS", "relation": "isSupplementTo", "resource_type": "software" },
     { "identifier": "https://pypi.org/project/qenvs/", "relation": "isIdenticalTo", "resource_type": "software" }

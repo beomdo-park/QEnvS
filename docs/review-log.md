@@ -2,7 +2,7 @@
 
 QEnvS models are accepted only after adversarial review: independent reviewers try to
 refute the physics, re-derive the reference formulas, and mutate the code to see whether
-the tests notice. This page records what those reviews found (five rounds so far), the counterexample that
+the tests notice. This page records what those reviews found (six rounds so far), the counterexample that
 showed each problem, the fix, and the check that now guards against it. Every number below
 was reproduced independently of the code under review (numpy or scipy, or QuTiP 5).
 
@@ -82,6 +82,22 @@ the tree to confirm that the new test now fails.
 | Local dissipation (mutation review) | The weight of the symmetric sector (`symmetric` in `info`) was untested. | Dropping the last basis index of the $j = N/2$ projector survived all 10 checks. | `brute_force_agreement` compares the symmetric weight with the brute-force state and the projector trace with $(N+1)(n_{\max}+1)$. Caches are read-only. Thin float32 tolerances were widened; the x64 1e-8 brute-force gate is unchanged. |
 | Local dissipation (docs) | The cost was described as polynomial in $N$; only the Liouvillian dimension is. Gradient memory was not documented. | `jit(grad(rollout))` peak memory 8.8 GB at $N = 4$, horizon 20, and 39.5 GB at $N = 5$, horizon 20. | Docs state the $O(4^N)$ state, ergotropy and observation cost and the memory table. The defaults (local emission and dephasing 0.05, no pumping) are pinned by `test_task_default_contract` and described as a benchmark setting, not a standard experimental value. |
 | Pulses | Not refuted; 40 of 43 mutants caught. A time-reversing `to_actions` survived because the resampling gate built both runs from it. | `samples[::-1]` passed all 27 tests. | The gate's reference is built from the raw actions, and `to_actions` is asserted equal to the input. Also fixed: stale `unpadded_n_samples` after resampling, complex input silently truncated, the padding caveat for open systems (1.2e-4 at T1 = 30 us, T2 = 25 us). |
+
+## Round 6 (2026-10-15): realistic RL conditions
+
+The parameter-randomisation, control-error, finite-shot observation and robust-evaluation
+implementation in commit `598d66c` received an adversarial API and statistics review. The
+private mutation patches were not retained, so the repository does not claim a reproducible
+total mutation count for this round. The table records the surviving gaps and the regression
+guards that are present in the released tree.
+
+| area | finding | counterexample | fix and guard |
+|---|---|---|---|
+| Parameter scope | CR detuning and Dicke `omega0` cannot use the generic episode-randomisation contract without changing the target. | CR detuning changes the episode frame while the target remains in the nominal end frame, leaving an uncorrectable phase. Dicke `omega0` is also the energy unit, so sampling it rescales the reward and evaluation metric. | The parameters are refused with the physical reason. `test_unsupported_parameters_are_refused_with_reason` pins the refusal and `test_neighbours_of_the_refused_parameters_stay_supported` confirms that CR single-transmon detuning and Dicke `omega_c` remain available. |
+| Differentiation | `DickeBatteryLocal.ergotropy_from_blocks` converted `omega0` through host NumPy, which could reject a traced value. | Differentiating the fixed-state ergotropy with respect to `omega0` failed instead of returning the expected linear derivative. | JAX multiplication keeps `omega0` traced. `test_ergotropy_from_blocks_accepts_a_traced_omega0`, `test_ergotropy_from_blocks_is_differentiable_in_omega0` and the float32 comparison guard it. |
+| Public API and sampling dtype | Removing wrapper names from `qenvs.wrappers.__all__` or ignoring a distribution's requested dtype survived the earlier tests. | The objects remained importable internally while public star imports lost them; a float64 request could silently return float32. | `test_public_exports_of_qenvs_wrappers` and `test_samples_have_the_requested_dtype` pin both contracts. |
+| Tail statistics | A floating-point tail-count formula and a bootstrap implementation that averaged the tail directly were not tied to the public CVaR definition. | Boundary sizes such as $n=1024$ require exactly 103 samples at level 0.1, and an independently replayed bootstrap could disagree with the reported CVaR interval. | `test_tail_count_is_exact_at_round_n` uses integer arithmetic at boundary sizes. `test_bootstrap_cvar_uses_the_cvar_definition` replays the same resamples through the public point estimator. |
+| Interval claim | Passing the predeclared coverage gate did not establish calibrated 95 percent CVaR intervals. | With $n=1024$, 2000 bootstrap resamples and 1000 repetitions, observed CVaR coverage was 0.932 for Uniform(0, 1) and 0.944 for the fidelity-shaped distribution. | The guide calls the interval approximate and slightly narrow, and limits the evidence to the two tested distributions. The coverage test and warning say "checked", not "validated". |
 
 ## How to reproduce
 
