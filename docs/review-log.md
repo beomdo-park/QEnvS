@@ -3,8 +3,9 @@
 QEnvS models are accepted only after adversarial review: independent reviewers try to
 refute the physics, re-derive the reference formulas, and mutate the code to see whether
 the tests notice. This page records what those reviews found (six rounds so far), the counterexample that
-showed each problem, the fix, and the check that now guards against it. Every number below
-was reproduced independently of the code under review (numpy or scipy, or QuTiP 5).
+showed each problem, the fix, and the check that now guards against it. Physics references
+use independent formulas or simulators where noted; statistical coverage measurements and
+API regression checks have the scope and limitations stated in each round.
 
 ## Round 1 (2026-10-13): first review of the model zoo
 

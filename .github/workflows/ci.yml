@@ -57,7 +57,7 @@ jobs:
         with:
           enable-cache: true
       - run: uv python install ${{ matrix.python-version }}
-      - name: install (locked, newest allowed versions)
+      - name: install (locked dependencies)
         if: matrix.resolution == 'highest'
         run: uv sync --extra dev
       - name: install (lowest allowed direct dependencies)
@@ -74,6 +74,7 @@ jobs:
   test-float32:
     name: float32 validation (ubuntu-latest, py3.12)
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     env:
       UV_PYTHON: "3.12"
       JAX_PLATFORMS: cpu

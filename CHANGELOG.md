@@ -5,6 +5,13 @@ suffix (`-vN`); a released task is never changed in place.
 
 ## [Unreleased]
 
+### Changed
+
+- Scope public physics-validation claims to the checks available for each model and record
+  the repository-backed round 6 review findings and statistical limitations.
+- Add serial float32 validation, weekly newest-dependency tests and pull-request documentation
+  builds to CI. Documentation deployment remains restricted to the main branch.
+
 ## [0.3.0] - 2026-10-16
 
 ### Added

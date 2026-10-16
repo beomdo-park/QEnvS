@@ -45,6 +45,4 @@ def test_zenodo_description_covers_v03_scope():
 
 def test_changelog_links_v03_comparison():
     changelog = _text("CHANGELOG.md")
-    assert (
-        "[0.3.0]: https://github.com/beomdo-park/QEnvS/compare/v0.2.0...v0.3.0" in changelog
-    )
+    assert "[0.3.0]: https://github.com/beomdo-park/QEnvS/compare/v0.2.0...v0.3.0" in changelog
