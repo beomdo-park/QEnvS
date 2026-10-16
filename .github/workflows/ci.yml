@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,7 +14,9 @@ concurrency:
 
 jobs:
   checks:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -28,9 +32,12 @@ jobs:
           ! LC_ALL=C.UTF-8 grep -rnIP --exclude-dir=assets '[\x{00B7}\x{2013}\x{2014}]' src tests docs examples README.md AGENTS.md CONTRIBUTING.md
 
   test:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     name: test (${{ matrix.os }}, py${{ matrix.python-version }}${{ matrix.resolution == 'lowest-direct' && ', lowest deps' || '' }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     strategy:
+      max-parallel: 2
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
@@ -55,7 +62,7 @@ jobs:
         with:
           enable-cache: true
       - run: uv python install ${{ matrix.python-version }}
-      - name: install (locked, newest allowed versions)
+      - name: install (locked dependencies)
         if: matrix.resolution == 'highest'
         run: uv sync --extra dev
       - name: install (lowest allowed direct dependencies)
@@ -69,8 +76,54 @@ jobs:
       # (tests/conftest.py clears jax caches after each module)
       - run: uv run --no-sync pytest -n 3
 
-  build:
+  test-float32:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    name: float32 validation (ubuntu-latest, py3.12)
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      UV_PYTHON: "3.12"
+      JAX_PLATFORMS: cpu
+      JAX_ENABLE_X64: "0"
+      QENVS_TEST_X64: "0"
+      QENVS_TEST_CPUS: "4"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --extra dev
+      - name: versions and precision
+        run: uv run --no-sync python -c "import sys, jax, dynamiqs, numpy, qutip; print(sys.version, jax.__version__, dynamiqs.__version__, numpy.__version__, qutip.__version__, jax.config.jax_enable_x64); assert not jax.config.jax_enable_x64"
+      - run: uv run --no-sync pytest tests/test_validation.py
+
+  test-newest-dependencies:
+    name: newest dependencies (ubuntu-latest, py3.12)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      UV_PYTHON: "3.12"
+      JAX_PLATFORMS: cpu
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - name: install newest allowed dependencies
+        run: uv sync --upgrade --extra dev
+      - name: versions
+        run: uv run --no-sync python -c "import sys, jax, dynamiqs, numpy, qutip; print(sys.version, jax.__version__, dynamiqs.__version__, numpy.__version__, qutip.__version__)"
+      - run: uv run --no-sync pytest -n 3
+
+  build:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,3 +134,4 @@ jobs:
         with:
           name: dist
           path: dist/
+          retention-days: 7
