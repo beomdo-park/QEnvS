@@ -169,3 +169,9 @@ hardware control, GPU benchmarking and new core dependencies.
 ## Implementation notes
 
 Implementation authorized on 2026-10-19. Target 0.3.2a1 preserves existing API behavior.
+
+On 2026-10-19 the maintainer authorized lead self-review and closing the remaining
+precision and version-policy gaps. The 0.3.2a1 additive API exception is scoped to
+the alpha in RELEASING.md. Five analytic precision cases now run in the ordinary
+float64 matrix and the serial float32 job. No solver or physics implementation
+changed during this follow-up.

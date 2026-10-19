@@ -14,6 +14,10 @@ suffix (`-vN`); a released task is never changed in place.
 
 ## 0.3.2a1 (candidate, unreleased)
 
+- Document the maintainer-approved additive API exception for this alpha only.
+- Check subsystem rewards and trajectory endpoints, batching and gradients in
+  both CI precision modes with explicit float32 tolerances.
+
 - Custom Hamiltonian models can declare battery subsystems and a local Hamiltonian,
   with reduced-state work and a consistent full-space energy operator.
 - New endpoint trajectory diagnostics preserve physical action precision and expose
