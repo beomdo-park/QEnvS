@@ -75,4 +75,5 @@ nav:
       - Environments: api/envs.md
       - Wrappers: api/wrappers.md
       - Robust evaluation: api/robust.md
+      - Endpoint trajectories: api/trajectories.md
       - Validation: api/validation.md

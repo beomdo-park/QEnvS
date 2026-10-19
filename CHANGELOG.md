@@ -5,6 +5,8 @@ suffix (`-vN`); a released task is never changed in place.
 
 ## [Unreleased]
 
+## [0.3.2a1] - 2026-10-19
+
 ### Changed
 
 - Scope public physics-validation claims to the checks available for each model and record
@@ -12,7 +14,7 @@ suffix (`-vN`); a released task is never changed in place.
 - Add serial float32 validation, weekly newest-dependency tests and pull-request documentation
   builds to CI. Documentation deployment remains restricted to the main branch.
 
-## 0.3.2a1 (candidate, unreleased)
+### Added
 
 - Document the maintainer-approved additive API exception for this alpha only.
 - Check subsystem rewards and trajectory endpoints, batching and gradients in
@@ -168,6 +170,7 @@ First release with a model zoo.
 Skeleton release: `qubit/StateTransfer-v0`, functional environment API,
 Gymnasium adapter, JSON command-line interface, physics validation framework.
 
+[0.3.2a1]: https://github.com/beomdo-park/QEnvS/compare/v0.3.0...v0.3.2a1
 [0.3.0]: https://github.com/beomdo-park/QEnvS/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/beomdo-park/QEnvS/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/beomdo-park/QEnvS/compare/v0.0.1...v0.1.0

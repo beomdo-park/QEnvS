@@ -15,6 +15,19 @@ uvx qenvs doctor
 uvx qenvs list
 ```
 
+### Alpha installation
+
+To test the alpha explicitly in a separate environment:
+
+```bash
+pip install --pre 'qenvs==0.3.2a1'
+qenvs doctor
+```
+
+For the auditable control example, install `qenvs[dev]==0.3.2a1` and use the
+script from the matching source distribution or `v0.3.2a1` source tag. Examples
+are not included in the wheel. Pin the version when recording results.
+
 ### GPU
 
 QEnvS runs on whatever backend your jax install provides. For NVIDIA GPUs install a

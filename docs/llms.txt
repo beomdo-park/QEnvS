@@ -4,6 +4,8 @@
 
 Tasks: `transmon/XGate-v0`, `transmon/SXGate-v0`, `transmon/CRGate-v0`, `qubit/StateTransfer-v0`, `battery/TwoLevel-v0`, `battery/Dicke-v0`, `battery/DickeLocal-v0`, `transfer/LambdaSTIRAP-v0`. Every model ships with analytic validation checks (86 in total: closed-form results, physical constraints, solver convergence, QuTiP cross-checks) that run as tests and are printed by `qenvs validate`. Environments are functional (jit/vmap/grad) with a Gymnasium adapter.
 
+Alpha: `pip install --pre 'qenvs==0.3.2a1'`. Explicit battery subsystems, endpoint diagnostics and an auditable control example are new in this alpha.
+
 ## Docs
 
 - [Overview and quickstart](https://beomdo-park.github.io/QEnvS/): install, functional API, gradient-based control, Gymnasium usage
@@ -29,6 +31,7 @@ Tasks: `transmon/XGate-v0`, `transmon/SXGate-v0`, `transmon/CRGate-v0`, `qubit/S
 - [API: environments](https://beomdo-park.github.io/QEnvS/api/envs/): `Environment` (with `info(state)`), `EnvState`, `TimeStep`, `StateTransfer`, `BatteryCharging`, `GateControl`, registry
 - [API: wrappers](https://beomdo-park.github.io/QEnvS/api/wrappers/): `GymnasiumEnv`, `GymnasiumVectorEnv`, `ParameterRandomization`, `ControlErrors`, `ObservationModel`, distributions (`Normal`, `Uniform`, `TruncatedNormal`), `Wrapper`
 - [API: robust evaluation](https://beomdo-park.github.io/QEnvS/api/robust/): `qenvs.robust.evaluate`, `stability`, `performance_metric`, and the key tree `qenvs.keys`
+- [API: endpoint trajectories](https://beomdo-park.github.io/QEnvS/api/trajectories/): `qenvs.trajectories.rollout_metrics`, physical amplitudes, explicit solver settings, right endpoints, jit/vmap/action gradients
 - [API: validation](https://beomdo-park.github.io/QEnvS/api/validation/): `CheckResult`, generic `model_checks` for any model
 
 ## Agent interface

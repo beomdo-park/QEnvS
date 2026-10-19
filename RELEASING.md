@@ -49,3 +49,8 @@ call signatures and released task behavior remain stable. This exception covers
 the alpha only; a final release needs a separate versioning decision. The alpha
 still requires the compatibility matrix, float32 checks and documentation build
 to pass on the candidate commit before tagging.
+
+For an alpha, update the installation instructions, changelog and CITATION.cff
+version/date together. Keep the concept DOI and historic final-release DOI
+identifiers; do not assign a previous version DOI to the alpha. Publish matching
+user and API documentation after integration.
