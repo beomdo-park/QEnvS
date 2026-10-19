@@ -533,7 +533,7 @@ model = HamiltonianModel(
     subsystem_hamiltonian=np.diag([0.0, 1.0]),
 )
 rho_b, h_b = model.battery_reduced(model.initial_state())
-print(energy(rho_b, h_b))     # 0.5
+print(energy(rho_b, h_b))  # 0.5
 print(ergotropy(rho_b, h_b))  # 0.0, unlike the pure joint state's work
 ```
 

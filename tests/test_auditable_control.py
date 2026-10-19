@@ -89,14 +89,31 @@ def test_provenance_does_not_claim_an_enclosing_repo(tmp_path):
     assert result["git_sha"] is None
     assert result["git_dirty"] is None
     assert result["source_sha256"]
-    import qenvs
-
-    actual = ex.source_provenance(Path(qenvs.__file__))
-    assert (
-        actual["git_sha"]
-        == subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    checkout = tmp_path / "src/qenvs/__init__.py"
+    checkout.parent.mkdir(parents=True)
+    checkout.write_text("# explicit source checkout fixture\n")
+    subprocess.run(["git", "-C", str(tmp_path), "add", "src"], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(tmp_path),
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "-qm",
+            "fixture",
+        ],
+        check=True,
     )
-    assert isinstance(actual["git_dirty"], bool)
+    actual = ex.source_provenance(checkout)
+    expected = subprocess.check_output(
+        ["git", "-C", str(tmp_path), "rev-parse", "HEAD"], text=True
+    ).strip()
+    assert actual["git_sha"] == expected
+    assert actual["git_dirty"] is True  # the unrelated installed fixture is untracked
 
 
 def test_json_output_refuses_overwrite_and_nonfinite(tmp_path):

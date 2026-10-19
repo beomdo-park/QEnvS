@@ -249,7 +249,9 @@ from qenvs.trajectories import rollout_metrics
 model = TwoLevel()
 actions = jnp.zeros((4, model.n_controls))
 times, values = rollout_metrics(
-    model, actions, dt=0.1,
+    model,
+    actions,
+    dt=0.1,
     metrics={"energy": lambda m, state: energy(state, m.battery_hamiltonian())},
     method=dq.method.Tsit5(rtol=1e-7, atol=1e-9),
 )
