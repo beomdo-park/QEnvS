@@ -230,3 +230,63 @@ Empirical checks on 1024 episodes (tests `tests/test_batch.py`): the leaves of t
 measurement noise of different observables and steps, and neighbouring episodes are uncorrelated
 within `|r| <= 4 / sqrt(n)`. Uncorrelatedness is a sanity check against key reuse, not a proof of
 statistical independence.
+
+## Endpoint diagnostics and reproducible candidate replay
+
+Added in `0.3.2a1`: install with `pip install --pre 'qenvs==0.3.2a1'`.
+
+`qenvs.trajectories.rollout_metrics(model, actions, dt=..., metrics=..., method=...)`
+returns `(times, values)` for physical piecewise-constant controls. Capture the
+model, positive finite `dt`, metric mapping and dynamiqs method outside `jit`.
+Differentiate with respect to the real floating action array. Each metric callback
+receives `(model, state)` and returns a real floating scalar.
+
+```python
+import dynamiqs as dq
+import jax.numpy as jnp
+from qenvs.models import TwoLevel
+from qenvs.observables import energy
+from qenvs.trajectories import rollout_metrics
+
+model = TwoLevel()
+actions = jnp.zeros((4, model.n_controls))
+times, values = rollout_metrics(
+    model,
+    actions,
+    dt=0.1,
+    metrics={"energy": lambda m, state: energy(state, m.battery_hamiltonian())},
+    method=dq.method.Tsit5(rtol=1e-7, atol=1e-9),
+)
+```
+
+This API does not clip or normalize amplitudes and does not force float32. Sampling
+starts at `dt`, not zero. `values["energy"].max()` is an endpoint maximum;
+`values["energy"][-1]` is terminal energy. Neither an endpoint maximum nor its
+retrospectively chosen time is an executable stopping policy. The existing
+`robust.evaluate` keeps its final-state metric behavior. These exact diagnostics
+must not be passed to a policy that is meant to use only measurement observations.
+
+The small `examples/auditable_control.py` example (repository or source distribution)
+uses two generic coupled-qubit models. Install the dev extra for Optax, then run:
+
+```bash
+JAX_ENABLE_X64=1 JAX_PLATFORMS=cpu python examples/auditable_control.py --out audit-output
+```
+
+It writes all four candidates as `Pulse` JSON records, the full model-by-candidate
+matrix, terminal work, first peak times, optimizer traces and a manifest. Every
+fixed action sequence is replayed unchanged on each evaluation model. Winners are
+selected by precise self-evaluation within their source group. Relative regret
+uses each model's own selected candidate as reference; a reference at or below
+`1e-12` in the example's dimensionless energy units produces `null` and a reason.
+Negative regret is retained. The example's threshold is not a universal tolerance.
+
+Warmup is fixed independently of total iterations. Traces distinguish gradient
+norm from update norm, and saved scores refer to saved actions before updating.
+These short runs illustrate bookkeeping, not convergence or control optimality.
+The manifest records method/tolerances, dtype, backend, seeds, initial/control
+hashes, package versions and the imported source hash. Git SHA and dirty status
+are included only for an actual source checkout; wheels report them as unavailable.
+Outputs must go to a new directory. A separate observation demo passes only the
+selected expectation and elapsed time to a policy; exact simulator reward remains
+privileged information if a caller chooses to expose it.

@@ -18,10 +18,16 @@ Public API means everything importable without a leading underscore from `qenvs`
 `qenvs.envs` (including `qenvs.envs.gate`), `qenvs.gates`, `qenvs.wrappers` (including
 `qenvs.wrappers.vector`, `qenvs.wrappers.randomization`, `qenvs.wrappers.control`,
 `qenvs.wrappers.observation`), `qenvs.observables`, `qenvs.pulses`, `qenvs.distributions`,
-`qenvs.robust`, `qenvs.keys`, `qenvs.validation` (including `qenvs.validation.generic`) and
+`qenvs.robust`, `qenvs.trajectories`, `qenvs.keys`, `qenvs.validation` (including
+`qenvs.validation.generic`) and
 `qenvs.registry`. Use `Environment.info(state)` for
 diagnostics; methods starting with `_` (for example `Environment._info`) are internal.
 `qenvs.toolkit` is the plain-dict layer behind the CLI and follows the CLI rules below.
+
+The `0.3.2a1` alpha is a maintainer-approved exception allowing opt-in,
+backward-compatible Python API additions. It does not change existing calls or
+released task behavior. This exception does not authorize a final patch release;
+see [Releasing](https://github.com/beomdo-park/QEnvS/blob/main/RELEASING.md).
 
 ## Supported environments
 

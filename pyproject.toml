@@ -71,7 +71,7 @@ version-file = "src/qenvs/_version.py"
 packages = ["src/qenvs"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/qenvs", "tests", "README.md", "LICENSE", "NOTICE", "CITATION.cff"]
+include = ["src/qenvs", "tests", "examples/auditable_control.py", "README.md", "LICENSE", "NOTICE", "CITATION.cff"]
 
 # --- tooling (ruff config adapted from dynamiqs, Apache-2.0) ---
 [tool.ruff]

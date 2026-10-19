@@ -299,6 +299,11 @@ class HamiltonianModel(Model):
             :class:`~qenvs.envs.BatteryCharging`. The energy and ergotropy are evaluated on
             the full state; for a battery that is only one subsystem of a composite system
             subclass and override ``battery_reduced`` (see the custom-models guide).
+        battery_subsystems: optional increasing tuple of retained tensor-factor indices.
+            Supply with subsystem_hamiltonian instead of battery_hamiltonian.
+        subsystem_hamiltonian: Hermitian Hamiltonian on the retained factors, ground
+            energy zero. Energy agrees with its full-space embedding; ergotropy
+            is computed after partial trace.
         dims: subsystem dimensions of a composite system, e.g. ``(2, 2)`` for two qubits
             (their product must be ``n``). Inferred from ``QArray``/``Qobj`` inputs when
             omitted, else ``(n,)``. Needed for ``dq.ptrace`` on the model's states.
@@ -331,6 +336,8 @@ class HamiltonianModel(Model):
     initial_matrix: Array
     observable_matrices: dict[str, Array]
     battery_matrix: Array | None
+    subsystem_matrix: Array | None
+    battery_subsystems: tuple[int, ...] | None = eqx.field(static=True)
     dims: tuple[int, ...] = eqx.field(static=True)
     parameter_nominals: dict[str, Array]
     parameter_matrices: dict[str, Array]
@@ -346,6 +353,9 @@ class HamiltonianModel(Model):
         battery_hamiltonian: object | None = None,
         dims: Sequence[int] | None = None,
         parameters: Mapping[str, Sequence[object]] | None = None,
+        *,
+        battery_subsystems: tuple[int, ...] | None = None,
+        subsystem_hamiltonian: object | None = None,
     ) -> None:
         h0 = _hermitian(drift, "drift")
         n = h0.shape[0]
@@ -391,6 +401,44 @@ class HamiltonianModel(Model):
         pnames, pnominal, pmats, pspecs = _parameter_terms(parameters, n)
         sources = [drift, *ctrl_in, *jump_in]
         self.dims = _resolve_dims(n, dims, sources)
+        self.battery_subsystems = None
+        sub_h = None
+        if (battery_subsystems is None) != (subsystem_hamiltonian is None):
+            msg = "battery_subsystems and subsystem_hamiltonian must be supplied together"
+            raise ValueError(msg)
+        if battery_subsystems is not None:
+            if battery_hamiltonian is not None:
+                msg = "subsystem_hamiltonian cannot be combined with battery_hamiltonian"
+                raise ValueError(msg)
+            if (
+                not isinstance(battery_subsystems, tuple)
+                or not battery_subsystems
+                or any(
+                    isinstance(i, bool)
+                    or not isinstance(i, (int, np.integer))
+                    or not 0 <= i < len(self.dims)
+                    for i in battery_subsystems
+                )
+                or tuple(sorted(set(battery_subsystems))) != battery_subsystems
+            ):
+                msg = "battery_subsystems must be distinct increasing valid integer indices"
+                raise ValueError(msg)
+            self.battery_subsystems = tuple(int(i) for i in battery_subsystems)
+            size = math.prod(self.dims[i] for i in self.battery_subsystems)
+            sub_h = _hermitian(subsystem_hamiltonian, "subsystem_hamiltonian", size)
+            spectrum = np.linalg.eigvalsh(sub_h)
+            if abs(spectrum[0]) > 1e-8 * max(1.0, float(np.max(np.abs(spectrum)))):
+                msg = "subsystem_hamiltonian must have ground energy zero"
+                raise ValueError(msg)
+            # Form H on retained factors followed by spectator identities, then reorder.
+            order = self.battery_subsystems + tuple(
+                i for i in range(len(self.dims)) if i not in self.battery_subsystems
+            )
+            ordered_dims = tuple(self.dims[i] for i in order)
+            inverse = tuple(order.index(i) for i in range(len(self.dims)))
+            axes = inverse + tuple(i + len(self.dims) for i in inverse)
+            hb = np.kron(sub_h, np.eye(n // size)).reshape(ordered_dims * 2)
+            hb = hb.transpose(axes).reshape(n, n)
         cdt = jax.dtypes.canonicalize_dtype(complex)
         rdt = jax.dtypes.canonicalize_dtype(float)
         self.parameter_nominals = {k: jnp.asarray(v, dtype=rdt) for k, v in pnominal.items()}
@@ -404,6 +452,7 @@ class HamiltonianModel(Model):
         self.initial_matrix = jnp.asarray(psi0, dtype=cdt)
         self.observable_matrices = {k: jnp.asarray(v, dtype=cdt) for k, v in obs.items()}
         self.battery_matrix = None if hb is None else jnp.asarray(hb, dtype=cdt)
+        self.subsystem_matrix = None if sub_h is None else jnp.asarray(sub_h, dtype=cdt)
 
     @classmethod
     def from_operators(
@@ -416,6 +465,9 @@ class HamiltonianModel(Model):
         battery_hamiltonian: object | None = None,
         dims: Sequence[int] | None = None,
         parameters: Mapping[str, Sequence[object]] | None = None,
+        *,
+        battery_subsystems: tuple[int, ...] | None = None,
+        subsystem_hamiltonian: object | None = None,
     ) -> HamiltonianModel:
         """Build and validate a model from operators; see the class docstring for the arguments."""
         return cls(
@@ -427,6 +479,8 @@ class HamiltonianModel(Model):
             battery_hamiltonian=battery_hamiltonian,
             dims=dims,
             parameters=parameters,
+            battery_subsystems=battery_subsystems,
+            subsystem_hamiltonian=subsystem_hamiltonian,
         )
 
     # ------------------------------------------------------------------ Model API
@@ -512,3 +566,12 @@ class HamiltonianModel(Model):
             )
             raise NotImplementedError(msg)
         return self._q(self.battery_matrix)
+
+    def battery_reduced(self, qstate: QArray) -> tuple[QArray, QArray]:
+        """Return the declared battery subsystem, or preserve the legacy full-state path."""
+        if self.battery_subsystems is None:
+            return super().battery_reduced(qstate)
+        dims = tuple(self.dims[i] for i in self.battery_subsystems)
+        return dq.ptrace(qstate, self.battery_subsystems), dq.asqarray(
+            self.subsystem_matrix, dims=dims
+        )

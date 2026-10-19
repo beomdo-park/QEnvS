@@ -4,7 +4,7 @@ Releases are cut from `main` by pushing a tag; `release.yml` builds, publishes t
 through Trusted Publishing and creates the GitHub release; Zenodo archives it and mints a
 version DOI. Minor releases (0.x.0) go through a release candidate first.
 
-Pre-release tags (`vX.Y.0aN` alpha, `bN` beta, `rcN` release candidate) are published to
+Pre-release tags (`vX.Y.ZaN` alpha, `bN` beta, `rcN` release candidate) are published to
 PyPI only: the workflow creates no GitHub release for them, so Zenodo mints no DOI for a
 candidate. An alpha may be cut before the feature freeze to test packaging and a fresh
 install of the features that are already done; features can still follow an alpha, not an
@@ -42,3 +42,15 @@ rc.
       record; add the version DOI to `README.md`, `CITATION.cff` and `docs/index.md`.
 
 Patch releases (X.Y.Z) carry fixes only and may skip the release candidate.
+
+For the maintainer-approved `0.3.2a1` experiment, backward-compatible, opt-in Python
+API additions are an explicit exception to the fixes-only patch policy. Existing
+call signatures and released task behavior remain stable. This exception covers
+the alpha only; a final release needs a separate versioning decision. The alpha
+still requires the compatibility matrix, float32 checks and documentation build
+to pass on the candidate commit before tagging.
+
+For an alpha, update the installation instructions, changelog and CITATION.cff
+version/date together. Keep the concept DOI and historic final-release DOI
+identifiers; do not assign a previous version DOI to the alpha. Publish matching
+user and API documentation after integration.

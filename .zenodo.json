@@ -1,6 +1,6 @@
 {
   "title": "QEnvS: physically validated quantum control environments for reinforcement learning and optimal control",
-  "description": "Model zoo of open-quantum-system control problems, including transmon gate synthesis, cross-resonance control, quantum batteries with collective and local dissipation, and qubit and three-level state transfer. It provides model-specific physics checks, a functional JAX environment API (jit/vmap/grad), parameter randomisation, finite-shot observations, robust evaluation, a Gymnasium adapter and a JSON command-line interface. Built on dynamiqs.",
+  "description": "Model zoo of open-quantum-system control problems, including transmon gate synthesis, cross-resonance control, quantum batteries with collective and local dissipation, and qubit and three-level state transfer. It provides model-specific physics checks, a functional JAX environment API (jit/vmap/grad), parameter randomisation, finite-shot observations, robust evaluation, a Gymnasium adapter and a JSON command-line interface. Custom Hamiltonian models support explicit battery subsystems and endpoint trajectory diagnostics. Built on dynamiqs.",
   "creators": [
     { "name": "Park, Beomdo", "affiliation": "Hanbat National University" }
   ],

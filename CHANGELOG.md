@@ -5,12 +5,27 @@ suffix (`-vN`); a released task is never changed in place.
 
 ## [Unreleased]
 
+## [0.3.2a1] - 2026-10-19
+
 ### Changed
 
 - Scope public physics-validation claims to the checks available for each model and record
   the repository-backed round 6 review findings and statistical limitations.
 - Add serial float32 validation, weekly newest-dependency tests and pull-request documentation
   builds to CI. Documentation deployment remains restricted to the main branch.
+
+### Added
+
+- Document the maintainer-approved additive API exception for this alpha only.
+- Check subsystem rewards and trajectory endpoints, batching and gradients in
+  both CI precision modes with explicit float32 tolerances.
+
+- Custom Hamiltonian models can declare battery subsystems and a local Hamiltonian,
+  with reduced-state work and a consistent full-space energy operator.
+- New endpoint trajectory diagnostics preserve physical action precision and expose
+  explicit solver settings without changing environment rollout or robust metrics.
+- Add a small auditable control example with all-candidate replay, fixed warmup,
+  optimizer traces and source provenance. No released task behavior changes.
 
 ## [0.3.0] - 2026-10-16
 
@@ -155,6 +170,7 @@ First release with a model zoo.
 Skeleton release: `qubit/StateTransfer-v0`, functional environment API,
 Gymnasium adapter, JSON command-line interface, physics validation framework.
 
+[0.3.2a1]: https://github.com/beomdo-park/QEnvS/compare/v0.3.0...v0.3.2a1
 [0.3.0]: https://github.com/beomdo-park/QEnvS/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/beomdo-park/QEnvS/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/beomdo-park/QEnvS/compare/v0.0.1...v0.1.0

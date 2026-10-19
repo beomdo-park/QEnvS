@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/qenvs_logo_1200.png" alt="QEnvS" width="480">
+  <img src="https://raw.githubusercontent.com/beomdo-park/QEnvS/main/docs/assets/qenvs_logo_1200.png" alt="QEnvS" width="480">
 </p>
 
 **Physically validated quantum control environments for reinforcement learning and optimal control.**
@@ -37,6 +37,17 @@ Full instructions, GPU setup and troubleshooting: [Getting started](https://beom
 pip install qenvs            # core: jax + dynamiqs
 pip install 'qenvs[gym]'     # + gymnasium adapter (stable-baselines3, CleanRL, ...)
 ```
+
+To try the `0.3.2a1` alpha explicitly:
+
+```bash
+pip install --pre 'qenvs==0.3.2a1'
+```
+
+This alpha adds explicit battery subsystems and endpoint trajectory diagnostics
+([custom models](https://beomdo-park.github.io/QEnvS/guides/custom-models/),
+[trajectory API](https://beomdo-park.github.io/QEnvS/api/trajectories/)).
+The default install continues to select the latest final release.
 
 ## Quickstart
 
@@ -174,7 +185,9 @@ Software DOI (all versions): [10.5281/zenodo.23359969](https://doi.org/10.5281/z
 Version 0.3.0: [10.5281/zenodo.23401877](https://doi.org/10.5281/zenodo.23401877)
 (0.2.0: [10.5281/zenodo.23374561](https://doi.org/10.5281/zenodo.23374561),
 0.1.0: [10.5281/zenodo.23359970](https://doi.org/10.5281/zenodo.23359970)).
-Machine-readable metadata is in [CITATION.cff](CITATION.cff) (GitHub shows a "Cite this
+The `0.3.2a1` alpha has no separate Zenodo archive or version DOI. Cite the
+concept DOI and record the alpha version used.
+Machine-readable metadata is in [CITATION.cff](https://github.com/beomdo-park/QEnvS/blob/main/CITATION.cff) (GitHub shows a "Cite this
 repository" button).
 
 ```bibtex
@@ -183,7 +196,7 @@ repository" button).
   title   = {{QEnvS}: physically validated quantum control environments for
              reinforcement learning and optimal control},
   year    = {2026},
-  version = {0.3.0},
+  version = {0.3.2a1},
   doi     = {10.5281/zenodo.23359969},
   url     = {https://github.com/beomdo-park/QEnvS}
 }

@@ -17,6 +17,11 @@ pip install qenvs            # core
 pip install 'qenvs[gym]'     # + Gymnasium adapter
 ```
 
+To try the `0.3.2a1` alpha, use `pip install --pre 'qenvs==0.3.2a1'`.
+It adds [explicit battery subsystems](guides/custom-models.md) and
+[endpoint trajectory diagnostics](api/trajectories.md). The default install
+continues to select the latest final release.
+
 ## 60-second tour
 
 ```python
@@ -85,3 +90,6 @@ If you use QEnvS, please cite the software DOI
 0.3.0 is [10.5281/zenodo.23401877](https://doi.org/10.5281/zenodo.23401877)). A BibTeX
 entry and `CITATION.cff` are in the
 [repository](https://github.com/beomdo-park/QEnvS#citation).
+
+The `0.3.2a1` alpha has no separate Zenodo archive or version DOI. Cite the
+concept DOI together with the alpha version used.
