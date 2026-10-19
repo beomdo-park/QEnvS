@@ -12,6 +12,15 @@ suffix (`-vN`); a released task is never changed in place.
 - Add serial float32 validation, weekly newest-dependency tests and pull-request documentation
   builds to CI. Documentation deployment remains restricted to the main branch.
 
+## 0.3.2a1 (candidate, unreleased)
+
+- Custom Hamiltonian models can declare battery subsystems and a local Hamiltonian,
+  with reduced-state work and a consistent full-space energy operator.
+- New endpoint trajectory diagnostics preserve physical action precision and expose
+  explicit solver settings without changing environment rollout or robust metrics.
+- Add a small auditable control example with all-candidate replay, fixed warmup,
+  optimizer traces and source provenance. No released task behavior changes.
+
 ## [0.3.0] - 2026-10-16
 
 ### Added
