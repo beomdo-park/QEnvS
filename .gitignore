@@ -14,3 +14,4 @@ site/
 src/qenvs/_version.py
 .python-version
 .claude/
+.worktrees/

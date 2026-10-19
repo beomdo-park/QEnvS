@@ -19,10 +19,11 @@ thermal machines later), packaged so
 that you can plug them into an RL agent or a gradient-based optimiser in a few
 lines, instead of re-deriving the physics for every paper.
 
-Every model ships with **analytic reference results that run as tests**
+Every model ships with **model-specific reference results that run as tests**
 (pi-pulse inversion, exponential decay, ergotropy bounds, collective-charging
-scaling, ...). If a model is in QEnvS, its physics has been checked against
-closed-form solutions and against an independent simulator (QuTiP).
+scaling, ...). The checks combine closed-form results, physical constraints and
+solver convergence. Models are also cross-checked against QuTiP where an equivalent
+independent formulation is available; the table below lists the exact coverage.
 
 Built on [dynamiqs](https://github.com/dynamiqs/dynamiqs) (JAX): environments are
 `jit`-able, `vmap`-able across thousands of trajectories, and differentiable, so
@@ -102,8 +103,9 @@ flowchart LR
 ```
 
 The physics lives only in `Model`; everything above it is an adapter. A model is
-merged only with checks in `qenvs.validation` that compare it against closed-form
-results, physical constraints and an independent simulator (QuTiP).
+merged only with model-specific checks in `qenvs.validation` that compare it against
+closed-form results, physical constraints and solver convergence, with QuTiP
+cross-checks where an equivalent independent formulation is available.
 
 ## Models and tasks
 
