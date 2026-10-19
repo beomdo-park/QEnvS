@@ -29,7 +29,7 @@ jobs:
       - run: uv python install 3.12
       - run: uv sync --extra docs --extra dev
       - run: uv run mkdocs build --strict
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         with:
           path: site/
