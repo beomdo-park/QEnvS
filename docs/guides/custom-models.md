@@ -512,3 +512,36 @@ any of these apply:
   finite quantum systems", EPL 67, 565 (2004) (ergotropy, used by the battery checks).
 * N. Lambert et al., "QuTiP 5: The Quantum Toolbox in Python", Phys. Rep. 1153, 1-62 (2026),
   arXiv:2412.04705 (the reference implementation of the cross-check).
+
+## Selecting a battery subsystem
+
+For a composite system, pass `battery_subsystems` and `subsystem_hamiltonian`
+instead of a full-space `battery_hamiltonian`. The same keywords work with
+`HamiltonianModel.from_operators`.
+
+```python
+import numpy as np
+from qenvs.models import HamiltonianModel
+from qenvs.observables import energy, ergotropy
+
+model = HamiltonianModel(
+    drift=np.zeros((4, 4)),
+    controls=[np.kron(np.eye(2), np.array([[0, 1], [1, 0]]))],
+    initial_state=np.array([1, 0, 0, 1]) / np.sqrt(2),
+    dims=(2, 2),
+    battery_subsystems=(1,),
+    subsystem_hamiltonian=np.diag([0.0, 1.0]),
+)
+rho_b, h_b = model.battery_reduced(model.initial_state())
+print(energy(rho_b, h_b))     # 0.5
+print(ergotropy(rho_b, h_b))  # 0.0, unlike the pure joint state's work
+```
+
+Indices must form a nonempty, increasing tuple without duplicates. The subsystem
+Hamiltonian acts on those factors in tensor order and must have ground energy
+zero, within `1e-8 * max(1, spectral norm)`. The constructor rejects a shifted
+Hamiltonian instead of changing it. `battery_hamiltonian()` returns its full-space
+embedding, while `battery_reduced()` returns the reduced density matrix and the
+local Hamiltonian. `BatteryCharging` therefore uses the subsystem's work.
+
+Existing calls using `battery_hamiltonian` retain their full-state behavior.
