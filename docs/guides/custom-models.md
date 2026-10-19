@@ -183,11 +183,12 @@ A task registered in your own code is only known to processes that import that c
 --model` takes the import path instead.
 
 Battery on one subsystem of a composite system: `BatteryCharging` evaluates energy and
-ergotropy of whatever `battery_reduced(state)` returns. For `HamiltonianModel` that is the
-full state with the full-space $H_B$, which is correct only if the battery is the whole
-system or the global state stays a product with a passive ancilla. If the battery is a
-subsystem that becomes entangled with the rest, subclass and trace the rest out (this is
-what `DickeBattery` does):
+ergotropy of whatever `battery_reduced(state)` returns. With the legacy
+`battery_hamiltonian` argument, `HamiltonianModel` returns the full state and
+full-space $H_B$. For local work, use the explicit
+[subsystem configuration](#selecting-a-battery-subsystem) added in `0.3.2a1`.
+On earlier releases, or for a custom reduction, subclass and trace the rest out
+(as `DickeBattery` does):
 
 ```python
 HB_LOCAL = dq.asqarray(np.diag([0.0, 1.0]))  # H_B on qubit 0 alone
@@ -485,7 +486,9 @@ any of these apply:
   frequency has to be in a rotating frame (RWA) or sampled finely.
 * Arrays are stored in the active JAX float precision (complex64 unless x64 is enabled).
   Hermiticity and state validity are decided in float64 on the inputs.
-* `battery_hamiltonian` is on the full space; subsystem batteries need a subclass (above).
+* `battery_hamiltonian` is on the full space. For subsystem batteries in `0.3.2a1`,
+  use `battery_subsystems` with `subsystem_hamiltonian`; earlier releases need
+  the subclass shown above.
 * dynamiqs 0.3.6 drops the subsystem dims of a composite density matrix integrated with
   `Expm`; `HamiltonianModel.evolve` restores them, the built-in composite models (for
   example the open `DickeBattery`) do not, so do not use `method=Expm()` in an environment
@@ -514,6 +517,8 @@ any of these apply:
   arXiv:2412.04705 (the reference implementation of the cross-check).
 
 ## Selecting a battery subsystem
+
+Added in `0.3.2a1`: install with `pip install --pre 'qenvs==0.3.2a1'`.
 
 For a composite system, pass `battery_subsystems` and `subsystem_hamiltonian`
 instead of a full-space `battery_hamiltonian`. The same keywords work with
