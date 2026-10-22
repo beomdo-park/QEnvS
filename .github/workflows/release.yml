@@ -10,8 +10,27 @@ on:
     tags: ["v*"]
 
 jobs:
-  build:
+  # A tag publishes only a commit that main CI has already passed; rerun this job once it has.
+  verify-ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    steps:
+      - name: require a successful ci run on the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          count=$(gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=${{ github.sha }}&event=push&status=success" --jq .total_count)
+          if [ "$count" -lt 1 ]; then
+            echo "no successful ci run for ${{ github.sha }}"
+            exit 1
+          fi
+
+  build:
+    needs: verify-ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,6 +45,7 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: pypi
     permissions:
       id-token: write

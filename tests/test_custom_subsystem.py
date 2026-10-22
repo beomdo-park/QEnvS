@@ -21,6 +21,10 @@ def make(**kwargs):
     return HamiltonianModel(**options)
 
 
+# complex oracles at 1e-12; the float32 gates are in test_alpha_precision.py
+needs_x64 = pytest.mark.skipif(not jax.config.jax_enable_x64, reason="float64 oracle; run with x64")
+
+
 @pytest.mark.parametrize("density", [False, True])
 def test_bell_local_work_is_zero_while_global_work_is_half(density):
     ket = np.array([1, 0, 0, 1]) / np.sqrt(2)
@@ -59,6 +63,7 @@ def test_nonadjacent_subsystems_embedding_and_factory():
     )
 
 
+@needs_x64
 def test_complex_subsystem_hamiltonian_and_coherent_state_on_nonadjacent_factors():
     # complex entries and off-diagonal coherences catch conjugate and transpose errors that
     # real symmetric cases cannot (independent review)
@@ -94,6 +99,86 @@ def test_complex_subsystem_hamiltonian_and_coherent_state_on_nonadjacent_factors
     assert float(energy(model.initial_state(), model.battery_hamiltonian())) == pytest.approx(
         np.trace(rho @ expected).real, abs=1e-12
     )
+
+
+def embed(h, dims, keep):
+    """Reference embedding by explicit indices: h on the kept factors, identity elsewhere."""
+    n = int(np.prod(dims))
+    kept = [dims[k] for k in keep]
+    out = np.zeros((n, n), dtype=complex)
+    for i in range(n):
+        x = np.unravel_index(i, dims)
+        for j in range(n):
+            y = np.unravel_index(j, dims)
+            if all(x[k] == y[k] for k in range(len(dims)) if k not in keep):
+                a = np.ravel_multi_index([x[k] for k in keep], kept)
+                b = np.ravel_multi_index([y[k] for k in keep], kept)
+                out[i, j] = h[a, b]
+    return out
+
+
+@needs_x64
+@pytest.mark.parametrize("keep,trace", [((1, 2), "abcaef->bcef"), ((2,), "abcabf->cf")])
+def test_trailing_subsystems_partial_trace_and_embedding(keep, trace):
+    # the leading factor is traced out, so the embedding permutation is not the identity
+    rng = np.random.default_rng(11)
+    dims = (2, 3, 2)
+    size = int(np.prod([dims[k] for k in keep]))
+    a = rng.normal(size=(size, size)) + 1j * rng.normal(size=(size, size))
+    h = a + a.conj().T
+    h -= np.linalg.eigvalsh(h)[0] * np.eye(size)
+    m = rng.normal(size=(12, 12)) + 1j * rng.normal(size=(12, 12))
+    rho = m @ m.conj().T
+    rho /= np.trace(rho)
+    model = HamiltonianModel(
+        np.zeros((12, 12)),
+        [np.eye(12)],
+        initial_state=rho,
+        dims=dims,
+        battery_subsystems=keep,
+        subsystem_hamiltonian=h,
+    )
+    reduced, hb = model.battery_reduced(model.initial_state())
+    oracle = np.einsum(trace, rho.reshape(dims + dims)).reshape(size, size)
+    np.testing.assert_allclose(reduced.to_jax(), oracle, atol=1e-12)
+    np.testing.assert_allclose(hb.to_jax(), h, atol=1e-12)
+    full = np.asarray(model.battery_hamiltonian().to_jax())
+    np.testing.assert_allclose(full, embed(h, dims, keep), atol=1e-12)
+    assert np.trace(rho @ full).real == pytest.approx(np.trace(oracle @ h).real, abs=1e-12)
+
+
+def test_ground_energy_gate():
+    with pytest.raises(ValueError, match="ground energy zero"):
+        make(subsystem_hamiltonian=np.diag([-1.0, 0]))
+    make(subsystem_hamiltonian=np.diag([-1e-9, 1.0]))  # within 1e-8 of the scale 1
+
+
+def test_factory_keeps_subclasses_with_the_030_init_signature():
+    class Legacy(HamiltonianModel):
+        def __init__(
+            self,
+            drift,
+            controls,
+            jump_ops=(),
+            initial_state=None,
+            observables=None,
+            battery_hamiltonian=None,
+            dims=None,
+            parameters=None,
+        ):
+            super().__init__(
+                drift,
+                controls,
+                jump_ops,
+                initial_state,
+                observables,
+                battery_hamiltonian,
+                dims,
+                parameters,
+            )
+
+    model = Legacy.from_operators(np.zeros((2, 2)), [np.eye(2)], battery_hamiltonian=np.eye(2))
+    assert isinstance(model, Legacy)
 
 
 @pytest.mark.parametrize("indices", [(), (True,), (1.0,), (2,), (-1,), (1, 1), (1, 0)])

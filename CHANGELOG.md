@@ -12,6 +12,12 @@ suffix (`-vN`); a released task is never changed in place.
   RELEASING.md). Up to 0.3.1 patches carried fixes only.
 - Documentation and install instructions describe the subsystem and trajectory features as
   part of 0.3.2 instead of an alpha.
+- `rollout_metrics` (new in 0.3.2a1) raises `ValueError` for a bool, string or traced `dt`, a
+  `method` that is not a dynamiqs solver and `metrics` that is not a mapping; an integer `dt`
+  is converted to float.
+- Release and CI: a tag publishes only a commit whose push CI on main passed, scheduled and
+  manual CI runs no longer replace a pending push run, a docs deployment on main is no longer
+  cancelled by the next push, and every release and deploy job has a timeout.
 
 ### Fixed
 
@@ -20,12 +26,22 @@ suffix (`-vN`); a released task is never changed in place.
 - A wrong-size `subsystem_hamiltonian` now reports the expected size of the retained
   subsystems instead of the drift dimension.
 - Validation wording on the docs home page and in `llms.txt` is scoped like the README.
+- `HamiltonianModel.from_operators` passes `battery_subsystems` and `subsystem_hamiltonian`
+  only when they are given, so a subclass whose `__init__` has the 0.3.0 signature still
+  works through the factory (regression in 0.3.2a1).
+- An invalid `battery_subsystems` names the `dims` its indices refer to, and the class
+  docstring and the missing-battery error mention the subsystem route.
 
 ### Tests
 
 - A complex Hermitian subsystem Hamiltonian with a coherent state on nonadjacent factors
   (catches conjugation and transpose errors), tighter float32 tolerances with their
   derivation, and x64 markers on the float64-only trajectory tests.
+- Partial trace and embedding with the leading factor traced out (a permutation that is not
+  its own inverse), the ground-energy gate on both sides, the factory with a 0.3.0-style
+  subclass, unclipped physical amplitudes, `rollout_metrics` argument checks, the auditable
+  example's model-by-candidate matrix against direct rollouts, and a smoke run of its
+  `main()`. Each kills a mutant that survived review.
 
 ## [0.3.2a1] - 2026-10-19
 

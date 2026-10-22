@@ -109,4 +109,5 @@ and exit code 1. Docs index for LLMs: https://beomdo-park.github.io/QEnvS/llms.t
 6. Do not copy code from repositories without an OSI license (e.g. RL4qcWpc). Attribute reuse in `NOTICE`.
 7. Silence solver progress bars (`progress_meter=False`) so `--json` output stays clean.
 8. Plain ASCII punctuation in code, comments, docs and notebooks: no middle dot (U+00B7), no en/em dash
-   (U+2013/U+2014), no ` -- ` as a prose separator. Use a colon, comma or a new sentence. CI greps for this.
+   (U+2013/U+2014), no ` -- ` as a prose separator. Use a colon, comma or a new sentence. CI greps for
+   the middle dot and the two dashes; ` -- ` is checked in review.

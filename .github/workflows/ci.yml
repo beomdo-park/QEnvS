@@ -8,8 +8,9 @@ on:
   schedule:
     - cron: "17 6 * * 1"
 
+# Scheduled and manual runs get their own group, so they do not replace a pending push run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:

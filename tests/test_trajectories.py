@@ -111,6 +111,9 @@ def test_float64_actions_are_not_rounded():
         (np.zeros((1, 1)), -1),
         (np.zeros((1, 1)), float("nan")),
         (np.zeros((1, 1)), float("inf")),
+        (np.zeros((1, 1)), True),
+        (np.zeros((1, 1)), "0.2"),
+        (np.zeros((1, 1)), None),
         (np.ones((1, 1), dtype=complex), 0.2),
     ],
 )
@@ -126,3 +129,26 @@ def test_empty_or_nonscalar_metrics_rejected():
         run(model(), jnp.ones((1, 1)), metrics={"rho": lambda m, s: s.to_jax()})
     with pytest.raises(ValueError):
         run(model(), jnp.ones((1, 1)), metrics={"complex": lambda m, s: jnp.array(1j)})
+
+
+def test_physical_amplitudes_are_not_clipped():
+    # an environment would clip 3.0 to its bound of 2, giving sin^2(0.4) = 0.152
+    _, values = run(model(), jnp.array([[3.0]]))
+    assert float(values["energy"][0]) == pytest.approx(np.sin(0.6) ** 2, abs=1e-6)
+
+
+def test_dt_must_be_concrete_and_is_coerced_to_float():
+    times, _ = run(model(), jnp.ones((2, 1)), dt=1)
+    assert jnp.issubdtype(times.dtype, jnp.floating)
+    np.testing.assert_allclose(times, [1, 2])
+    with pytest.raises(ValueError, match="concrete"):
+        jax.jit(lambda dt: run(model(), jnp.ones((1, 1)), dt=dt)[0])(0.2)
+
+
+def test_method_and_metrics_types_checked():
+    module = importlib.import_module("qenvs.trajectories")
+    metrics = {"energy": lambda m, s: energy(s, m.battery_hamiltonian())}
+    with pytest.raises(ValueError, match="method"):
+        module.rollout_metrics(model(), jnp.ones((1, 1)), dt=0.2, metrics=metrics, method=None)
+    with pytest.raises(ValueError, match="mapping"):
+        run(model(), jnp.ones((1, 1)), metrics=[("energy", metrics["energy"])])

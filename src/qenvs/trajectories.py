@@ -35,7 +35,7 @@ def rollout_metrics(
             No clipping or normalization is applied, and the function does not cast
             actions itself. JAX does: with jax_enable_x64 off (the JAX default) float64
             actions become float32 on conversion, so enable x64 to keep them.
-        dt: positive finite control period, fixed outside jit.
+        dt: positive finite control period, a concrete number fixed outside jit.
         metrics: nonempty mapping of names to pure (model, state) scalar-real
             callbacks. Capture this mapping outside jit, like dt and method.
         method: explicit dynamiqs solver, including its tolerances.
@@ -46,7 +46,7 @@ def rollout_metrics(
         respect to actions, jit and vmap are supported.
 
     Raises:
-        ValueError: invalid shape, dtype, fixed dt or metric outputs.
+        ValueError: invalid shape, dtype, dt, method, metrics or metric outputs.
 
     Finite action and output checks belong at the host evaluation boundary;
     this scan does not convert traced arrays to NumPy or hide nonfinite scores.
@@ -58,10 +58,21 @@ def rollout_metrics(
     if not jnp.issubdtype(actions.dtype, jnp.floating):
         msg = "actions must have a real floating dtype"
         raise ValueError(msg)
+    try:
+        dt = math.nan if isinstance(dt, (bool, str)) else float(dt)
+    except (TypeError, jax.errors.ConcretizationTypeError):
+        dt = math.nan  # a traced or non-numeric dt
     if not math.isfinite(dt) or dt <= 0:
-        msg = "dt must be positive and finite, fixed outside jit"
+        msg = "dt must be a concrete positive finite number, fixed outside jit"
         raise ValueError(msg)
-    if not metrics or any(not isinstance(k, str) or not callable(f) for k, f in metrics.items()):
+    if not isinstance(method, Method):
+        msg = "method must be an explicit dynamiqs solver, e.g. dq.method.Tsit5(rtol=..., atol=...)"
+        raise ValueError(msg)
+    if (
+        not isinstance(metrics, Mapping)
+        or not metrics
+        or any(not isinstance(k, str) or not callable(f) for k, f in metrics.items())
+    ):
         msg = "metrics must be a nonempty mapping of names to callbacks"
         raise ValueError(msg)
 
