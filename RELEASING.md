@@ -38,7 +38,8 @@ rc.
 
 - [ ] Maintainer GO after looking at the release candidate.
 - [ ] Bump `version` and `date-released` in `CITATION.cff`; tag `vX.Y.0` on the commit that
-      was tested as the last rc (plus only the changelog and citation edits).
+      was tested as the last rc (plus only the changelog and citation edits). The build takes
+      its version from the pushed tag, so the final tag may share a commit with the last rc.
 - [ ] Check PyPI, the GitHub release (with `*.publish.attestation` files) and the Zenodo
       record; add the version DOI to `README.md`, `CITATION.cff` and `docs/index.md`.
 

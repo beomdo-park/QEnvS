@@ -86,6 +86,6 @@ independent: the ODE solver adapts inside each control interval.
 
 If you use QEnvS, please cite the software DOI
 [10.5281/zenodo.23359969](https://doi.org/10.5281/zenodo.23359969) (all versions; version
-0.3.0 is [10.5281/zenodo.23401877](https://doi.org/10.5281/zenodo.23401877)). A BibTeX
+0.3.2 is [10.5281/zenodo.23566307](https://doi.org/10.5281/zenodo.23566307)). A BibTeX
 entry and `CITATION.cff` are in the
 [repository](https://github.com/beomdo-park/QEnvS#citation).
