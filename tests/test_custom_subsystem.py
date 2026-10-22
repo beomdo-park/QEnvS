@@ -59,6 +59,43 @@ def test_nonadjacent_subsystems_embedding_and_factory():
     )
 
 
+def test_complex_subsystem_hamiltonian_and_coherent_state_on_nonadjacent_factors():
+    # complex entries and off-diagonal coherences catch conjugate and transpose errors that
+    # real symmetric cases cannot (independent review)
+    rng = np.random.default_rng(7)
+    a = rng.normal(size=(4, 4)) + 1j * rng.normal(size=(4, 4))
+    h = a + a.conj().T
+    h -= np.linalg.eigvalsh(h)[0] * np.eye(4)  # ground energy 0
+    m = rng.normal(size=(12, 12)) + 1j * rng.normal(size=(12, 12))
+    rho = m @ m.conj().T
+    rho /= np.trace(rho)
+    model = HamiltonianModel.from_operators(
+        np.zeros((12, 12)),
+        [np.eye(12)],
+        initial_state=rho,
+        dims=(2, 3, 2),
+        battery_subsystems=(0, 2),
+        subsystem_hamiltonian=h,
+    )
+    reduced, hb = model.battery_reduced(model.initial_state())
+    oracle = np.einsum("abcdbf->acdf", rho.reshape(2, 3, 2, 2, 3, 2)).reshape(4, 4)
+    np.testing.assert_allclose(reduced.to_jax(), oracle, atol=1e-12)
+    np.testing.assert_allclose(hb.to_jax(), h, atol=1e-12)
+    full = np.asarray(model.battery_hamiltonian().to_jax())
+    expected = np.zeros((12, 12), dtype=complex)
+    for i in range(12):
+        x, y, z = np.unravel_index(i, (2, 3, 2))
+        for j in range(12):
+            u, v, w = np.unravel_index(j, (2, 3, 2))
+            if y == v:
+                expected[i, j] = h[2 * x + z, 2 * u + w]
+    np.testing.assert_allclose(full, expected, atol=1e-12)
+    assert float(energy(reduced, hb)) == pytest.approx(np.trace(oracle @ h).real, abs=1e-12)
+    assert float(energy(model.initial_state(), model.battery_hamiltonian())) == pytest.approx(
+        np.trace(rho @ expected).real, abs=1e-12
+    )
+
+
 @pytest.mark.parametrize("indices", [(), (True,), (1.0,), (2,), (-1,), (1, 1), (1, 0)])
 def test_invalid_subsystems_rejected(indices):
     with pytest.raises(ValueError, match="battery_subsystems"):

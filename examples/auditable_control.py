@@ -258,6 +258,8 @@ def main():
         "candidates_sha256": hashlib.sha256(candidates.tobytes()).hexdigest(),
         "example_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "source": source_provenance(Path(qenvs.__file__)),
+        # the installed metadata can differ from the imported tree (editable or PYTHONPATH)
+        "qenvs_imported_version": qenvs.__version__,
         "versions": {
             p: importlib.metadata.version(p)
             for p in ("qenvs", "jax", "jaxlib", "dynamiqs", "numpy", "optax")

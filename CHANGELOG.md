@@ -13,6 +13,20 @@ suffix (`-vN`); a released task is never changed in place.
 - Documentation and install instructions describe the subsystem and trajectory features as
   part of 0.3.2 instead of an alpha.
 
+### Fixed
+
+- The trajectory docs no longer claim that action precision is always preserved: with
+  `jax_enable_x64` off, JAX converts float64 actions to float32 (independent review).
+- A wrong-size `subsystem_hamiltonian` now reports the expected size of the retained
+  subsystems instead of the drift dimension.
+- Validation wording on the docs home page and in `llms.txt` is scoped like the README.
+
+### Tests
+
+- A complex Hermitian subsystem Hamiltonian with a coherent state on nonadjacent factors
+  (catches conjugation and transpose errors), tighter float32 tolerances with their
+  derivation, and x64 markers on the float64-only trajectory tests.
+
 ## [0.3.2a1] - 2026-10-19
 
 ### Changed
@@ -30,7 +44,8 @@ suffix (`-vN`); a released task is never changed in place.
 
 - Custom Hamiltonian models can declare battery subsystems and a local Hamiltonian,
   with reduced-state work and a consistent full-space energy operator.
-- New endpoint trajectory diagnostics preserve physical action precision and expose
+- New endpoint trajectory diagnostics keep the action precision of the active JAX
+  configuration (float64 actions need `jax_enable_x64`) and expose
   explicit solver settings without changing environment rollout or robust metrics.
 - Add a small auditable control example with all-candidate replay, fixed warmup,
   optimizer traces and source provenance. No released task behavior changes.

@@ -105,20 +105,24 @@ def _to_numpy(x: object, name: str) -> np.ndarray:
     return arr
 
 
-def _operator(x: object, name: str, n: int | None = None) -> np.ndarray:
+def _operator(
+    x: object, name: str, n: int | None = None, against: str = "the drift Hamiltonian"
+) -> np.ndarray:
     arr = _to_numpy(x, name)
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
         msg = f"{name} must be a square matrix, got shape {arr.shape}"
         raise ValueError(msg)
     if n is not None and arr.shape[0] != n:
-        msg = f"{name} has dimension {arr.shape[0]} but the drift Hamiltonian has dimension {n}"
+        msg = f"{name} has dimension {arr.shape[0]} but {against} has dimension {n}"
         raise ValueError(msg)
     return arr
 
 
-def _hermitian(x: object, name: str, n: int | None = None) -> np.ndarray:
+def _hermitian(
+    x: object, name: str, n: int | None = None, against: str = "the drift Hamiltonian"
+) -> np.ndarray:
     """Validated, exactly symmetrised Hermitian operator."""
-    arr = _operator(x, name, n)
+    arr = _operator(x, name, n, against)
     asym = float(np.max(np.abs(arr - arr.conj().T), initial=0.0))
     scale = float(np.max(np.abs(arr), initial=0.0))
     if asym > HERMITIAN_RTOL * max(scale, 1e-300):
@@ -425,7 +429,12 @@ class HamiltonianModel(Model):
                 raise ValueError(msg)
             self.battery_subsystems = tuple(int(i) for i in battery_subsystems)
             size = math.prod(self.dims[i] for i in self.battery_subsystems)
-            sub_h = _hermitian(subsystem_hamiltonian, "subsystem_hamiltonian", size)
+            sub_h = _hermitian(
+                subsystem_hamiltonian,
+                "subsystem_hamiltonian",
+                size,
+                "the product of the retained subsystem dimensions",
+            )
             spectrum = np.linalg.eigvalsh(sub_h)
             if abs(spectrum[0]) > 1e-8 * max(1.0, float(np.max(np.abs(spectrum)))):
                 msg = "subsystem_hamiltonian must have ground energy zero"

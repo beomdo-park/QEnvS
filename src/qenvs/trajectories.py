@@ -32,7 +32,9 @@ def rollout_metrics(
     Args:
         model: a concrete model constructed outside JAX transformations.
         actions: real floating array (steps, model.n_controls), in physical units.
-            No clipping, normalization or precision conversion is applied.
+            No clipping or normalization is applied, and the function does not cast
+            actions itself. JAX does: with jax_enable_x64 off (the JAX default) float64
+            actions become float32 on conversion, so enable x64 to keep them.
         dt: positive finite control period, fixed outside jit.
         metrics: nonempty mapping of names to pure (model, state) scalar-real
             callbacks. Capture this mapping outside jit, like dt and method.

@@ -36,6 +36,12 @@ def run(m, actions, dt=0.2, metrics=None):
     )
 
 
+needs_x64 = pytest.mark.skipif(
+    not jax.config.jax_enable_x64, reason="float64 expectations (1e-8); run with x64"
+)
+
+
+@needs_x64
 @pytest.mark.parametrize("mixed", [False, True])
 def test_analytic_endpoints_and_qutip(mixed):
     m = model(mixed)
@@ -54,6 +60,7 @@ def test_analytic_endpoints_and_qutip(mixed):
     np.testing.assert_allclose(values["energy"], result.expect[0][1:], atol=1e-8)
 
 
+@needs_x64
 def test_jit_vmap_and_action_gradient():
     m = model()
 
@@ -72,6 +79,7 @@ def test_jit_vmap_and_action_gradient():
     assert grad == pytest.approx(fd, abs=1e-6)
 
 
+@needs_x64
 def test_float64_actions_are_not_rounded():
     # This double isolates action forwarding from numerical integration error.
     class IdentityEvolution:

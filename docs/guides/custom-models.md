@@ -61,6 +61,8 @@ What you may pass, and what is checked at construction:
 | `observables` | `{name: operator}` | Hermitian; reported in `info` by the environments |
 | `battery_hamiltonian` | operator on the full space | Hermitian; needed by `BatteryCharging` |
 | `dims` | e.g. `(2, 2)` | product equals $n$; inferred from `QArray`/`Qobj` inputs |
+| `battery_subsystems` | increasing indices into `dims`, e.g. `(0, 2)` | given together with `subsystem_hamiltonian` (0.3.2 and later) |
+| `subsystem_hamiltonian` | operator on the retained subsystems | Hermitian, size the product of their `dims`, ground energy 0 |
 
 Violations raise `ValueError` that names the offending operator, for example
 `controls[1] is not Hermitian: max|A - A^dagger| = 2.0e-01 ...`. Hermiticity is checked to a
@@ -523,6 +525,9 @@ Added in 0.3.2 (`pip install 'qenvs>=0.3.2'`).
 For a composite system, pass `battery_subsystems` and `subsystem_hamiltonian`
 instead of a full-space `battery_hamiltonian`. The same keywords work with
 `HamiltonianModel.from_operators`.
+In `BatteryCharging`, `info["energy"]` and `info["ergotropy"]` then use the reduced battery
+state, while `info["purity"]` stays the purity of the full joint state (as for the Dicke
+models).
 
 ```python
 import numpy as np

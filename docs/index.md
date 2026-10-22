@@ -6,8 +6,9 @@
 
 QEnvS is a model zoo of open-quantum-system control problems (quantum batteries,
 qubit state transfer, later thermal machines) with a uniform environment API.
-Every model ships with analytic validation checks that run as tests and are
-printed by `qenvs validate`. Built on [dynamiqs](https://github.com/dynamiqs/dynamiqs)
+Every built-in model ships with model-specific reference checks (closed forms, physical
+constraints, solver convergence, and QuTiP cross-checks where an equivalent independent
+formulation is available) that run as tests and are printed by `qenvs validate`. Built on [dynamiqs](https://github.com/dynamiqs/dynamiqs)
 (JAX), so environments are `jit`-able, `vmap`-able and differentiable.
 
 ## Install
