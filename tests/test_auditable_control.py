@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 import dynamiqs as dq
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -61,6 +62,50 @@ def test_evaluation_preserves_all_candidates_and_rejects_nonfinite():
     candidates[0, 0, 0] = np.nan
     with pytest.raises(ValueError, match="finite"):
         ex.evaluate_candidates(models, candidates, [0, 0, 1, 1], dt=0.4, method=method)
+
+
+def test_evaluation_matrix_matches_direct_rollouts():
+    # distinct models and candidates, so a transposed matrix or a wrong reduction shows up
+    from qenvs.trajectories import rollout_metrics
+
+    ex = example()
+    models = [ex.make_model(0.0), ex.make_model(0.2)]
+    candidates = np.array([[[0.8], [0.8], [0.8]], [[1.0], [-1.0], [0.3]], [[0.2], [0.9], [-0.5]]])
+    method = dq.method.Tsit5(rtol=1e-10, atol=1e-12)
+    result = ex.evaluate_candidates(models, candidates, [0, 1, 1], dt=0.4, method=method)
+    early_peak = False
+    for i, model in enumerate(models):
+        for j, actions in enumerate(candidates):
+            times, values = rollout_metrics(
+                model, jnp.asarray(actions), dt=0.4, metrics=ex.METRICS, method=method
+            )
+            work = np.asarray(values["work"])
+            peak = int(work.argmax())
+            early_peak |= peak < len(work) - 1
+            assert result["scores"][i][j] == pytest.approx(work[peak], abs=1e-12)
+            assert result["terminal"][i][j] == pytest.approx(work[-1], abs=1e-12)
+            assert result["peak_times"][i][j] == pytest.approx(float(times[peak]), abs=1e-12)
+    assert early_peak, "fixture must include a candidate whose peak is not the last step"
+    assert not np.allclose(result["scores"][0], result["scores"][1])
+
+
+@pytest.mark.skipif(not jax.config.jax_enable_x64, reason="the example requires x64")
+def test_main_writes_the_audit_record(tmp_path, monkeypatch, capsys):
+    pytest.importorskip("optax")
+    ex = example()
+    out = tmp_path / "run"
+    monkeypatch.setattr("sys.argv", ["auditable_control.py", "--out", str(out)])
+    ex.main()
+    names = {p.name for p in out.iterdir()}
+    expected = {f"candidate-{i}.json" for i in range(4)}  # two models, two starts each
+    expected |= {"initial.json", "history.json", "manifest.json", "evaluation.json"}
+    assert names == expected
+    manifest = json.loads((out / "manifest.json").read_text())
+    for key in ("seed", "dt", "source", "qenvs_imported_version", "versions", "candidates_sha256"):
+        assert key in manifest
+    evaluation = json.loads((out / "evaluation.json").read_text())
+    assert np.shape(evaluation["scores"]) == (2, 4)
+    assert json.loads(capsys.readouterr().out)["candidates"] == 4
 
 
 def test_fixed_warmup_prefix_and_saved_score():

@@ -8,8 +8,9 @@ on:
   schedule:
     - cron: "17 6 * * 1"
 
+# Scheduled and manual runs get their own group, so they do not replace a pending push run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
@@ -19,7 +20,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv python install 3.12
@@ -37,7 +38,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     strategy:
-      max-parallel: 2
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
@@ -58,7 +58,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv python install ${{ matrix.python-version }}
@@ -72,9 +72,29 @@ jobs:
           uv pip install --resolution lowest-direct -e ".[dev]"
       - name: versions
         run: uv run --no-sync python -c "import sys, jax, dynamiqs, numpy, qutip; print(sys.version, jax.__version__, dynamiqs.__version__, numpy.__version__, qutip.__version__)"
+      # A pull request that changes only documentation runs only the tests that read
+      # documentation; push CI on main still runs the full suite after the merge.
+      - name: scope
+        id: scope
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          full=true
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            files=$(git diff --name-only "$BASE" HEAD)
+            if [ -n "$files" ] && ! grep -qvE '^docs/|\.md$|^CITATION\.cff$|^\.zenodo\.json$' <<< "$files"; then
+              full=false
+            fi
+          fi
+          echo "full=$full" >> "$GITHUB_OUTPUT"
+          echo "full suite: $full"
       # 3 workers: the runner has 16 GB; the full suite peaks at about 12.6 GB with 3 workers
       # (tests/conftest.py clears jax caches after each module)
-      - run: uv run --no-sync pytest -n 3
+      - if: steps.scope.outputs.full == 'true'
+        run: uv run --no-sync pytest -n 3
+      - name: tests that read documentation
+        if: steps.scope.outputs.full != 'true'
+        run: uv run --no-sync pytest -n 3 $(grep -lE 'docs/|\.md|CITATION|zenodo' tests/test_*.py)
 
   test-float32:
     if: github.event_name == 'push' || github.event_name == 'pull_request'
@@ -89,7 +109,7 @@ jobs:
       QENVS_TEST_CPUS: "4"
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv python install 3.12
@@ -110,7 +130,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv python install 3.12
@@ -128,9 +148,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/

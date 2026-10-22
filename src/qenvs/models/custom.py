@@ -105,20 +105,24 @@ def _to_numpy(x: object, name: str) -> np.ndarray:
     return arr
 
 
-def _operator(x: object, name: str, n: int | None = None) -> np.ndarray:
+def _operator(
+    x: object, name: str, n: int | None = None, against: str = "the drift Hamiltonian"
+) -> np.ndarray:
     arr = _to_numpy(x, name)
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
         msg = f"{name} must be a square matrix, got shape {arr.shape}"
         raise ValueError(msg)
     if n is not None and arr.shape[0] != n:
-        msg = f"{name} has dimension {arr.shape[0]} but the drift Hamiltonian has dimension {n}"
+        msg = f"{name} has dimension {arr.shape[0]} but {against} has dimension {n}"
         raise ValueError(msg)
     return arr
 
 
-def _hermitian(x: object, name: str, n: int | None = None) -> np.ndarray:
+def _hermitian(
+    x: object, name: str, n: int | None = None, against: str = "the drift Hamiltonian"
+) -> np.ndarray:
     """Validated, exactly symmetrised Hermitian operator."""
-    arr = _operator(x, name, n)
+    arr = _operator(x, name, n, against)
     asym = float(np.max(np.abs(arr - arr.conj().T), initial=0.0))
     scale = float(np.max(np.abs(arr), initial=0.0))
     if asym > HERMITIAN_RTOL * max(scale, 1e-300):
@@ -297,8 +301,9 @@ class HamiltonianModel(Model):
             environments.
         battery_hamiltonian: Hermitian ``H_B`` on the full space, needed by
             :class:`~qenvs.envs.BatteryCharging`. The energy and ergotropy are evaluated on
-            the full state; for a battery that is only one subsystem of a composite system
-            subclass and override ``battery_reduced`` (see the custom-models guide).
+            the full state. For a battery that is only one subsystem of a composite system,
+            pass ``battery_subsystems`` and ``subsystem_hamiltonian`` instead (0.3.2 and
+            later), or subclass and override ``battery_reduced`` (see the custom-models guide).
         battery_subsystems: optional increasing tuple of retained tensor-factor indices.
             Supply with subsystem_hamiltonian instead of battery_hamiltonian.
         subsystem_hamiltonian: Hermitian Hamiltonian on the retained factors, ground
@@ -421,11 +426,19 @@ class HamiltonianModel(Model):
                 )
                 or tuple(sorted(set(battery_subsystems))) != battery_subsystems
             ):
-                msg = "battery_subsystems must be distinct increasing valid integer indices"
+                msg = (
+                    "battery_subsystems must be a tuple of distinct increasing integer indices "
+                    f"into dims={self.dims}; pass dims= for a composite system"
+                )
                 raise ValueError(msg)
             self.battery_subsystems = tuple(int(i) for i in battery_subsystems)
             size = math.prod(self.dims[i] for i in self.battery_subsystems)
-            sub_h = _hermitian(subsystem_hamiltonian, "subsystem_hamiltonian", size)
+            sub_h = _hermitian(
+                subsystem_hamiltonian,
+                "subsystem_hamiltonian",
+                size,
+                "the product of the retained subsystem dimensions",
+            )
             spectrum = np.linalg.eigvalsh(sub_h)
             if abs(spectrum[0]) > 1e-8 * max(1.0, float(np.max(np.abs(spectrum)))):
                 msg = "subsystem_hamiltonian must have ground energy zero"
@@ -470,6 +483,12 @@ class HamiltonianModel(Model):
         subsystem_hamiltonian: object | None = None,
     ) -> HamiltonianModel:
         """Build and validate a model from operators; see the class docstring for the arguments."""
+        # forwarded only when given, so a subclass with the 0.3.0 __init__ signature still
+        # works through the factory
+        subsystem = {
+            "battery_subsystems": battery_subsystems,
+            "subsystem_hamiltonian": subsystem_hamiltonian,
+        }
         return cls(
             drift,
             controls,
@@ -479,8 +498,7 @@ class HamiltonianModel(Model):
             battery_hamiltonian=battery_hamiltonian,
             dims=dims,
             parameters=parameters,
-            battery_subsystems=battery_subsystems,
-            subsystem_hamiltonian=subsystem_hamiltonian,
+            **{k: v for k, v in subsystem.items() if v is not None},
         )
 
     # ------------------------------------------------------------------ Model API
@@ -561,7 +579,8 @@ class HamiltonianModel(Model):
         if self.battery_matrix is None:
             msg = (
                 "this HamiltonianModel was built without battery_hamiltonian; pass "
-                "battery_hamiltonian=H_B (Hermitian, same dimension as the drift) to use "
+                "battery_hamiltonian=H_B (Hermitian, same dimension as the drift), or "
+                "battery_subsystems with subsystem_hamiltonian for a subsystem battery, to use "
                 "BatteryCharging"
             )
             raise NotImplementedError(msg)

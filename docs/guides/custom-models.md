@@ -61,6 +61,8 @@ What you may pass, and what is checked at construction:
 | `observables` | `{name: operator}` | Hermitian; reported in `info` by the environments |
 | `battery_hamiltonian` | operator on the full space | Hermitian; needed by `BatteryCharging` |
 | `dims` | e.g. `(2, 2)` | product equals $n$; inferred from `QArray`/`Qobj` inputs |
+| `battery_subsystems` | increasing indices into `dims`, e.g. `(0, 2)` | given together with `subsystem_hamiltonian` (0.3.2 and later) |
+| `subsystem_hamiltonian` | operator on the retained subsystems | Hermitian, size the product of their `dims`, ground energy 0 |
 
 Violations raise `ValueError` that names the offending operator, for example
 `controls[1] is not Hermitian: max|A - A^dagger| = 2.0e-01 ...`. Hermiticity is checked to a
@@ -186,7 +188,7 @@ Battery on one subsystem of a composite system: `BatteryCharging` evaluates ener
 ergotropy of whatever `battery_reduced(state)` returns. With the legacy
 `battery_hamiltonian` argument, `HamiltonianModel` returns the full state and
 full-space $H_B$. For local work, use the explicit
-[subsystem configuration](#selecting-a-battery-subsystem) added in `0.3.2a1`.
+[subsystem configuration](#selecting-a-battery-subsystem) added in 0.3.2.
 On earlier releases, or for a custom reduction, subclass and trace the rest out
 (as `DickeBattery` does):
 
@@ -486,7 +488,7 @@ any of these apply:
   frequency has to be in a rotating frame (RWA) or sampled finely.
 * Arrays are stored in the active JAX float precision (complex64 unless x64 is enabled).
   Hermiticity and state validity are decided in float64 on the inputs.
-* `battery_hamiltonian` is on the full space. For subsystem batteries in `0.3.2a1`,
+* `battery_hamiltonian` is on the full space. For subsystem batteries (0.3.2 and later),
   use `battery_subsystems` with `subsystem_hamiltonian`; earlier releases need
   the subclass shown above.
 * dynamiqs 0.3.6 drops the subsystem dims of a composite density matrix integrated with
@@ -518,11 +520,14 @@ any of these apply:
 
 ## Selecting a battery subsystem
 
-Added in `0.3.2a1`: install with `pip install --pre 'qenvs==0.3.2a1'`.
+Added in 0.3.2 (`pip install 'qenvs>=0.3.2'`).
 
 For a composite system, pass `battery_subsystems` and `subsystem_hamiltonian`
 instead of a full-space `battery_hamiltonian`. The same keywords work with
 `HamiltonianModel.from_operators`.
+In `BatteryCharging`, `info["energy"]` and `info["ergotropy"]` then use the reduced battery
+state, while `info["purity"]` stays the purity of the full joint state (as for the Dicke
+models).
 
 ```python
 import numpy as np

@@ -233,7 +233,7 @@ statistical independence.
 
 ## Endpoint diagnostics and reproducible candidate replay
 
-Added in `0.3.2a1`: install with `pip install --pre 'qenvs==0.3.2a1'`.
+Added in 0.3.2 (`pip install 'qenvs>=0.3.2'`).
 
 `qenvs.trajectories.rollout_metrics(model, actions, dt=..., metrics=..., method=...)`
 returns `(times, values)` for physical piecewise-constant controls. Capture the
@@ -259,7 +259,9 @@ times, values = rollout_metrics(
 )
 ```
 
-This API does not clip or normalize amplitudes and does not force float32. Sampling
+This API does not clip or normalize amplitudes and does not cast them itself. JAX converts
+float64 actions to float32 when `jax_enable_x64` is off (the JAX default), so enable x64
+to keep float64 actions. Sampling
 starts at `dt`, not zero. `values["energy"].max()` is an endpoint maximum;
 `values["energy"][-1]` is terminal energy. Neither an endpoint maximum nor its
 retrospectively chosen time is an executable stopping policy. The existing

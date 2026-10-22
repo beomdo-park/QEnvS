@@ -3,7 +3,50 @@
 All notable changes to QEnvS are listed here. Task ids carry their own version
 suffix (`-vN`); a released task is never changed in place.
 
-## [Unreleased]
+## [0.3.2] - 2026-10-22
+
+Final release of the 0.3.2a1 features (battery subsystems for custom models, endpoint
+trajectory diagnostics, the auditable control example) with the fixes below.
+
+### Changed
+
+- Versioning: a patch release may now carry backward-compatible additions as well as fixes;
+  the minor number moves only for changes that can break existing code (docs/stability.md,
+  RELEASING.md). Up to 0.3.1 patches carried fixes only.
+- Documentation and install instructions describe the subsystem and trajectory features as
+  part of 0.3.2 instead of an alpha.
+- `rollout_metrics` (new in 0.3.2a1) raises `ValueError` for a bool, string or traced `dt`, a
+  `method` that is not a dynamiqs solver and `metrics` that is not a mapping; an integer `dt`
+  is converted to float.
+- Release and CI: a tag publishes only a commit on main (which takes only pull requests with
+  passing checks), the test matrix runs in parallel, a pull request that changes only
+  documentation runs only the tests that read documentation, scheduled and manual CI runs no
+  longer replace a pending push run, a docs deployment on main is no longer cancelled by the
+  next push, and every release and deploy job has a timeout.
+
+### Fixed
+
+- The trajectory docs no longer claim that action precision is always preserved: with
+  `jax_enable_x64` off, JAX converts float64 actions to float32 (independent review).
+- A wrong-size `subsystem_hamiltonian` now reports the expected size of the retained
+  subsystems instead of the drift dimension.
+- Validation wording on the docs home page and in `llms.txt` is scoped like the README.
+- `HamiltonianModel.from_operators` passes `battery_subsystems` and `subsystem_hamiltonian`
+  only when they are given, so a subclass whose `__init__` has the 0.3.0 signature still
+  works through the factory (regression in 0.3.2a1).
+- An invalid `battery_subsystems` names the `dims` its indices refer to, and the class
+  docstring and the missing-battery error mention the subsystem route.
+
+### Tests
+
+- A complex Hermitian subsystem Hamiltonian with a coherent state on nonadjacent factors
+  (catches conjugation and transpose errors), tighter float32 tolerances with their
+  derivation, and x64 markers on the float64-only trajectory tests.
+- Partial trace and embedding with the leading factor traced out (a permutation that is not
+  its own inverse), the ground-energy gate on both sides, the factory with a 0.3.0-style
+  subclass, unclipped physical amplitudes, `rollout_metrics` argument checks, the auditable
+  example's model-by-candidate matrix against direct rollouts, and a smoke run of its
+  `main()`. Each kills a mutant that survived review.
 
 ## [0.3.2a1] - 2026-10-19
 
@@ -22,7 +65,8 @@ suffix (`-vN`); a released task is never changed in place.
 
 - Custom Hamiltonian models can declare battery subsystems and a local Hamiltonian,
   with reduced-state work and a consistent full-space energy operator.
-- New endpoint trajectory diagnostics preserve physical action precision and expose
+- New endpoint trajectory diagnostics keep the action precision of the active JAX
+  configuration (float64 actions need `jax_enable_x64`) and expose
   explicit solver settings without changing environment rollout or robust metrics.
 - Add a small auditable control example with all-candidate replay, fixed warmup,
   optimizer traces and source provenance. No released task behavior changes.
@@ -170,6 +214,7 @@ First release with a model zoo.
 Skeleton release: `qubit/StateTransfer-v0`, functional environment API,
 Gymnasium adapter, JSON command-line interface, physics validation framework.
 
+[0.3.2]: https://github.com/beomdo-park/QEnvS/compare/v0.3.2a1...v0.3.2
 [0.3.2a1]: https://github.com/beomdo-park/QEnvS/compare/v0.3.0...v0.3.2a1
 [0.3.0]: https://github.com/beomdo-park/QEnvS/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/beomdo-park/QEnvS/compare/v0.1.0...v0.2.0

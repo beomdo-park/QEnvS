@@ -9,7 +9,7 @@ can rely on when you build on it.
 |---|---|
 | Task ids (`namespace/Name-vN`) | A released task id never changes behaviour: reward, observation, action space, defaults and physics stay fixed. Any change that could alter learning or optimisation results gets a new suffix (`-v1`), and the old id keeps working for at least one minor release. |
 | Validation checks | Checks can be added at any time. A check is never loosened silently: a tolerance change is listed in the changelog with its reason. |
-| Python API (`qenvs.*`) | Semantic versioning with the 0.x convention: a minor release (0.2 to 0.3) may change public API, a patch release (0.2.0 to 0.2.1) does not. Every removal or rename is announced with a `DeprecationWarning` for at least one minor release first. |
+| Python API (`qenvs.*`) | Semantic versioning with the 0.x convention. A minor release (0.3 to 0.4) is the only place for changes that can break existing code: removed or renamed names, changed signatures or defaults, changed behaviour of existing calls. A patch release (0.3.1 to 0.3.2) carries fixes and backward-compatible additions: new functions, classes, modules, tasks or checks, and new keyword arguments whose default keeps the old behaviour. Every removal or rename is announced with a `DeprecationWarning` for at least one minor release first. |
 | CLI and `--json` output | Commands, flags and the keys of the JSON documents follow the same rule as the Python API. New keys may appear in any release; consumers should ignore unknown keys. Error codes (`unknown_task`, `invalid_argument`, ...) are stable. |
 | Examples (`examples/`) | Reference scripts, not part of the package (not in the wheel). Their arguments and outputs may change in any release. |
 
@@ -24,10 +24,10 @@ Public API means everything importable without a leading underscore from `qenvs`
 diagnostics; methods starting with `_` (for example `Environment._info`) are internal.
 `qenvs.toolkit` is the plain-dict layer behind the CLI and follows the CLI rules below.
 
-The `0.3.2a1` alpha is a maintainer-approved exception allowing opt-in,
-backward-compatible Python API additions. It does not change existing calls or
-released task behavior. This exception does not authorize a final patch release;
-see [Releasing](https://github.com/beomdo-park/QEnvS/blob/main/RELEASING.md).
+Up to 0.3.1 a patch release carried fixes only. From 0.3.2 on (maintainer decision,
+2026-10-22) backward-compatible additions may also ship in a patch release, so the minor
+number moves only for breaking changes. See
+[Releasing](https://github.com/beomdo-park/QEnvS/blob/main/RELEASING.md).
 
 ## Supported environments
 

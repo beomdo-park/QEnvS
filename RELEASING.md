@@ -2,7 +2,8 @@
 
 Releases are cut from `main` by pushing a tag; `release.yml` builds, publishes to PyPI
 through Trusted Publishing and creates the GitHub release; Zenodo archives it and mints a
-version DOI. Minor releases (0.x.0) go through a release candidate first.
+version DOI. Minor releases (0.x.0), and patch releases that add features, go through a
+release candidate first.
 
 Pre-release tags (`vX.Y.ZaN` alpha, `bN` beta, `rcN` release candidate) are published to
 PyPI only: the workflow creates no GitHub release for them, so Zenodo mints no DOI for a
@@ -41,14 +42,12 @@ rc.
 - [ ] Check PyPI, the GitHub release (with `*.publish.attestation` files) and the Zenodo
       record; add the version DOI to `README.md`, `CITATION.cff` and `docs/index.md`.
 
-Patch releases (X.Y.Z) carry fixes only and may skip the release candidate.
-
-For the maintainer-approved `0.3.2a1` experiment, backward-compatible, opt-in Python
-API additions are an explicit exception to the fixes-only patch policy. Existing
-call signatures and released task behavior remain stable. This exception covers
-the alpha only; a final release needs a separate versioning decision. The alpha
-still requires the compatibility matrix, float32 checks and documentation build
-to pass on the candidate commit before tagging.
+Patch releases (X.Y.Z) carry fixes and backward-compatible additions (see
+[stability](docs/stability.md); a change that can break existing code waits for the next
+minor release). A patch with additions goes through a release candidate and the same
+checks as a minor release; a fixes-only patch may skip the candidate. Either way the
+compatibility matrix, the float32 checks and the documentation build pass on the tagged
+commit.
 
 For an alpha, update the installation instructions, changelog and CITATION.cff
 version/date together. Keep the concept DOI and historic final-release DOI

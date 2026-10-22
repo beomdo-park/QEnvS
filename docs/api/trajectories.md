@@ -1,6 +1,6 @@
 # Endpoint trajectories
 
-Added in `0.3.2a1`: install with `pip install --pre 'qenvs==0.3.2a1'`.
+Added in 0.3.2 (`pip install 'qenvs>=0.3.2'`).
 
 `rollout_metrics` evaluates physical control amplitudes at right endpoints.
 These are privileged simulator diagnostics, not policy observations. An endpoint
