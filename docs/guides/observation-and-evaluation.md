@@ -233,7 +233,7 @@ statistical independence.
 
 ## Endpoint diagnostics and reproducible candidate replay
 
-Added in `0.3.2a1`: install with `pip install --pre 'qenvs==0.3.2a1'`.
+Added in 0.3.2 (`pip install 'qenvs>=0.3.2'`).
 
 `qenvs.trajectories.rollout_metrics(model, actions, dt=..., metrics=..., method=...)`
 returns `(times, values)` for physical piecewise-constant controls. Capture the

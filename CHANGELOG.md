@@ -5,6 +5,14 @@ suffix (`-vN`); a released task is never changed in place.
 
 ## [Unreleased]
 
+### Changed
+
+- Versioning: a patch release may now carry backward-compatible additions as well as fixes;
+  the minor number moves only for changes that can break existing code (docs/stability.md,
+  RELEASING.md). Up to 0.3.1 patches carried fixes only.
+- Documentation and install instructions describe the subsystem and trajectory features as
+  part of 0.3.2 instead of an alpha.
+
 ## [0.3.2a1] - 2026-10-19
 
 ### Changed

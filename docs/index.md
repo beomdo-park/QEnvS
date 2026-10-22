@@ -17,10 +17,8 @@ pip install qenvs            # core
 pip install 'qenvs[gym]'     # + Gymnasium adapter
 ```
 
-To try the `0.3.2a1` alpha, use `pip install --pre 'qenvs==0.3.2a1'`.
-It adds [explicit battery subsystems](guides/custom-models.md) and
-[endpoint trajectory diagnostics](api/trajectories.md). The default install
-continues to select the latest final release.
+Since 0.3.2 the package also has [explicit battery subsystems](guides/custom-models.md) and
+[endpoint trajectory diagnostics](api/trajectories.md).
 
 ## 60-second tour
 

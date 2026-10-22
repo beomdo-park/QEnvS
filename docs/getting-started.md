@@ -15,18 +15,11 @@ uvx qenvs doctor
 uvx qenvs list
 ```
 
-### Alpha installation
+### Examples
 
-To test the alpha explicitly in a separate environment:
-
-```bash
-pip install --pre 'qenvs==0.3.2a1'
-qenvs doctor
-```
-
-For the auditable control example, install `qenvs[dev]==0.3.2a1` and use the
-script from the matching source distribution or `v0.3.2a1` source tag. Examples
-are not included in the wheel. Pin the version when recording results.
+For the auditable control example, install `qenvs[dev]` and use the script from the
+matching source distribution or source tag (for example `v0.3.2`). Examples are not
+included in the wheel. Pin the version when recording results.
 
 ### GPU
 

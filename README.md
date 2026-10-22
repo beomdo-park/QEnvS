@@ -38,16 +38,10 @@ pip install qenvs            # core: jax + dynamiqs
 pip install 'qenvs[gym]'     # + gymnasium adapter (stable-baselines3, CleanRL, ...)
 ```
 
-To try the `0.3.2a1` alpha explicitly:
-
-```bash
-pip install --pre 'qenvs==0.3.2a1'
-```
-
-This alpha adds explicit battery subsystems and endpoint trajectory diagnostics
+Since 0.3.2 the package also has explicit battery subsystems for custom models and endpoint
+trajectory diagnostics
 ([custom models](https://beomdo-park.github.io/QEnvS/guides/custom-models/),
 [trajectory API](https://beomdo-park.github.io/QEnvS/api/trajectories/)).
-The default install continues to select the latest final release.
 
 ## Quickstart
 
