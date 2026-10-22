@@ -56,7 +56,9 @@ Implementation notes.
 - Public standard-runner execution is free; still account separately for concurrency, artifact
   storage and any paid runner use. Do not duplicate a PR matrix with a manual full-matrix run.
 - Weekly and manual dependency checks run only the newest-dependency job. The regular matrix
-  uses at most two concurrent jobs. Jobs have timeouts and test artifacts expire after seven days.
+  runs in parallel (standard runners are free for this public repository). A pull request that
+  changes only documentation runs only the tests that read documentation; push CI on main runs
+  the full suite. Jobs have timeouts and test artifacts expire after seven days.
 - Batch fixes before pushing, rerun only failed jobs when possible, and defer optional paid work
   when account-wide remaining usage cannot be established. Do not change billing permissions or
   account spending limits automatically.

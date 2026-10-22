@@ -18,9 +18,11 @@ trajectory diagnostics, the auditable control example) with the fixes below.
 - `rollout_metrics` (new in 0.3.2a1) raises `ValueError` for a bool, string or traced `dt`, a
   `method` that is not a dynamiqs solver and `metrics` that is not a mapping; an integer `dt`
   is converted to float.
-- Release and CI: a tag publishes only a commit whose push CI on main passed, scheduled and
-  manual CI runs no longer replace a pending push run, a docs deployment on main is no longer
-  cancelled by the next push, and every release and deploy job has a timeout.
+- Release and CI: a tag publishes only a commit on main (which takes only pull requests with
+  passing checks), the test matrix runs in parallel, a pull request that changes only
+  documentation runs only the tests that read documentation, scheduled and manual CI runs no
+  longer replace a pending push run, a docs deployment on main is no longer cancelled by the
+  next push, and every release and deploy job has a timeout.
 
 ### Fixed
 

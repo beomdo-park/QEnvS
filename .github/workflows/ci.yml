@@ -38,7 +38,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     strategy:
-      max-parallel: 2
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
@@ -73,9 +72,29 @@ jobs:
           uv pip install --resolution lowest-direct -e ".[dev]"
       - name: versions
         run: uv run --no-sync python -c "import sys, jax, dynamiqs, numpy, qutip; print(sys.version, jax.__version__, dynamiqs.__version__, numpy.__version__, qutip.__version__)"
+      # A pull request that changes only documentation runs only the tests that read
+      # documentation; push CI on main still runs the full suite after the merge.
+      - name: scope
+        id: scope
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          full=true
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            files=$(git diff --name-only "$BASE" HEAD)
+            if [ -n "$files" ] && ! grep -qvE '^docs/|\.md$|^CITATION\.cff$|^\.zenodo\.json$' <<< "$files"; then
+              full=false
+            fi
+          fi
+          echo "full=$full" >> "$GITHUB_OUTPUT"
+          echo "full suite: $full"
       # 3 workers: the runner has 16 GB; the full suite peaks at about 12.6 GB with 3 workers
       # (tests/conftest.py clears jax caches after each module)
-      - run: uv run --no-sync pytest -n 3
+      - if: steps.scope.outputs.full == 'true'
+        run: uv run --no-sync pytest -n 3
+      - name: tests that read documentation
+        if: steps.scope.outputs.full != 'true'
+        run: uv run --no-sync pytest -n 3 $(grep -lE 'docs/|\.md|CITATION|zenodo' tests/test_*.py)
 
   test-float32:
     if: github.event_name == 'push' || github.event_name == 'pull_request'
