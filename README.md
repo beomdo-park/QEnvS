@@ -179,8 +179,6 @@ Software DOI (all versions): [10.5281/zenodo.23359969](https://doi.org/10.5281/z
 Version 0.3.0: [10.5281/zenodo.23401877](https://doi.org/10.5281/zenodo.23401877)
 (0.2.0: [10.5281/zenodo.23374561](https://doi.org/10.5281/zenodo.23374561),
 0.1.0: [10.5281/zenodo.23359970](https://doi.org/10.5281/zenodo.23359970)).
-The `0.3.2a1` alpha has no separate Zenodo archive or version DOI. Cite the
-concept DOI and record the alpha version used.
 Machine-readable metadata is in [CITATION.cff](https://github.com/beomdo-park/QEnvS/blob/main/CITATION.cff) (GitHub shows a "Cite this
 repository" button).
 
@@ -190,7 +188,7 @@ repository" button).
   title   = {{QEnvS}: physically validated quantum control environments for
              reinforcement learning and optimal control},
   year    = {2026},
-  version = {0.3.2a1},
+  version = {0.3.2},
   doi     = {10.5281/zenodo.23359969},
   url     = {https://github.com/beomdo-park/QEnvS}
 }

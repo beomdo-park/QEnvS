@@ -1,9 +1,9 @@
 # QEnvS research adoption alpha
 
-Status: Accepted
+Status: Implemented
 Owner: @beomdo-park
 Issue: https://github.com/beomdo-park/QEnvS/issues/8
-Target: 0.3.2a1 (proposed, not a published version)
+Target: 0.3.2a1 alpha, released as 0.3.2
 
 ## Problem
 
@@ -175,3 +175,11 @@ precision and version-policy gaps. The 0.3.2a1 additive API exception is scoped 
 the alpha in RELEASING.md. Five analytic precision cases now run in the ordinary
 float64 matrix and the serial float32 job. No solver or physics implementation
 changed during this follow-up.
+
+For 0.3.2 (2026-10-22) the versioning rule changed instead of the alpha exception: patch
+releases may carry backward-compatible additions (docs/stability.md). A physics review and
+an API and mutation review found no blocker. Deviations from the design, with reasons:
+`from_operators` forwards the subsystem arguments only when given, because unconditional
+forwarding broke subclasses with the 0.3.0 `__init__` signature; `rollout_metrics` also
+rejects a bool, string or traced `dt`, a non-dynamiqs `method` and non-mapping `metrics`,
+which previously failed later with unrelated errors or ran with integer times.

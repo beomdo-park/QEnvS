@@ -89,6 +89,3 @@ If you use QEnvS, please cite the software DOI
 0.3.0 is [10.5281/zenodo.23401877](https://doi.org/10.5281/zenodo.23401877)). A BibTeX
 entry and `CITATION.cff` are in the
 [repository](https://github.com/beomdo-park/QEnvS#citation).
-
-The `0.3.2a1` alpha has no separate Zenodo archive or version DOI. Cite the
-concept DOI together with the alpha version used.

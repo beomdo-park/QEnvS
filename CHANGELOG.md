@@ -3,7 +3,10 @@
 All notable changes to QEnvS are listed here. Task ids carry their own version
 suffix (`-vN`); a released task is never changed in place.
 
-## [Unreleased]
+## [0.3.2] - 2026-10-22
+
+Final release of the 0.3.2a1 features (battery subsystems for custom models, endpoint
+trajectory diagnostics, the auditable control example) with the fixes below.
 
 ### Changed
 
@@ -209,6 +212,7 @@ First release with a model zoo.
 Skeleton release: `qubit/StateTransfer-v0`, functional environment API,
 Gymnasium adapter, JSON command-line interface, physics validation framework.
 
+[0.3.2]: https://github.com/beomdo-park/QEnvS/compare/v0.3.2a1...v0.3.2
 [0.3.2a1]: https://github.com/beomdo-park/QEnvS/compare/v0.3.0...v0.3.2a1
 [0.3.0]: https://github.com/beomdo-park/QEnvS/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/beomdo-park/QEnvS/compare/v0.1.0...v0.2.0
