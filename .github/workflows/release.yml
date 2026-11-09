@@ -22,7 +22,10 @@ jobs:
       - name: the tagged commit must be on main
         run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
       - uses: astral-sh/setup-uv@v7
-      - run: uv build
+      # The version comes from the pushed tag: actions/checkout fetches that tag as a lightweight
+      # one, so hatch-vcs would prefer another annotated tag on the same commit (the 0.3.2 build
+      # first came out as 0.3.2rc1).
+      - run: SETUPTOOLS_SCM_PRETEND_VERSION="${GITHUB_REF_NAME#v}" uv build
       - uses: actions/upload-artifact@v7
         with:
           name: dist

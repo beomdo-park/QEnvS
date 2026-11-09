@@ -3,6 +3,16 @@
 All notable changes to QEnvS are listed here. Task ids carry their own version
 suffix (`-vN`); a released task is never changed in place.
 
+## [Unreleased]
+
+### Fixed
+
+- The release build takes its version from the pushed tag. The first 0.3.2 build came out as
+  0.3.2rc1 because the rc1 tag was on the same commit; it was rebuilt from the `v0.3.2` tag
+  and the GitHub release files were replaced with the 0.3.2 files from PyPI (same
+  attestations). The `v0.3.2rc1` tag was removed for the rebuild; 0.3.2rc1 on PyPI was built
+  from 23ecc6e, the commit of `v0.3.2`.
+
 ## [0.3.2] - 2026-10-22
 
 Final release of the 0.3.2a1 features (battery subsystems for custom models, endpoint
