@@ -5,6 +5,12 @@ suffix (`-vN`); a released task is never changed in place.
 
 ## [Unreleased]
 
+### Changed
+
+- CI: a ci or docs run that a GitHub outage fails without any failed step (jobs never
+  created, a lost runner) is rerun automatically, at most twice in total (`retry.yml`); a run
+  with a failed test, lint or build step is never retried.
+
 ### Fixed
 
 - `tests/test_examples.py` compares JAX arrays with `numpy.testing.assert_allclose`: pytest 9.2
