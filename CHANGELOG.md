@@ -7,6 +7,9 @@ suffix (`-vN`); a released task is never changed in place.
 
 ### Fixed
 
+- `tests/test_examples.py` compares JAX arrays with `numpy.testing.assert_allclose`: pytest 9.2
+  `approx` reads `expected.flat`, which JAX arrays refuse, so the weekly newest-dependency
+  job failed.
 - The release build takes its version from the pushed tag. The first 0.3.2 build came out as
   0.3.2rc1 because the rc1 tag was on the same commit; it was rebuilt from the `v0.3.2` tag
   and the GitHub release files were replaced with the 0.3.2 files from PyPI (same

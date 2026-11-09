@@ -22,7 +22,7 @@ jobs:
       UV_PYTHON: "3.12"
       JAX_PLATFORMS: cpu
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v7

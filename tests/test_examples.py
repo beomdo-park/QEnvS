@@ -7,6 +7,7 @@ import sys
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
 
 EXAMPLES = pathlib.Path(__file__).resolve().parents[1] / "examples"
@@ -98,7 +99,8 @@ def test_actor_critic_shapes_and_gaussian():
     action = jnp.array([[0.5, -1.0]])
     lp = ppo_jax.gaussian_log_prob(jnp.zeros((1, 2)), log_std, action)
     ref = jax.scipy.stats.norm.logpdf(action, 0.0, jnp.exp(log_std)).sum(-1)
-    assert lp == pytest.approx(ref, abs=1e-6)
+    # pytest 9.2 approx reads expected.flat, which JAX arrays refuse
+    np.testing.assert_allclose(lp, ref, rtol=0, atol=1e-6)
     ent = ppo_jax.gaussian_entropy(log_std)
     assert ent == pytest.approx(float(jnp.sum(log_std + 0.5 * jnp.log(2 * jnp.pi * jnp.e))))
 
