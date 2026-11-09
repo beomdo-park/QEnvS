@@ -1,0 +1,54 @@
+name: retry
+
+# A GitHub outage can fail a ci or docs run without any failed step: jobs are never created,
+# a runner is lost, or a job dies while being set up. Such runs are rerun, at most twice in
+# total; a run with a failed step (a test, lint or build failure) is left alone. The schedule
+# catches runs whose completion event was lost in the outage, and reruns started here.
+on:
+  workflow_run:
+    workflows: [ci, docs]
+    types: [completed]
+  schedule:
+    - cron: "41 */6 * * *"
+
+permissions:
+  actions: write
+
+jobs:
+  retry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: rerun runs that failed without a failed step
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          ids=$RUN_ID
+          if [ -z "$ids" ]; then
+            since=$(date -u -d '-1 day' +%Y-%m-%dT%H:%M:%SZ)
+            ids=$(gh api -X GET "repos/$GH_REPO/actions/runs" -f created=">$since" -F per_page=100 \
+              --jq '.workflow_runs[] | select(.name == "ci" or .name == "docs") | .id')
+          fi
+          for id in $ids; do
+            read -r conclusion attempt < <(gh api "repos/$GH_REPO/actions/runs/$id" --jq '"\(.conclusion) \(.run_attempt)"')
+            case "$conclusion" in failure | startup_failure) ;; *) continue ;; esac
+            if [ "$attempt" -ge 3 ]; then
+              echo "$id: still failing after $attempt attempts, left for a person"
+              continue
+            fi
+            jobs=$(gh api "repos/$GH_REPO/actions/runs/$id/attempts/$attempt/jobs?per_page=100")
+            steps=$(jq '[.jobs[].steps[]? | select(.conclusion == "failure" and .name != "Set up job")] | length' <<< "$jobs")
+            if [ "$steps" -gt 0 ]; then
+              echo "$id: $steps failed steps, a real failure"
+              continue
+            fi
+            # rerun only the failed jobs when there are any; jobs that were never created need a full rerun
+            if [ "$(jq '[.jobs[] | select(.conclusion == "failure")] | length' <<< "$jobs")" -gt 0 ]; then
+              gh run rerun "$id" --failed || echo "$id: rerun refused"
+            else
+              gh run rerun "$id" || echo "$id: rerun refused"
+            fi
+            echo "$id: attempt $attempt failed without a failed step, rerun requested"
+          done

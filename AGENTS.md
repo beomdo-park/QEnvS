@@ -59,6 +59,8 @@ Implementation notes.
   runs in parallel (standard runners are free for this public repository). A pull request that
   changes only documentation runs only the tests that read documentation; push CI on main runs
   the full suite. Jobs have timeouts and test artifacts expire after seven days.
+- `retry.yml` reruns a ci or docs run that failed without any failed step (a GitHub outage), at
+  most twice; do not rerun a run with a failed step by hand without reading its log.
 - Batch fixes before pushing, rerun only failed jobs when possible, and defer optional paid work
   when account-wide remaining usage cannot be established. Do not change billing permissions or
   account spending limits automatically.
